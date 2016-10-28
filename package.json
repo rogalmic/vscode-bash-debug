@@ -1,0 +1,93 @@
+{
+	"name": "bash-debug",
+	"displayName": "Bash Debug",
+	"version": "0.0.1",
+	"publisher": "SkunkWorks",
+	"description": "A package for debugging bash scripts using bashdb.",
+	"author": {
+		"name": "Michal Rogalinski",
+		"email": "rogalinsky@gmail.com"
+	},
+	"engines": {
+		"vscode": "^1.1.0",
+		"node": "^5.10.0"
+	},
+	"icon": "images/mock-debug-icon.svg",
+	"categories": [
+		"Debuggers"
+	],
+	"private": true,
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-mock-debug.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Microsoft/vscode-mock-debug/issues"
+	},
+	"dependencies": {
+		"vscode-debugprotocol": "^1.13.0",
+		"vscode-debugadapter": "^1.13.0",
+		"child-process": "^1.0.2"
+	},
+	"devDependencies": {
+		"@types/es6-collections": "^0.5.29",
+		"@types/es6-promise": "0.0.32",
+		"@types/mocha": "^2.2.32",
+		"@types/node": "^6.0.39",
+		"typescript": "^2.0.2",
+		"mocha": "^3.0.2",
+		"vscode": "^0.11.18",
+		"vscode-debugadapter-testsupport": "^1.13.0"
+	},
+	"scripts": {
+		"prepublish": "node ./node_modules/typescript/bin/tsc -p ./src",
+		"compile": "node ./node_modules/typescript/bin/tsc -p ./src",
+		"watch": "node ./node_modules/typescript/bin/tsc -w -p ./src",
+		"test": "node ./node_modules/mocha/bin/mocha -u tdd ./out/tests/",
+		"postinstall": "node ./node_modules/vscode/bin/install"
+	},
+	"main": "./out/extension",
+	"activationEvents": [
+		"onCommand:extension.getProgramName",
+		"onCommand:extension.mock-debug.provideInitialConfigurations"
+	],
+	"contributes": {
+		"breakpoints": [
+			{
+				"language": "shellscript"
+			}
+		],
+		"debuggers": [
+			{
+				"type": "bashdb",
+				"label": "Bash Debug",
+
+				"program": "./out/bashDebug.js",
+				"runtime": "node",
+
+				"variables": {
+					"AskForProgramName": "extension.getProgramName"
+				},
+
+				"configurationAttributes": {
+					"launch": {
+						"required": [ "program" ],
+						"properties": {
+							"program": {
+								"type": "string",
+								"description": "Absolute path to a script.",
+								"default": "${workspaceRoot}/${command.AskForProgramName}"
+							},
+							"stopOnEntry": {
+								"type": "boolean",
+								"description": "Automatically stop after launch.",
+								"default": true
+							}
+						}
+					}
+				},
+				"initialConfigurations": "extension.mock-debug.provideInitialConfigurations"
+			}
+		]
+	}
+}
