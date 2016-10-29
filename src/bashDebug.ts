@@ -31,6 +31,8 @@ class BashDebugSession extends DebugSession {
 	// we don't support multiple threads, so we can use a hardcoded ID for the default thread
 	private static THREAD_ID = 1;
 
+	private static BASHDB_PROMPT = "bashdb<";
+
 	// since we want to send breakpoint events, we will assign an id to every event
 	// so that the frontend can match events with breakpoints.
 	private _breakpointId = 1000;
@@ -56,7 +58,9 @@ class BashDebugSession extends DebugSession {
 
 	private _variableHandles = new Handles<string>();
 
-	private _fullDebugOutput = new Array<string>();
+	private _fullDebugOutput = [""];
+
+	private _debuggerExecutableBusy = false;
 
 
 	/**
@@ -67,8 +71,8 @@ class BashDebugSession extends DebugSession {
 		super();
 
 		// this debugger uses zero-based lines and columns
-		this.setDebuggerLinesStartAt1(false);
-		this.setDebuggerColumnsStartAt1(false);
+		this.setDebuggerLinesStartAt1(true);
+		this.setDebuggerColumnsStartAt1(true);
 	}
 
 	/**
@@ -94,32 +98,44 @@ class BashDebugSession extends DebugSession {
 
 		this.sendEvent(new OutputEvent(`launchRequest: ${args.program}\n`));
 
-		this.process = ChildProcess.spawn("bashdb", [args.program]);
+		this.process = ChildProcess.spawn("bashdb", ["--quiet", args.program]);
 
 		this.process.stdout.on("data", (data) =>
 		{
-			this.sendEvent(new OutputEvent(`stdout: ${data}\n`));
+			this.sendEvent(new OutputEvent(`stdout: '${data}'\n`));
 
-			var list = data.toString().split("\n");
+			var list = data.toString().split("\n", -1);
 
-			this._fullDebugOutput = this._fullDebugOutput.concat(list);
+			//this.sendEvent(new OutputEvent(`TEST(${this._fullDebugOutput.length}): ${this._fullDebugOutput.join("=======")} \n`));
 
 			for (var i=list.length-1; i>=0; i--)
 			{
-				if (list[i].indexOf("(") == 0)
+				try
 				{
-					var res = list[i].replace("(", "").replace(")", "");
-					this.sendEvent(new OutputEvent(`line: ${res}\n`));
-					this._currentLine = parseInt(res.split(":")[1]) - 1;
-					this._sourceFile = res.split(":")[0];
-					this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
+					if (list[i].indexOf("(/") == 0)
+					{
+						var res = list[i].replace("(", "").replace(")", "");
+						this.sendEvent(new OutputEvent(`line: ${res}\n`));
+						this._currentLine = parseInt(res.split(":", -1)[1]);
+						this._sourceFile = res.split(":", -1)[0];
+						this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
+					}
+					else if (list[i].indexOf("terminated") > 0 )
+					{
+						this.sendEvent(new TerminatedEvent());
+						this.process.stdin.write(`quit\n\n`)
+					}
 				}
-				else if (list[i].indexOf("terminated") > 0 )
+				catch(ex)
 				{
-					this.sendEvent(new TerminatedEvent());
-					this.process.stdin.write(`quit\n`)
+					this.sendEvent(new OutputEvent(`${ex}\n`));
 				}
 			}
+
+			// TODO: separate method
+			var fullLine = `${this._fullDebugOutput.pop()}${list.shift()}`;
+			this._fullDebugOutput.push(fullLine);
+			this._fullDebugOutput = this._fullDebugOutput.concat(list);
 		});
 
 		this.process.stderr.on("data", (data)=>
@@ -132,13 +148,13 @@ class BashDebugSession extends DebugSession {
 		this._sourceFile = args.program;
 		this._sourceLines = readFileSync(this._sourceFile).toString().split('\n');
 
-		setTimeout(()=>this.launchRequestFinalize(response, args), 100);
+		setTimeout(()=>this.launchRequestFinalize(response, args), 10);
 	}
 
 	private launchRequestFinalize(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
 
 		for (var i = 0; i < this._fullDebugOutput.length; i++) {
-			if (this._fullDebugOutput[i].indexOf("(") == 0)
+			if (this._fullDebugOutput[i].indexOf("(/") == 0)
 			{
 				this.sendResponse(response);
 				this.sendEvent(new InitializedEvent());
@@ -156,10 +172,10 @@ class BashDebugSession extends DebugSession {
 		// TODO: implement properly
 		this.sendEvent(new OutputEvent(`setBreakPointsRequest: ${args.breakpoints.join(",")}\n`));
 
-		for (var i = 0; i < args.breakpoints.length; i++)
+		if (this._debuggerExecutableBusy)
 		{
-			this.sendEvent(new OutputEvent(`breakpoints: ${args.breakpoints[i].line} ${args.breakpoints[i].condition}\n`));
-			//this.process.stdin.write(`break ${args.breakpoints[i].line}\n`)
+			setTimeout(()=>	this.setBreakPointsRequest(response, args), 100);
+			return;
 		}
 
 		var breakpoints = new Array<Breakpoint>();
@@ -170,30 +186,35 @@ class BashDebugSession extends DebugSession {
 			return;
 		}
 
-		this.process.stdin.write(`break ${args.breakpoints[0].line}\n`)
-		setTimeout(()=>	this.setBreakPointsRequestFinalize(response, args, this._fullDebugOutput.length, 0, breakpoints), 100);
+		this._debuggerExecutableBusy = true;
+		var currentLine = this._fullDebugOutput.length;
+		this.process.stdin.write(`break ${args.breakpoints[0].line}\nprint BASHDB\n`);
+		setTimeout(()=>	this.setBreakPointsRequestFinalize(response, args, currentLine, 0, breakpoints), 100);
 	}
 
 	private setBreakPointsRequestFinalize(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, currentOutputLength:number, currentBreakpoint:number, breakpoints:Array<Breakpoint>): void {
 		this.sendResponse(response);
 
-		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[currentOutputLength].length > 0){
+		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length -2] == "BASHDB"){
 			const bp = <DebugProtocol.Breakpoint> new Breakpoint(true, this.convertDebuggerLineToClient(args.breakpoints[currentBreakpoint].line));
 			bp.id = this._breakpointId++;
 			breakpoints.push(bp);
 
 			if (currentBreakpoint + 1 == args.breakpoints.length){
 				response.body = { breakpoints: breakpoints };
+				this.sendEvent(new OutputEvent(`setBreakPointsRequestDone\n`));
+				this._debuggerExecutableBusy = false;
 				this.sendResponse(response);
 				return;
 			}
-			// TODO: source file selection?
-			this.process.stdin.write(`break ${args.breakpoints[currentBreakpoint + 1].line}\n`)
-			setTimeout(()=> this.setBreakPointsRequestFinalize(response, args, this._fullDebugOutput.length, currentBreakpoint + 1, breakpoints), 0);
+
+			var currentLine = this._fullDebugOutput.length;
+			this.process.stdin.write(`break ${args.breakpoints[currentBreakpoint + 1].line}\nprint BASHDB\n`);
+			setTimeout(()=> this.setBreakPointsRequestFinalize(response, args, currentLine, currentBreakpoint + 1, breakpoints), 0);
 			return;
 		}
 
-		setTimeout(()=> this.setBreakPointsRequestFinalize(response, args, currentOutputLength, currentBreakpoint, breakpoints), 10);
+		setTimeout(()=> this.setBreakPointsRequestFinalize(response, args, currentOutputLength, currentBreakpoint, breakpoints), 100);
 	}
 
 	protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
@@ -205,6 +226,8 @@ class BashDebugSession extends DebugSession {
 				new Thread(BashDebugSession.THREAD_ID, "thread 1")
 			]
 		};
+
+		this.sendEvent(new OutputEvent(`threadRequestDone\n`));
 		this.sendResponse(response);
 	}
 
@@ -213,36 +236,56 @@ class BashDebugSession extends DebugSession {
 	 */
 	protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
 
-		// TODO: implement properly
 		this.sendEvent(new OutputEvent(`stackTraceRequest: ${args.startFrame}  ${args.levels}\n`));
 
-		//this.process.stdin.write(`backtrace\n`);
+		if (this._debuggerExecutableBusy)
+		{
+			setTimeout(()=>	this.stackTraceRequest(response, args), 100);
+			return;
+		}
 
-		setTimeout(this.stackTraceRequestFinalize(response, args), 100);
+		this._debuggerExecutableBusy = true;
+		var currentLine = this._fullDebugOutput.length;
+		this.process.stdin.write(`backtrace\nprint BASHDB\n`);
+		setTimeout(() => this.stackTraceRequestFinalize(response, args, currentLine), 100);
 	}
 
-	private stackTraceRequestFinalize(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
+	private stackTraceRequestFinalize(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments, currentOutputLength:number): void {
+		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length -2] == "BASHDB"){
 
-		var initialLength = this._fullDebugOutput.length;
-		const words = this._sourceLines[this._currentLine].trim().split(/\s+/);
+			var lastStackLineIndex = this._fullDebugOutput.length - 3;
 
-		const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
-		const maxLevels = typeof args.levels === 'number' ? args.levels : words.length-startFrame;
-		const endFrame = Math.min(startFrame + maxLevels, words.length);
+			const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
+			const maxLevels = typeof args.levels === 'number' ? args.levels : 100;
 
-		const frames = new Array<StackFrame>();
-		// every word of the current line becomes a stack frame.
-		for (let i= startFrame; i < endFrame; i++) {
-			const name = words[i];	// use a word of the line as the stackframe name
-			frames.push(new StackFrame(i, `${name}(${i})`, new Source(basename(this._sourceFile),
-				this.convertDebuggerPathToClient(this._sourceFile)),
-				this.convertDebuggerLineToClient(this._currentLine), 0));
+			const frames = new Array<StackFrame>();
+			for (var i= currentOutputLength - 1; i <= lastStackLineIndex ; i++) {
+				var lineContent = this._fullDebugOutput[i];
+				var frameIndex = parseInt(lineContent.substr(2, 2));
+				var frameText = lineContent.substr(2, 2);
+				var frameSourcePath = lineContent.substr(lineContent.lastIndexOf("`") + 1, lineContent.lastIndexOf("'") - lineContent.lastIndexOf("`") - 1);
+				var frameLine = parseInt(lineContent.substr(lineContent.lastIndexOf(" ")));
+
+				//this.sendEvent(new OutputEvent(`BBBBBB ${lineContent}\n${frameSourcePath}\n`));
+
+				frames.push(new StackFrame(
+					frameIndex,
+					frameText,
+					new Source(basename(frameSourcePath), this.convertDebuggerPathToClient(frameSourcePath)),
+					this.convertDebuggerLineToClient(frameLine)
+					));
+			}
+
+			var totalFrames = this._fullDebugOutput.length - currentOutputLength -1;
+
+			response.body = { stackFrames: frames, totalFrames: totalFrames };
+			this.sendEvent(new OutputEvent(`stackTraceRequestDone\n`));
+			this._debuggerExecutableBusy = false;
+			this.sendResponse(response);
+			return;
 		}
-		response.body = {
-			stackFrames: frames,
-			totalFrames: words.length
-		};
-		this.sendResponse(response);
+
+		setTimeout(() => this.stackTraceRequestFinalize(response, args, currentOutputLength), 100);
 	}
 
 	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
@@ -264,30 +307,40 @@ class BashDebugSession extends DebugSession {
 
 		this.sendEvent(new OutputEvent(`variablesRequest: ${args.variablesReference.toString()}\n`));
 
+		if (this._debuggerExecutableBusy)
+		{
+			setTimeout(()=>	this.variablesRequest(response, args), 100);
+			return;
+		}
 
 		const variables = [];
 
-		this.process.stdin.write(`examine $0\n`);
-		setTimeout(()=> this.variablesRequestFinalize(response, args, this._fullDebugOutput.length, 0, variables), 0);
+		this._debuggerExecutableBusy = true;
+		var currentLine = this._fullDebugOutput.length;
+		this.process.stdin.write(`examine $0\nprint BASHDB\n`);
+		setTimeout(()=> this.variablesRequestFinalize(response, args, currentLine, 0, variables), 10);
 	}
 
 	private variablesRequestFinalize(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments, currentOutputLength:number, currentVariable:number, variables:Array<DebugProtocol.Variable>): void {
 
-		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[currentOutputLength].length > 0){
+		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length -2] == "BASHDB"){
 			variables.push({
 				name: `$${currentVariable}`,
 				type: "string",
-				value: this._fullDebugOutput[currentOutputLength],
+				value: this._fullDebugOutput[currentOutputLength - 1],
 				variablesReference: 0
 			});
 
 			if (currentVariable +1 > 10){
 				response.body = { variables: variables };
+
+				this._debuggerExecutableBusy = false;
 				this.sendResponse(response);
+				this.sendEvent(new OutputEvent(`variablesRequestDone\n`));
 				return;
 			}
 
-			this.process.stdin.write(`examine $${currentVariable + 1}\n`);
+			this.process.stdin.write(`examine $${currentVariable + 1}\nprint BASHDB\n`);
 			setTimeout(()=> this.variablesRequestFinalize(response, args, this._fullDebugOutput.length, currentVariable + 1, variables), 0);
 			return;
 		}
@@ -298,50 +351,58 @@ class BashDebugSession extends DebugSession {
 	protected continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments): void {
 
 		this.sendEvent(new OutputEvent(`continueRequest: ${args.threadId}\n`));
-		this.process.stdin.write(`continue\n`);
+		this.process.stdin.write(`continue\nprint BASHDB\n`);
 		this.sendResponse(response);
 	}
 
 	protected nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments): void {
 
 		this.sendEvent(new OutputEvent(`nextRequest: ${args.threadId}\n`));
-		this.process.stdin.write(`step\n`);
+		this.process.stdin.write(`step\nprint BASHDB\n`);
 		this.sendResponse(response);
 	}
 
 	protected stepBackRequest(response: DebugProtocol.StepBackResponse, args: DebugProtocol.StepBackArguments): void {
 
 		this.sendEvent(new OutputEvent(`stepBackRequest: ${args.threadId}\n`));
-		this.process.stdin.write(`step-\n`);
+		this.process.stdin.write(`step-\nprint BASHDB\n`);
 		this.sendResponse(response);
 	}
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
 
-		this.sendEvent(new OutputEvent(`evaluateRequest: ${args.context}  ${args.expression}\n`));
+		this.sendEvent(new OutputEvent(`evaluateRequest: ${args.context}  ${args.expression}\n\n`));
 
-		this.process.stdin.write(`examine ${args.expression}\n`);
+		if (this._debuggerExecutableBusy)
+		{
+			setTimeout(()=>	this.evaluateRequest(response, args), 100);
+			return;
+		}
 
-		setTimeout(()=>this.evaluateRequestFinalize(response, args, this._fullDebugOutput.length), 100);
+		this._debuggerExecutableBusy = true;
+		var currentLine = this._fullDebugOutput.length;
+		this.process.stdin.write(`examine ${args.expression}\nprint BASHDB\n`);
+		setTimeout(()=>this.evaluateRequestFinalize(response, args, currentLine), 10);
 	}
 
 	private evaluateRequestFinalize(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments, currentOutputLength:number): void {
 
-		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[currentOutputLength].length > 0)
+		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length -2] == "BASHDB")
 		{
-			this.sendEvent(new OutputEvent(`${args.expression}: ${this._fullDebugOutput[currentOutputLength]}\n`));
+			this.sendEvent(new OutputEvent(`${args.expression}: ${this._fullDebugOutput[currentOutputLength - 1]}\n`));
 
 			response.body = {
-				result: `${args.expression} = '${this._fullDebugOutput[currentOutputLength]}'`,
+				result: `${args.expression} = '${this._fullDebugOutput[currentOutputLength - 1]}'`,
 				variablesReference: 0
 			};
 
+			this._debuggerExecutableBusy = false;
 			this.sendResponse(response);
 			return;
 		}
 
 
-		setTimeout(()=>this.evaluateRequestFinalize(response, args, currentOutputLength), 100);
+		setTimeout(()=>this.evaluateRequestFinalize(response, args, currentOutputLength), 10);
 	}
 
 
