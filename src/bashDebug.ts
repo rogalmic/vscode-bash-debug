@@ -58,23 +58,16 @@ class BashDebugSession extends DebugSession {
 
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
 
-		this.sendEvent(new OutputEvent(`initializeRequest: ${args.adapterID}\n`));
-		response.body.supportsConfigurationDoneRequest = false; //TODO: implement configDone
+		response.body.supportsConfigurationDoneRequest = false; //TODO: implement configDone if needed
 		response.body.supportsEvaluateForHovers = true;
 		response.body.supportsStepBack = false;
-
-		setTimeout(()=>this.initializeRequestFinalize(response, args), 0);
-	}
-
-	private initializeRequestFinalize(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
 
 		this.sendResponse(response);
 	}
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
 
-		this.sendEvent(new OutputEvent(`launchRequest: ${args.program}\n`));
-
+		this.configurationDoneRequest
 		this.process = ChildProcess.spawn("bashdb", ["--quiet", args.program]);
 
 		this.process.stdout.on("data", (data) =>
@@ -333,9 +326,12 @@ class BashDebugSession extends DebugSession {
 
 		this._debuggerExecutableBusy = true;
 		var currentLine = this._fullDebugOutput.length;
-		this.process.stdin.write(`step\nprint ${BashDebugSession.BASHDB_PROMPT}\n`);
+		this.process.stdin.write(`next\nprint ${BashDebugSession.BASHDB_PROMPT}\n`);
 
 		setTimeout(()=>this.nextRequestFinalize(response, args, currentLine), this._responsivityFactor);
+
+		// TODO: why does it need to be here?
+		this.sendResponse(response);
 	}
 
 	private nextRequestFinalize(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments, currentOutputLength:number): void {
@@ -343,11 +339,40 @@ class BashDebugSession extends DebugSession {
 		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length -2] == BashDebugSession.BASHDB_PROMPT)
 		{
 			this._debuggerExecutableBusy = false;
-			this.sendResponse(response);
+			//this.sendResponse(response);
 			return;
 		}
 
 		setTimeout(()=>this.nextRequestFinalize(response, args, currentOutputLength), this._responsivityFactor);
+	}
+
+	protected stepInRequest(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments): void {
+
+		if (this._debuggerExecutableBusy)
+		{
+			setTimeout(()=>	this.stepInRequest(response, args), this._responsivityFactor);
+			return;
+		}
+
+		this._debuggerExecutableBusy = true;
+		var currentLine = this._fullDebugOutput.length;
+		this.process.stdin.write(`step\nprint ${BashDebugSession.BASHDB_PROMPT}\n`);
+
+		setTimeout(()=>this.stepInRequestFinalize(response, args, currentLine), this._responsivityFactor);
+
+		// TODO: why does it need to be here?
+		this.sendResponse(response);
+	}
+
+	private stepInRequestFinalize(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments, currentOutputLength:number): void {
+		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length -2] == BashDebugSession.BASHDB_PROMPT)
+		{
+			this._debuggerExecutableBusy = false;
+			//this.sendResponse(response);
+			return;
+		}
+
+		setTimeout(()=>this.stepInRequestFinalize(response, args, currentOutputLength), this._responsivityFactor);
 	}
 
 	protected stepBackRequest(response: DebugProtocol.StepBackResponse, args: DebugProtocol.StepBackArguments): void {
@@ -363,13 +388,16 @@ class BashDebugSession extends DebugSession {
 		this.process.stdin.write(`step -\nprint ${BashDebugSession.BASHDB_PROMPT}\n`);
 
 		setTimeout(()=>this.stepBackRequestFinalize(response, args, currentLine), this._responsivityFactor);
+
+		// TODO: why does it need to be here?
+		this.sendResponse(response);
 	}
 
 	private stepBackRequestFinalize(response: DebugProtocol.StepBackResponse, args: DebugProtocol.StepBackArguments, currentOutputLength:number): void {
 		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length -2] == BashDebugSession.BASHDB_PROMPT)
 		{
 			this._debuggerExecutableBusy = false;
-			this.sendResponse(response);
+			//this.sendResponse(response);
 			return;
 		}
 
