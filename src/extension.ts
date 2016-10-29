@@ -13,7 +13,7 @@ const initialConfigurations = {
 		type: 'bashdb',
 		request: 'launch',
 		program: '${command.SelectScriptName}',
-		stopOnEntry: true
+		commandLineArguments: ''
 	}],
 	configuration2: [
 	{
@@ -21,7 +21,7 @@ const initialConfigurations = {
 		type: 'bashdb',
 		request: 'launch',
 		program: '${workspaceRoot}/path/to/script.sh',
-		stopOnEntry: true
+		commandLineArguments: ''
 	}],
 	configuration3: [
 	{
@@ -29,7 +29,7 @@ const initialConfigurations = {
 		type: 'bashdb',
 		request: 'launch',
 		program: '${workspaceRoot}/${command.AskForScriptName}',
-		stopOnEntry: true
+		commandLineArguments: ''
 	}
 	]}
 

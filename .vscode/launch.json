@@ -41,13 +41,6 @@
 			"outDir": "${workspaceRoot}/out",
 			"cwd": "${workspaceRoot}",
 			"internalConsoleOptions": "openOnSessionStart"
-		},
-		{
-			"name": "Run BashDb Sample",
-			"type": "mock",  // TODO
-			"request": "launch",
-			"program": "${workspaceRoot}/${command.AskForProgramName}",
-			"stopOnEntry": true
 		}
 	]
 }
