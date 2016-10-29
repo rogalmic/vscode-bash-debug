@@ -18,7 +18,7 @@
 			"type": "node",
 			"request": "launch",
 			"runtimeArgs": [ "--nolazy" ],
-			"program": "${workspaceRoot}/src/mockDebug.ts",
+			"program": "${workspaceRoot}/src/bashDebug.ts",
 			"stopOnEntry": false,
 			"args": [ "--server=4711" ],
 			"sourceMaps": true,
@@ -43,8 +43,8 @@
 			"internalConsoleOptions": "openOnSessionStart"
 		},
 		{
-			"name": "Run Mock Sample",
-			"type": "mock",
+			"name": "Run BashDb Sample",
+			"type": "mock",  // TODO
 			"request": "launch",
 			"program": "${workspaceRoot}/${command.AskForProgramName}",
 			"stopOnEntry": true

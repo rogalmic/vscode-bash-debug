@@ -26,7 +26,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	stopOnEntry?: boolean;
 }
 
-class MockDebugSession extends DebugSession {
+class BashDebugSession extends DebugSession {
 
 	// we don't support multiple threads, so we can use a hardcoded ID for the default thread
 	private static THREAD_ID = 1;
@@ -112,7 +112,7 @@ class MockDebugSession extends DebugSession {
 					this.sendEvent(new OutputEvent(`line: ${res}\n`));
 					this._currentLine = parseInt(res.split(":")[1]) - 1;
 					this._sourceFile = res.split(":")[0];
-					this.sendEvent(new StoppedEvent("break", MockDebugSession.THREAD_ID));
+					this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
 				}
 				else if (list[i].indexOf("terminated") > 0 )
 				{
@@ -142,7 +142,7 @@ class MockDebugSession extends DebugSession {
 			{
 				this.sendResponse(response);
 				this.sendEvent(new InitializedEvent());
-				this.sendEvent(new StoppedEvent("entry", MockDebugSession.THREAD_ID));
+				this.sendEvent(new StoppedEvent("entry", BashDebugSession.THREAD_ID));
 				return;
 			}
 		}
@@ -159,52 +159,41 @@ class MockDebugSession extends DebugSession {
 		for (var i = 0; i < args.breakpoints.length; i++)
 		{
 			this.sendEvent(new OutputEvent(`breakpoints: ${args.breakpoints[i].line} ${args.breakpoints[i].condition}\n`));
-			this.process.stdin.write(`break ${args.breakpoints[i].line}\n`)
+			//this.process.stdin.write(`break ${args.breakpoints[i].line}\n`)
 		}
-
-
-		var path = args.source.path;
-		var clientLines = args.lines;
-
-		// read file contents into array for direct access
-		var lines = readFileSync(path).toString().split('\n');
 
 		var breakpoints = new Array<Breakpoint>();
 
-		// verify breakpoint locations
-		for (var i = 0; i < clientLines.length; i++) {
-			var l = this.convertClientLineToDebugger(clientLines[i]);
-			var verified = false;
-			if (l < lines.length) {
-				const line = lines[l].trim();
-				// if a line is empty or starts with '+' we don't allow to set a breakpoint but move the breakpoint down
-				if (line.length == 0 || line.indexOf("+") == 0)
-					l++;
-				// if a line starts with '-' we don't allow to set a breakpoint but move the breakpoint up
-				if (line.indexOf("-") == 0)
-					l--;
-				// don't set 'verified' to true if the line contains the word 'lazy'
-				// in this case the breakpoint will be verified 'lazy' after hitting it once.
-				if (line.indexOf("lazy") < 0) {
-					verified = true;    // this breakpoint has been validated
-				}
-			}
-			const bp = <DebugProtocol.Breakpoint> new Breakpoint(verified, this.convertDebuggerLineToClient(l));
-			bp.id = this._breakpointId++;
-			breakpoints.push(bp);
+		if (args.breakpoints.length == 0){
+			response.body = { breakpoints: breakpoints };
+			this.sendResponse(response);
+			return;
 		}
-		this._breakPoints.set(path, breakpoints);
 
-		// send back the actual breakpoint positions
-		response.body = {
-			breakpoints: breakpoints
-		};
-
-		setTimeout(()=>this.setBreakPointsRequestFinalize(response, args, this._fullDebugOutput.length), 100);
+		this.process.stdin.write(`break ${args.breakpoints[0].line}\n`)
+		setTimeout(()=>	this.setBreakPointsRequestFinalize(response, args, this._fullDebugOutput.length, 0, breakpoints), 100);
 	}
 
-	private setBreakPointsRequestFinalize(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, currenLength:number): void {
+	private setBreakPointsRequestFinalize(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, currentOutputLength:number, currentBreakpoint:number, breakpoints:Array<Breakpoint>): void {
 		this.sendResponse(response);
+
+		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[currentOutputLength].length > 0){
+			const bp = <DebugProtocol.Breakpoint> new Breakpoint(true, this.convertDebuggerLineToClient(args.breakpoints[currentBreakpoint].line));
+			bp.id = this._breakpointId++;
+			breakpoints.push(bp);
+
+			if (currentBreakpoint + 1 == args.breakpoints.length){
+				response.body = { breakpoints: breakpoints };
+				this.sendResponse(response);
+				return;
+			}
+			// TODO: source file selection?
+			this.process.stdin.write(`break ${args.breakpoints[currentBreakpoint + 1].line}\n`)
+			setTimeout(()=> this.setBreakPointsRequestFinalize(response, args, this._fullDebugOutput.length, currentBreakpoint + 1, breakpoints), 0);
+			return;
+		}
+
+		setTimeout(()=> this.setBreakPointsRequestFinalize(response, args, currentOutputLength, currentBreakpoint, breakpoints), 10);
 	}
 
 	protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
@@ -213,7 +202,7 @@ class MockDebugSession extends DebugSession {
 		// return the default thread
 		response.body = {
 			threads: [
-				new Thread(MockDebugSession.THREAD_ID, "thread 1")
+				new Thread(BashDebugSession.THREAD_ID, "thread 1")
 			]
 		};
 		this.sendResponse(response);
@@ -264,8 +253,6 @@ class MockDebugSession extends DebugSession {
 		const frameReference = args.frameId;
 		const scopes = new Array<Scope>();
 		scopes.push(new Scope("Local", this._variableHandles.create("local_" + frameReference), false));
-		scopes.push(new Scope("Closure", this._variableHandles.create("closure_" + frameReference), false));
-		scopes.push(new Scope("Global", this._variableHandles.create("global_" + frameReference), true));
 
 		response.body = {
 			scopes: scopes
@@ -279,38 +266,33 @@ class MockDebugSession extends DebugSession {
 
 
 		const variables = [];
-		const id = this._variableHandles.get(args.variablesReference);
-		if (id != null) {
+
+		this.process.stdin.write(`examine $0\n`);
+		setTimeout(()=> this.variablesRequestFinalize(response, args, this._fullDebugOutput.length, 0, variables), 0);
+	}
+
+	private variablesRequestFinalize(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments, currentOutputLength:number, currentVariable:number, variables:Array<DebugProtocol.Variable>): void {
+
+		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[currentOutputLength].length > 0){
 			variables.push({
-				name: id + "_i",
-				type: "integer",
-				value: "123",
-				variablesReference: 0
-			});
-			variables.push({
-				name: id + "_f",
-				type: "float",
-				value: "3.14",
-				variablesReference: 0
-			});
-			variables.push({
-				name: id + "_s",
+				name: `$${currentVariable}`,
 				type: "string",
-				value: "hello world",
+				value: this._fullDebugOutput[currentOutputLength],
 				variablesReference: 0
 			});
-			variables.push({
-				name: id + "_o",
-				type: "object",
-				value: "Object",
-				variablesReference: this._variableHandles.create("object_")
-			});
+
+			if (currentVariable +1 > 10){
+				response.body = { variables: variables };
+				this.sendResponse(response);
+				return;
+			}
+
+			this.process.stdin.write(`examine $${currentVariable + 1}\n`);
+			setTimeout(()=> this.variablesRequestFinalize(response, args, this._fullDebugOutput.length, currentVariable + 1, variables), 0);
+			return;
 		}
 
-		response.body = {
-			variables: variables
-		};
-		this.sendResponse(response);
+		setTimeout(()=> this.variablesRequestFinalize(response, args, currentOutputLength, currentVariable, variables), 10);
 	}
 
 	protected continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments): void {
@@ -338,20 +320,19 @@ class MockDebugSession extends DebugSession {
 
 		this.sendEvent(new OutputEvent(`evaluateRequest: ${args.context}  ${args.expression}\n`));
 
-		var initialLength = this._fullDebugOutput.length;
 		this.process.stdin.write(`examine ${args.expression}\n`);
 
 		setTimeout(()=>this.evaluateRequestFinalize(response, args, this._fullDebugOutput.length), 100);
 	}
 
-	private evaluateRequestFinalize(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments, currenLength:number): void {
+	private evaluateRequestFinalize(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments, currentOutputLength:number): void {
 
-		if (this._fullDebugOutput.length > currenLength && this._fullDebugOutput[currenLength].length > 0)
+		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[currentOutputLength].length > 0)
 		{
-			this.sendEvent(new OutputEvent(`${args.expression}: ${this._fullDebugOutput[currenLength]}\n`));
+			this.sendEvent(new OutputEvent(`${args.expression}: ${this._fullDebugOutput[currentOutputLength]}\n`));
 
 			response.body = {
-				result: `${args.expression} = '${this._fullDebugOutput[currenLength]}'`,
+				result: `${args.expression} = '${this._fullDebugOutput[currentOutputLength]}'`,
 				variablesReference: 0
 			};
 
@@ -360,7 +341,7 @@ class MockDebugSession extends DebugSession {
 		}
 
 
-		setTimeout(()=>this.evaluateRequestFinalize(response, args, currenLength), 100);
+		setTimeout(()=>this.evaluateRequestFinalize(response, args, currentOutputLength), 100);
 	}
 
 
@@ -372,4 +353,4 @@ class MockDebugSession extends DebugSession {
 	protected process: ChildProcess.ChildProcess;
 }
 
-DebugSession.run(MockDebugSession);
+DebugSession.run(BashDebugSession);

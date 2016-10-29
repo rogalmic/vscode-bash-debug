@@ -22,13 +22,21 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let disposable = vscode.commands.registerCommand('extension.getProgramName', () => {
 		return vscode.window.showInputBox({
-			placeHolder: "Please enter the name of a text file in the workspace folder",
-			value: "readme.md"
+			placeHolder: "Please enter the relative path to bash script.",
+			value: "./path/to/script.sh"
 		});
 	});
 	context.subscriptions.push(disposable);
 
-	context.subscriptions.push(vscode.commands.registerCommand('extension.mock-debug.provideInitialConfigurations', () => {
+	// TODO: list all bash scripts instead of uncomfortable input
+	// let disposable2 = vscode.commands.registerCommand('extension.getProgramName', () => {
+	// 	return vscode.window.showQuickPick(
+	// 		["path1", "path2"]
+	// 	);
+	// });
+	// context.subscriptions.push(disposable2);
+
+	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.provideInitialConfigurations', () => {
 		return JSON.stringify(initialConfigurations);
 	}));
 }
