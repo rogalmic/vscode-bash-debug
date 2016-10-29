@@ -1,2 +1,2 @@
 # vscode-bash-debug
-Attempt to create a bash debugger based on bashdb scripts.
+Attempt to create a bash debugger GUI frontend based on awesome bashdb scripts.
