@@ -20,10 +20,9 @@ import * as ChildProcess from "child_process"
  * This interface should always match the schema found in the mock-debug extension manifest.
  */
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
-	/** An absolute path to the program to debug. */
+
 	program: string;
-	/** Automatically stop target after launch. If not specified, target does not stop. */
-	stopOnEntry?: boolean;
+	commandLineParameters: string;
 }
 
 class BashDebugSession extends DebugSession {
@@ -67,8 +66,7 @@ class BashDebugSession extends DebugSession {
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
 
-		this.configurationDoneRequest
-		this.process = ChildProcess.spawn("bashdb", ["--quiet", args.program]);
+		this.process = ChildProcess.spawn("bash", ["-c", `bashdb --quiet ${args.program} -- ${args.commandLineParameters}`]);
 
 		this.process.stdout.on("data", (data) =>
 		{
