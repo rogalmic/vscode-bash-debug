@@ -12,7 +12,7 @@ const initialConfigurations = {
 		name: 'Bash-Debug (select script from list of sh files)',
 		type: 'bashdb',
 		request: 'launch',
-		program: '${workspaceRoot}/${command.SelectScriptName}',
+		program: '${command.SelectScriptName}',
 		stopOnEntry: true
 	}],
 	configuration2: [
