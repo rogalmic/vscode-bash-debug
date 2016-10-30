@@ -8,7 +8,7 @@ const initialConfigurations = {
 		name: 'Bash-Debug (select script from list of sh files)',
 		type: 'bashdb',
 		request: 'launch',
-		program: '${command.SelectScriptName}',
+		scriptPath: '${command.SelectScriptName}',
 		commandLineArguments: ''
 	}],
 	configuration2: [
@@ -16,7 +16,7 @@ const initialConfigurations = {
 		name: 'Bash-Debug (hardcoded script name)',
 		type: 'bashdb',
 		request: 'launch',
-		program: '${workspaceRoot}/path/to/script.sh',
+		scriptPath: '${workspaceRoot}/path/to/script.sh',
 		commandLineArguments: ''
 	}],
 	configuration3: [
@@ -24,7 +24,7 @@ const initialConfigurations = {
 		name: 'Bash-Debug (type in script name)',
 		type: 'bashdb',
 		request: 'launch',
-		program: '${workspaceRoot}/${command.AskForScriptName}',
+		scriptPath: '${workspaceRoot}/${command.AskForScriptName}',
 		commandLineArguments: ''
 	}
 	]}
