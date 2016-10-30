@@ -35,7 +35,7 @@ class BashDebugSession extends DebugSession {
 
 	private _debuggerExecutableBusy = false;
 
-	private _responsivityFactor = 20;
+	private _responsivityFactor = 1;
 
 	public constructor() {
 		super();
@@ -118,11 +118,11 @@ class BashDebugSession extends DebugSession {
 		}
 
 		var setBreakpointsCommand = `delete\n`;
-		args.breakpoints.forEach((b)=>{ setBreakpointsCommand += `print ' [${args.source}:${b.line}] '\nbreak ${args.source}:${b.line}\n` });
+		args.breakpoints.forEach((b)=>{ setBreakpointsCommand += `print ' <${args.source.path}:${b.line}> '\nbreak ${args.source.path}:${b.line}\n` });
 
 		this._debuggerExecutableBusy = true;
 		var currentLine = this._fullDebugOutput.length;
-		this.process.stdin.write(`${setBreakpointsCommand}\nprint '${BashDebugSession.BASHDB_PROMPT}'\n`);
+		this.process.stdin.write(`${setBreakpointsCommand}print '${BashDebugSession.BASHDB_PROMPT}'\n`);
 		setTimeout(()=>	this.setBreakPointsRequestFinalize(response, args, currentLine), this._responsivityFactor);
 	}
 
@@ -135,7 +135,7 @@ class BashDebugSession extends DebugSession {
 
 			for (var i = currentOutputLength; i < this._fullDebugOutput.length - 2; i++ ){
 
-				if (this._fullDebugOutput[i-1].indexOf(" [") == 0 && this._fullDebugOutput[i-1].indexOf("] ") > 0) {
+				if (this._fullDebugOutput[i-1].indexOf(" <") == 0 && this._fullDebugOutput[i-1].indexOf("> ") > 0) {
 
 					var lineNodes = this._fullDebugOutput[i].split(" ");
 					const bp = <DebugProtocol.Breakpoint> new Breakpoint(true, this.convertDebuggerLineToClient(parseInt(lineNodes[lineNodes.length-1].replace(".",""))));
@@ -232,11 +232,11 @@ class BashDebugSession extends DebugSession {
 		}
 
 		var getVariablesCommand = `info program\n`;
-		["$0","$1","$2","$3","$4","$5","$6","$7","$8","$9"].forEach((v)=>{ getVariablesCommand += `print ' [${v}] '\nexamine ${v}\n` });
+		["PWD","0","1","2","3","4","5","6","7","8","9"].forEach((v)=>{ getVariablesCommand += `print ' <$${v}> '\nexamine $${v}\n` });
 
 		this._debuggerExecutableBusy = true;
 		var currentLine = this._fullDebugOutput.length;
-		this.process.stdin.write(`${getVariablesCommand}\nprint '${BashDebugSession.BASHDB_PROMPT}'\n`);
+		this.process.stdin.write(`${getVariablesCommand}print '${BashDebugSession.BASHDB_PROMPT}'\n`);
 		setTimeout(()=> this.variablesRequestFinalize(response, args, currentLine), this._responsivityFactor);
 	}
 
@@ -244,15 +244,15 @@ class BashDebugSession extends DebugSession {
 
 		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length -2] == BashDebugSession.BASHDB_PROMPT){
 
+			var variables = [];
+
 			for (var i = currentOutputLength; i < this._fullDebugOutput.length - 2; i++ ){
 
-				var variables = [];
-
-				if (this._fullDebugOutput[i-1].indexOf(" [") == 0 && this._fullDebugOutput[i-1].indexOf("] ") > 0) {
+				if (this._fullDebugOutput[i-1].indexOf(" <") == 0 && this._fullDebugOutput[i-1].indexOf("> ") > 0) {
 
 					var lineNodes = this._fullDebugOutput[i].split(" ");
 					variables.push({
-						name: `$${this._fullDebugOutput[i-1].replace(" [", "").replace("] ", "")}`,
+						name: `$${this._fullDebugOutput[i-1].replace(" <", "").replace("> ", "")}`,
 						type: "string",
 						value: this._fullDebugOutput[i],
 						variablesReference: 0
