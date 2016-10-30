@@ -31,15 +31,14 @@ const initialConfigurations = {
 
 export function activate(context: vscode.ExtensionContext) {
 
-	let disposable1 = vscode.commands.registerCommand('extension.getProgramName', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('extension.getProgramName', () => {
 		return vscode.window.showInputBox({
 			placeHolder: "Please enter the relative path to bash script.",
 			value: "./path/to/script.sh"
 		});
-	});
-	context.subscriptions.push(disposable1);
+	}));
 
-	let disposable2 = vscode.commands.registerCommand('extension.selectProgramName', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('extension.selectProgramName', () => {
 
 		return vscode.workspace.findFiles("**/*.sh", "").then((uris) => {
 			var list = new Array<string>();
@@ -48,10 +47,10 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 			return vscode.window.showQuickPick(list);
 		});
-	});
-	context.subscriptions.push(disposable2);
+	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.provideInitialConfigurations', () => {
+
 		return vscode.window.showQuickPick(
 			["1. Script path should be selected from drop-down list of shell scripts in workspace",
 			"2. Script path should be hardcoded in launch task",
