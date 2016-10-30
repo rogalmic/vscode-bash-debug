@@ -252,7 +252,7 @@ class BashDebugSession extends DebugSession {
 
 					var lineNodes = this._fullDebugOutput[i].split(" ");
 					variables.push({
-						name: `$${this._fullDebugOutput[i-1].replace(" <", "").replace("> ", "")}`,
+						name: `${this._fullDebugOutput[i-1].replace(" <", "").replace("> ", "")}`,
 						type: "string",
 						value: this._fullDebugOutput[i],
 						variablesReference: 0
