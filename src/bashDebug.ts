@@ -11,10 +11,6 @@ import {readFileSync} from 'fs';
 import {basename} from 'path';
 import * as ChildProcess from "child_process"
 
-
-/**
- * This interface should always match the schema found in the mock-debug extension manifest.
- */
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
 	scriptPath: string;
@@ -29,6 +25,7 @@ class BashDebugSession extends DebugSession {
 	protected process: ChildProcess.ChildProcess;
 
 	private _variableHandles = new Handles<string>();
+	private _currentBreakpointIds = [];
 
 	private _fullDebugOutput = [""];
 	private _fullDebugOutputIndex = 0;
@@ -117,7 +114,7 @@ class BashDebugSession extends DebugSession {
 			return;
 		}
 
-		var setBreakpointsCommand = `delete\n`;
+		var setBreakpointsCommand = `delete ${this._currentBreakpointIds.join(" ")}\n`;
 		args.breakpoints.forEach((b)=>{ setBreakpointsCommand += `print ' <${args.source.path}:${b.line}> '\nbreak ${args.source.path}:${b.line}\n` });
 
 		this._debuggerExecutableBusy = true;
@@ -131,6 +128,7 @@ class BashDebugSession extends DebugSession {
 
 		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length - 2] == BashDebugSession.BASHDB_PROMPT){
 
+			this._currentBreakpointIds = [];
 			var breakpoints = new Array<Breakpoint>();
 
 			for (var i = currentOutputLength; i < this._fullDebugOutput.length - 2; i++ ){
@@ -141,6 +139,7 @@ class BashDebugSession extends DebugSession {
 					const bp = <DebugProtocol.Breakpoint> new Breakpoint(true, this.convertDebuggerLineToClient(parseInt(lineNodes[lineNodes.length-1].replace(".",""))));
 					bp.id = parseInt(lineNodes[1]);
 					breakpoints.push(bp);
+					this._currentBreakpointIds.push(lineNodes[1]);
 				}
 			}
 
