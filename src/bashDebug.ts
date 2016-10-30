@@ -18,21 +18,13 @@ import * as ChildProcess from "child_process"
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
 	program: string;
-	commandLineParameters: string;
+	commandLineArguments: string;
 }
 
 class BashDebugSession extends DebugSession {
 
 	private static THREAD_ID = 42;
 	private static BASHDB_PROMPT = "#";
-
-	private __currentLine = 0;
-	private get _currentLine() : number {
-		return this.__currentLine;
-    }
-	private set _currentLine(line: number) {
-		this.__currentLine = line;
-	}
 
 	protected process: ChildProcess.ChildProcess;
 
@@ -62,7 +54,7 @@ class BashDebugSession extends DebugSession {
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
 
-		this.process = ChildProcess.spawn("bash", ["-c", `bashdb --quiet ${args.program} -- ${args.commandLineParameters}`]);
+		this.process = ChildProcess.spawn("bash", ["-c", `bashdb --quiet -- "${args.program}" ${args.commandLineArguments}`]);
 		this.process.stdin.write(`print '${BashDebugSession.BASHDB_PROMPT}'\n`);
 
 		this.process.stdout.on("data", (data) =>
@@ -94,14 +86,12 @@ class BashDebugSession extends DebugSession {
 				this.sendEvent(new InitializedEvent());
 
 				this.process.stdout.on("data", (data) => {
-				for (this._fullDebugOutputIndex; this._fullDebugOutputIndex < this._fullDebugOutput.length - 1; i++)
+				for (; this._fullDebugOutputIndex < this._fullDebugOutput.length - 1; this._fullDebugOutputIndex++)
 					{
 						var line = this._fullDebugOutput[this._fullDebugOutputIndex];
-						if (line.indexOf("(/") == 0)
+
+						if (line.indexOf("(/") == 0 && line.indexOf("):") == line.length-2)
 						{
-							var res = line.replace("(", "").replace(")", "");
-							//his.sendEvent(new OutputEvent(`line: ${res}\n`));
-							this._currentLine = parseInt(res.split(":", -1)[1]);
 							this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
 						}
 						else if (line.indexOf("terminated") > 0 )
@@ -290,6 +280,9 @@ class BashDebugSession extends DebugSession {
 		this.process.stdin.write(`continue\nprint '${BashDebugSession.BASHDB_PROMPT}'\n`);
 
 		setTimeout(()=>this.continueRequestFinalize(response, args, currentLine), this._responsivityFactor);
+
+		// TODO: why does it need to be here?
+		this.sendResponse(response);
 	}
 
 	private continueRequestFinalize(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments, currentOutputLength:number): void {
@@ -297,7 +290,7 @@ class BashDebugSession extends DebugSession {
 		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length -2] == BashDebugSession.BASHDB_PROMPT)
 		{
 			this._debuggerExecutableBusy = false;
-			this.sendResponse(response);
+			//this.sendResponse(response);
 			return;
 		}
 
