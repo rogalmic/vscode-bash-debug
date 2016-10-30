@@ -75,7 +75,7 @@
 					"launch": {
 						"required": [ "program" ],
 						"properties": {
-							"program": {
+							"scriptPath": {
 								"type": "string",
 								"description": "Absolute path to a script.",
 								"default": "${workspaceRoot}/${command.SelectScriptName}"
