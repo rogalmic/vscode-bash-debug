@@ -52,7 +52,11 @@ class BashDebugSession extends DebugSession {
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
 
-		this.process = ChildProcess.spawn("bash", ["-c", `"${args.bashDbPath}" --quiet -- "${args.scriptPath}" ${args.commandLineArguments}`]);
+		if (!args.bashDbPath){
+			args.bashDbPath = "bashdb";
+		}
+
+		this.process = ChildProcess.spawn("bash", ["-c", `${args.bashDbPath} --quiet -- "${args.scriptPath}" ${args.commandLineArguments}`]);
 		this.process.stdin.write(`print '${BashDebugSession.BASHDB_PROMPT}'\n`);
 
 		this.process.stdout.on("data", (data) =>
@@ -211,7 +215,7 @@ class BashDebugSession extends DebugSession {
 
 	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
 
-		var scopes = [ new Scope("Local", 0, false) ];
+		var scopes = [ new Scope("Local", this._fullDebugOutputIndex, false) ];
 		response.body = { scopes: scopes };
 		this.sendResponse(response);
 	}
@@ -351,25 +355,25 @@ class BashDebugSession extends DebugSession {
 		setTimeout(()=>this.stepInRequestFinalize(response, args, currentOutputLength), this._responsivityFactor);
 	}
 
-	protected stepBackRequest(response: DebugProtocol.StepBackResponse, args: DebugProtocol.StepBackArguments): void {
+	protected stepOutRequest(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments): void {
 
 		if (this._debuggerExecutableBusy)
 		{
-			setTimeout(()=>	this.stepBackRequest(response, args), this._responsivityFactor);
+			setTimeout(()=>	this.stepOutRequest(response, args), this._responsivityFactor);
 			return;
 		}
 
 		this._debuggerExecutableBusy = true;
 		var currentLine = this._fullDebugOutput.length;
-		this.process.stdin.write(`step -\nprint '${BashDebugSession.BASHDB_PROMPT}'\n`);
+		this.process.stdin.write(`finish\nprint '${BashDebugSession.BASHDB_PROMPT}'\n`);
 
-		setTimeout(()=>this.stepBackRequestFinalize(response, args, currentLine), this._responsivityFactor);
+		setTimeout(()=>this.stepOutRequestFinalize(response, args, currentLine), this._responsivityFactor);
 
 		// TODO: why does it need to be here?
 		this.sendResponse(response);
 	}
 
-	private stepBackRequestFinalize(response: DebugProtocol.StepBackResponse, args: DebugProtocol.StepBackArguments, currentOutputLength:number): void {
+	private stepOutRequestFinalize(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments, currentOutputLength:number): void {
 		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length -2] == BashDebugSession.BASHDB_PROMPT)
 		{
 			this._debuggerExecutableBusy = false;
@@ -377,8 +381,9 @@ class BashDebugSession extends DebugSession {
 			return;
 		}
 
-		setTimeout(()=>this.stepBackRequestFinalize(response, args, currentOutputLength), this._responsivityFactor);
+		setTimeout(()=>this.stepOutRequestFinalize(response, args, currentOutputLength), this._responsivityFactor);
 	}
+
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
 

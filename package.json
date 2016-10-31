@@ -74,7 +74,7 @@
 
 				"configurationAttributes": {
 					"launch": {
-						"required": [ "program" ],
+						"required": [ "scriptPath", "commandLineArguments" ],
 						"properties": {
 							"scriptPath": {
 								"type": "string",
