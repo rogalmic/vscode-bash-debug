@@ -2,7 +2,7 @@
 	"name": "bash-debug",
 	"displayName": "Bash Debug",
 	"version": "0.0.1",
-	"publisher": "SkunkWorks",
+	"publisher": "rogalmic",
 	"description": "A debugger extension for bash scripts (using bashdb).",
 	"author": {
 		"name": "Michal Rogalinski",
@@ -37,7 +37,8 @@
 		"typescript": "^2.0.2",
 		"mocha": "^3.0.2",
 		"vscode": "^0.11.18",
-		"vscode-debugadapter-testsupport": "^1.13.0"
+		"vscode-debugadapter-testsupport": "^1.13.0",
+		"vsce": "^1.16.1"
 	},
 	"scripts": {
 		"prepublish": "node ./node_modules/typescript/bin/tsc -p ./src",
@@ -84,6 +85,11 @@
 								"type": "string",
 								"description": "Command line arguments.",
 								"default": ""
+							},
+							"bashDbPath": {
+								"type": "string",
+								"description": "bashdb location.",
+								"default": "bashdb"
 							}
 						}
 					}

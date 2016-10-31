@@ -15,6 +15,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 
 	scriptPath: string;
 	commandLineArguments: string;
+	bashDbPath: string;
 }
 
 class BashDebugSession extends DebugSession {
@@ -24,7 +25,6 @@ class BashDebugSession extends DebugSession {
 
 	protected process: ChildProcess.ChildProcess;
 
-	private _variableHandles = new Handles<string>();
 	private _currentBreakpointIds = [];
 
 	private _fullDebugOutput = [""];
@@ -42,7 +42,8 @@ class BashDebugSession extends DebugSession {
 
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
 
-		response.body.supportsConfigurationDoneRequest = false; //TODO: implement configDone if needed
+		response.body.supportsConditionalBreakpoints = false;
+		response.body.supportsConfigurationDoneRequest = false;
 		response.body.supportsEvaluateForHovers = true;
 		response.body.supportsStepBack = false;
 		response.body.supportsSetVariable = false;
@@ -51,7 +52,7 @@ class BashDebugSession extends DebugSession {
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
 
-		this.process = ChildProcess.spawn("bash", ["-c", `bashdb --quiet -- "${args.scriptPath}" ${args.commandLineArguments}`]);
+		this.process = ChildProcess.spawn("bash", ["-c", `"${args.bashDbPath}" --quiet -- "${args.scriptPath}" ${args.commandLineArguments}`]);
 		this.process.stdin.write(`print '${BashDebugSession.BASHDB_PROMPT}'\n`);
 
 		this.process.stdout.on("data", (data) =>
@@ -154,12 +155,7 @@ class BashDebugSession extends DebugSession {
 
 	protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
 
-		response.body = {
-			threads: [
-				new Thread(BashDebugSession.THREAD_ID, "Bash-Super-Thread")
-			]
-		};
-
+		response.body = { threads: [ new Thread(BashDebugSession.THREAD_ID, "Bash thread") ]};
 		this.sendResponse(response);
 	}
 
@@ -215,9 +211,7 @@ class BashDebugSession extends DebugSession {
 
 	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
 
-		const frameReference = args.frameId;
-		const scopes = new Array<Scope>();
-		scopes.push(new Scope("Local", this._variableHandles.create("local_" + frameReference), false));
+		var scopes = [ new Scope("Local", 0, false) ];
 		response.body = { scopes: scopes };
 		this.sendResponse(response);
 	}
@@ -231,7 +225,7 @@ class BashDebugSession extends DebugSession {
 		}
 
 		var getVariablesCommand = `info program\n`;
-		["PWD","0","1","2","3","4","5","6","7","8","9"].forEach((v)=>{ getVariablesCommand += `print ' <$${v}> '\nexamine $${v}\n` });
+		["PWD","?","0","1","2","3","4","5","6","7","8","9"].forEach((v)=>{ getVariablesCommand += `print ' <$${v}> '\nexamine $${v}\n` });
 
 		this._debuggerExecutableBusy = true;
 		var currentLine = this._fullDebugOutput.length;
