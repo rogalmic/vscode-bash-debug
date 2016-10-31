@@ -21,7 +21,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 class BashDebugSession extends DebugSession {
 
 	private static THREAD_ID = 42;
-	private static BASHDB_PROMPT = "######";
+	private static BASHDB_PROMPT = "############################################################";
 
 	protected process: ChildProcess.ChildProcess;
 
