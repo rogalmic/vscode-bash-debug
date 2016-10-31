@@ -4,7 +4,7 @@ A bash debugger GUI frontend based on awesome bashdb scripts.
 # Overview
 This is a SIMPLE bashdb debugger frontend. Useful for learning bash shell usage and writing simple scripts.
 
-Hopefully bash will land on 3 leading platforms making this extension.
+Hopefully bash will land on 3 leading platforms making this extension very useful.
 
 Sample usage animation:
 1. Creating launch configuration with "wizzard"
