@@ -25,7 +25,7 @@ class BashDebugSession extends DebugSession {
 
 	protected process: ChildProcess.ChildProcess;
 
-	private _currentBreakpointIds = [];
+	private _currentBreakpointIds = new Map<string, Array<number>>();
 
 	private _fullDebugOutput = [""];
 	private _fullDebugOutputIndex = 0;
@@ -87,8 +87,8 @@ class BashDebugSession extends DebugSession {
 				this.sendResponse(response);
 				this.sendEvent(new InitializedEvent());
 
-				this.process.stdout.on("data", (data) => {
-				for (; this._fullDebugOutputIndex < this._fullDebugOutput.length - 1; this._fullDebugOutputIndex++)
+				setInterval((data) => {
+					for (; this._fullDebugOutputIndex < this._fullDebugOutput.length - 1; this._fullDebugOutputIndex++)
 					{
 						var line = this._fullDebugOutput[this._fullDebugOutputIndex];
 
@@ -102,7 +102,8 @@ class BashDebugSession extends DebugSession {
 							this.process.stdin.write(`quit\n\n`)
 						}
 					}
-				});
+				},
+				this._responsivityFactor);
 				return;
 			}
 		}
@@ -119,7 +120,11 @@ class BashDebugSession extends DebugSession {
 			return;
 		}
 
-		var setBreakpointsCommand = `delete ${this._currentBreakpointIds.join(" ")}\n`;
+		if (!this._currentBreakpointIds.has(args.source.path)){
+			this._currentBreakpointIds[args.source.path] = [];
+		}
+
+		var setBreakpointsCommand = `delete ${this._currentBreakpointIds[args.source.path].join(" ")}\nload ${args.source.path}\n`;
 		args.breakpoints.forEach((b)=>{ setBreakpointsCommand += `print ' <${args.source.path}:${b.line}> '\nbreak ${args.source.path}:${b.line}\n` });
 
 		this._debuggerExecutableBusy = true;
@@ -133,7 +138,7 @@ class BashDebugSession extends DebugSession {
 
 		if (this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length - 2] == BashDebugSession.BASHDB_PROMPT){
 
-			this._currentBreakpointIds = [];
+			this._currentBreakpointIds[args.source.path] = [];
 			var breakpoints = new Array<Breakpoint>();
 
 			for (var i = currentOutputLength; i < this._fullDebugOutput.length - 2; i++ ){
@@ -144,7 +149,7 @@ class BashDebugSession extends DebugSession {
 					const bp = <DebugProtocol.Breakpoint> new Breakpoint(true, this.convertDebuggerLineToClient(parseInt(lineNodes[lineNodes.length-1].replace(".",""))));
 					bp.id = parseInt(lineNodes[1]);
 					breakpoints.push(bp);
-					this._currentBreakpointIds.push(lineNodes[1]);
+					this._currentBreakpointIds[args.source.path].push(lineNodes[1]);
 				}
 			}
 
