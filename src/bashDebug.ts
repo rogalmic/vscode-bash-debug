@@ -8,7 +8,8 @@ import {
 } from 'vscode-debugadapter';
 import {DebugProtocol} from 'vscode-debugprotocol';
 import {basename} from 'path';
-import * as ChildProcess from "child_process"
+import {readFileSync, unlink, openSync, closeSync, createReadStream, ReadStream, existsSync, readFile} from 'fs';
+import * as ChildProcess from "child_process";
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -24,7 +25,6 @@ class BashDebugSession extends DebugSession {
 	private static BASHDB_PROMPT = "############################################################";
 
 	protected _debuggerProcess: ChildProcess.ChildProcess;
-	protected _pipeReadProcess: ChildProcess.ChildProcess;
 
 	private _currentBreakpointIds = new Map<string, Array<number>>();
 
@@ -34,6 +34,8 @@ class BashDebugSession extends DebugSession {
 	private _debuggerExecutableBusy = false;
 
 	private _responsivityFactor = 5;
+
+	private _fifoPath = "/tmp/vscode-bash-debug.fifo";
 
 	public constructor() {
 		super();
@@ -52,48 +54,69 @@ class BashDebugSession extends DebugSession {
 	}
 
 	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments): void {
-		this._debuggerProcess.kill();
-		this._pipeReadProcess.kill();
-
-		this.sendResponse(response);
+		var kill = require('tree-kill');
+		kill(this._debuggerProcess.pid, 'SIGTERM', (err)=> {
+			this._debuggerProcess.stdin.write(`quit\n`);
+			setTimeout(()=>this.sendResponse(response), 100);
+		});
 	}
 
-	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
-
-		if (!args.bashDbPath){
-			args.bashDbPath = "bashdb";
+	private processDebugTerminalOutput(sendOutput: boolean): void {
+		if (!existsSync(this._fifoPath)){
+			setTimeout(() => this.processDebugTerminalOutput(sendOutput), this._responsivityFactor);
+			return;
 		}
 
-		var fifoPath = "/tmp/vscode-bash-debug";
+		var readStream = createReadStream(this._fifoPath, { flags: "r", mode: 0x124 })
 
-		this._pipeReadProcess = ChildProcess.spawn("bash", ["-c", `if [ -p "${fifoPath}" ]; then rm "${fifoPath}"; fi; mkfifo "${fifoPath}"; while [ -p "${fifoPath}" ]; do cat "${fifoPath}"; done`]);
-
-		this._pipeReadProcess.stdout.on("data", (data) =>
-		{
-			if (args.showDebugOutput) this.sendEvent(new OutputEvent(`${data}`));
+		readStream.on('data', (data) => {
+			if (sendOutput)	{
+				this.sendEvent(new OutputEvent(`${data}`));
+			}
 
 			var list = data.toString().split("\n", -1);
 			var fullLine = `${this._fullDebugOutput.pop()}${list.shift()}`;
 			this._fullDebugOutput.push(this.removePrompt(fullLine));
 			list.forEach(l => this._fullDebugOutput.push(this.removePrompt(l)));
-		});
+		})
 
-		// TODO: fix race condition when fifo might not be created
-		this._debuggerProcess = ChildProcess.spawn("bash", ["-c", `trap 'rm "${fifoPath}"; exit;' TERM; ${args.bashDbPath} --quiet --tty "${fifoPath}" -- "${args.scriptPath}" ${args.commandLineArguments}; rm "${fifoPath}";`]);
+		readStream.on('end', (data) => {
+			setTimeout(() => this.processDebugTerminalOutput(sendOutput), this._responsivityFactor);
+		})
+	}
+
+
+	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
+
+		if (!args.bashDbPath) {
+			args.bashDbPath = "bashdb";
+		}
+
+		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns)
+		this._debuggerProcess = ChildProcess.spawn("bash", ["-c", `
+			mkfifo "${this._fifoPath}"
+			trap 'echo "TERM"' TERM
+			trap 'rm "${this._fifoPath}"; echo "DELETED ${this._fifoPath} $?"; exit;' EXIT
+			${args.bashDbPath} --quiet --tty "${this._fifoPath}" -- "${args.scriptPath}" ${args.commandLineArguments}`
+		]);
+
+		this.processDebugTerminalOutput(args.showDebugOutput == true);
 
 		this._debuggerProcess.stdin.write(`print '${BashDebugSession.BASHDB_PROMPT}'\n`);
 
-		this._debuggerProcess.stdout.on("data", (data)=>
-		{
+		this._debuggerProcess.stdout.on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'console'));
 		});
 
-		this._debuggerProcess.stderr.on("data", (data)=>
-		{
+		this._debuggerProcess.stderr.on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stderr'));
 		});
 
-		setTimeout(()=>this.launchRequestFinalize(response, args), this._responsivityFactor);
+		this._debuggerProcess.on("exit", ()=> {
+			this.sendEvent(new TerminatedEvent());
+		});
+
+		setTimeout(() => this.launchRequestFinalize(response, args), this._responsivityFactor);
 	}
 
 	private launchRequestFinalize(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
@@ -116,8 +139,6 @@ class BashDebugSession extends DebugSession {
 						else if (line.indexOf("terminated") > 0)
 						{
 							this.sendEvent(new TerminatedEvent());
-							this._debuggerProcess.kill();
-							this._pipeReadProcess.kill();
 						}
 					}
 				},
