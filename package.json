@@ -28,7 +28,7 @@
 		"vscode-debugprotocol": "^1.14.0",
 		"vscode-debugadapter": "^1.14.0",
 		"child-process": "^1.0.2",
-		"tree-kill": "*"
+		"tree-kill": "^1.1.0"
 	},
 	"devDependencies": {
 		"@types/es6-collections": "^0.5.29",

@@ -55,14 +55,13 @@ class BashDebugSession extends DebugSession {
 
 	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments): void {
 		var kill = require('tree-kill');
-		kill(this._debuggerProcess.pid, 'SIGTERM', (err)=> {
-			this._debuggerProcess.stdin.write(`quit\n`);
-			setTimeout(()=>this.sendResponse(response), 100);
-		});
+
+		this._debuggerProcess.on("exit", ()=> this.sendResponse(response));
+		kill(this._debuggerProcess.pid, 'SIGTERM', (err)=> this._debuggerProcess.stdin.write(`quit\n`));
 	}
 
 	private processDebugTerminalOutput(sendOutput: boolean): void {
-		if (!existsSync(this._fifoPath)){
+		if (!existsSync(this._fifoPath)) {
 			setTimeout(() => this.processDebugTerminalOutput(sendOutput), this._responsivityFactor);
 			return;
 		}
@@ -70,7 +69,7 @@ class BashDebugSession extends DebugSession {
 		var readStream = createReadStream(this._fifoPath, { flags: "r", mode: 0x124 })
 
 		readStream.on('data', (data) => {
-			if (sendOutput)	{
+			if (sendOutput) {
 				this.sendEvent(new OutputEvent(`${data}`));
 			}
 
@@ -95,8 +94,8 @@ class BashDebugSession extends DebugSession {
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns)
 		this._debuggerProcess = ChildProcess.spawn("bash", ["-c", `
 			mkfifo "${this._fifoPath}"
-			trap 'echo "TERM"' TERM
-			trap 'rm "${this._fifoPath}"; echo "DELETED ${this._fifoPath} $?"; exit;' EXIT
+			trap 'echo "TERMINATED BASHDB SUBPROCESS"' TERM
+			trap 'rm "${this._fifoPath}"; echo "EXITED DEBUGGER PROCESS ($?)"; exit;' EXIT
 			${args.bashDbPath} --quiet --tty "${this._fifoPath}" -- "${args.scriptPath}" ${args.commandLineArguments}`
 		]);
 
@@ -110,10 +109,6 @@ class BashDebugSession extends DebugSession {
 
 		this._debuggerProcess.stderr.on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stderr'));
-		});
-
-		this._debuggerProcess.on("exit", ()=> {
-			this.sendEvent(new TerminatedEvent());
 		});
 
 		setTimeout(() => this.launchRequestFinalize(response, args), this._responsivityFactor);
