@@ -72,7 +72,8 @@ class BashDebugSession extends DebugSession {
 			args.bashDbPath = "bashdb";
 		}
 
-		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns)
+		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
+		// when this is fixed in bashdb, use &1
 		this._debuggerProcess = ChildProcess.spawn("bash", ["-c", `
 			mkfifo "${this._fifoPath}"
 			trap 'echo "TERMINATED BASHDB SUBPROCESS"' TERM
@@ -302,7 +303,7 @@ class BashDebugSession extends DebugSession {
 
 		this.scheduleExecution(()=>this.continueRequestFinalize(response, args, currentLine));
 
-		// TODO: why does it need to be here?
+		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
@@ -311,7 +312,6 @@ class BashDebugSession extends DebugSession {
 		if (this.promptReached(currentOutputLength))
 		{
 			this._debuggerExecutableBusy = false;
-			//this.sendResponse(response);
 			return;
 		}
 
@@ -332,7 +332,7 @@ class BashDebugSession extends DebugSession {
 
 		this.scheduleExecution(()=>this.nextRequestFinalize(response, args, currentLine));
 
-		// TODO: why does it need to be here?
+		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
@@ -341,7 +341,6 @@ class BashDebugSession extends DebugSession {
 		if (this.promptReached(currentOutputLength))
 		{
 			this._debuggerExecutableBusy = false;
-			//this.sendResponse(response);
 			return;
 		}
 
@@ -362,7 +361,7 @@ class BashDebugSession extends DebugSession {
 
 		this.scheduleExecution(()=>this.stepInRequestFinalize(response, args, currentLine));
 
-		// TODO: why does it need to be here?
+		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
@@ -370,7 +369,6 @@ class BashDebugSession extends DebugSession {
 		if (this.promptReached(currentOutputLength))
 		{
 			this._debuggerExecutableBusy = false;
-			//this.sendResponse(response);
 			return;
 		}
 
@@ -391,7 +389,7 @@ class BashDebugSession extends DebugSession {
 
 		this.scheduleExecution(()=>this.stepOutRequestFinalize(response, args, currentLine));
 
-		// TODO: why does it need to be here?
+		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
@@ -399,7 +397,6 @@ class BashDebugSession extends DebugSession {
 		if (this.promptReached(currentOutputLength))
 		{
 			this._debuggerExecutableBusy = false;
-			//this.sendResponse(response);
 			return;
 		}
 
