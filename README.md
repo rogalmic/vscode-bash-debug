@@ -1,4 +1,4 @@
-# VS Code Mock Debug
+# VS Code Bash Debug
 A bash debugger GUI frontend based on awesome bashdb scripts.
 
 # Overview
