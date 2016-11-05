@@ -13,5 +13,6 @@ Sample usage animation:
 ![unfortunatly no animation for you](images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
 
 ## Limitations and known problems
-* Debugger stops at first command
-* Bash unofficial strict mode "set -eu" causes script to exit
+* Currently debugger stops at first command.
+* Bash unofficial strict mode "set -e" causes debugging script to exit. Consider using "trap 'exit $?' ERR" instead.
+* On Windows 10, there is a problem with starting bash without console window (https://github.com/Microsoft/BashOnWindows/issues/2#issuecomment-209118529);
