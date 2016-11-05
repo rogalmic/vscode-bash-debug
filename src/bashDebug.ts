@@ -76,9 +76,9 @@ class BashDebugSession extends DebugSession {
 		// when this is fixed in bashdb, use &1
 		this._debuggerProcess = ChildProcess.spawn("bash", ["-c", `
 			mkfifo "${this._fifoPath}"
-			trap 'echo "TERMINATED BASHDB SUBPROCESS"' TERM
-			trap 'echo "INTERRUPTED BASHDB SUBPROCESS"' INT
-			trap 'rm "${this._fifoPath}"; echo "EXITED DEBUGGER PROCESS ($?)"; exit;' EXIT
+			trap 'echo "vscode-bash-debugger: SIGTERM" 1>&2' TERM
+			trap 'echo "vscode-bash-debugger: SIGINT" 1>&2' INT
+			trap 'rm "${this._fifoPath}"; echo "vscode-bash-debugger: EXIT ($?)" 1>&2; exit;' EXIT
 			${args.bashDbPath} --quiet --tty "${this._fifoPath}" -- "${args.scriptPath}" ${args.commandLineArguments}`
 		]);
 
@@ -87,7 +87,7 @@ class BashDebugSession extends DebugSession {
 		this._debuggerProcess.stdin.write(`print '${BashDebugSession.END_MARKER}'\n`);
 
 		this._debuggerProcess.stdout.on("data", (data) => {
-			this.sendEvent(new OutputEvent(`${data}`, 'console'));
+			this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
 		});
 
 		this._debuggerProcess.stderr.on("data", (data) => {
@@ -103,6 +103,7 @@ class BashDebugSession extends DebugSession {
 			if (this._fullDebugOutput[i] == BashDebugSession.END_MARKER) {
 
 				this.sendResponse(response);
+				this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
 				this.sendEvent(new InitializedEvent());
 
 				var interval = setInterval((data) => {
@@ -112,11 +113,13 @@ class BashDebugSession extends DebugSession {
 
 						if (line.indexOf("(/") == 0 && line.indexOf("):") == line.length-2)
 						{
+							this.sendEvent(new OutputEvent(`Sending StoppedEvent`, 'telemetry'));
 							this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
 						}
 						else if (line.indexOf("terminated") > 0)
 						{
 							clearInterval(interval);
+							this.sendEvent(new OutputEvent(`Sending TerminatedEvent`, 'telemetry'));
 							this.sendEvent(new TerminatedEvent());
 						}
 					}
@@ -152,7 +155,6 @@ class BashDebugSession extends DebugSession {
 	}
 
 	private setBreakPointsRequestFinalize(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, currentOutputLength:number): void {
-		this.sendResponse(response);
 
 		if (this.promptReached(currentOutputLength))
 		{
@@ -206,10 +208,7 @@ class BashDebugSession extends DebugSession {
 		{
 			var lastStackLineIndex = this._fullDebugOutput.length - 3;
 
-			const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
-			const maxLevels = typeof args.levels === 'number' ? args.levels : 100;
-
-			const frames = new Array<StackFrame>();
+			var frames = new Array<StackFrame>();
 			for (var i= currentOutputLength; i <= lastStackLineIndex ; i++) {
 				var lineContent = this._fullDebugOutput[i];
 				var frameIndex = parseInt(lineContent.substr(2, 2));
@@ -226,6 +225,10 @@ class BashDebugSession extends DebugSession {
 			}
 
 			var totalFrames = this._fullDebugOutput.length - currentOutputLength -1;
+
+			const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
+			const maxLevels = typeof args.levels === 'number' ? args.levels : 100;
+			frames = frames.slice(startFrame, Math.min(startFrame + maxLevels, frames.length));
 
 			response.body = { stackFrames: frames, totalFrames: totalFrames };
 			this._debuggerExecutableBusy = false;
@@ -252,7 +255,13 @@ class BashDebugSession extends DebugSession {
 		}
 
 		var getVariablesCommand = `info program\n`;
-		["PWD","?","0","1","2","3","4","5","6","7","8","9"].forEach((v)=>{ getVariablesCommand += `print ' <$${v}> '\nexamine $${v}\n` });
+
+		const count = typeof args.count === 'number' ? args.count : 100;
+		const start = typeof args.start === 'number' ? args.start : 0;
+		var variableDefinitions = ["PWD", "EUID","#","0","-"];
+		variableDefinitions = variableDefinitions.slice(start, Math.min(start + count, variableDefinitions.length));
+
+		variableDefinitions.forEach((v)=>{ getVariablesCommand += `print ' <$${v}> '\nexamine $${v}\n` });
 
 		this._debuggerExecutableBusy = true;
 		var currentLine = this._fullDebugOutput.length;
@@ -453,7 +462,7 @@ class BashDebugSession extends DebugSession {
 
 		readStream.on('data', (data) => {
 			if (sendOutput) {
-				this.sendEvent(new OutputEvent(`${data}`));
+				this.sendEvent(new OutputEvent(`${data}`, 'console'));
 			}
 
 			var list = data.toString().split("\n", -1);
