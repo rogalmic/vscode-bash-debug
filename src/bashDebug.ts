@@ -38,7 +38,6 @@ class BashDebugSession extends DebugSession {
 	private _responsivityFactor = 5;
 
 	private _debuggerProcessParentId = -1;
-	private _fifoPath = "/tmp/vscode-bash-debug.fifo";
 
 	public constructor() {
 		super();
@@ -76,47 +75,42 @@ class BashDebugSession extends DebugSession {
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
 		this._debuggerProcess = ChildProcess.spawn("bash", ["-c", `
+
 			# http://tldp.org/LDP/abs/html/io-redirection.html
+
+			fifo_path=$(mktemp --dry-run /tmp/vscode-bash-debug-fifo.XXXXXX)
+
 			function cleanup()
 			{
-				#exec 4>&
-				rm "${this._fifoPath}";
-				exit;
+				exit_code=$?
+				exec 4>&-
+				rm "$fifo_path";
+				exit $exit_code;
 			}
-			trap 'cleanup; exit 1;' ERR SIGINT SIGTERM
-			echo "test" >&3
-			#exec 4<> "${this._fifoPath}"
-			mkfifo "${this._fifoPath}"
-			echo "Starting ${args.scriptPath} ${args.commandLineArguments}"
-			${args.bashDbPath} --quiet --tty '&3' -- "${args.scriptPath}" ${args.commandLineArguments}
+			trap 'cleanup' ERR SIGINT SIGTERM
+			mkfifo "$fifo_path"
+			cat "$fifo_path" >&3 & 		# Open for reading in background.
+			exec 4>"$fifo_path" 		# Keep open for writing, bashdb seems close after every write.
+			${args.bashDbPath} --quiet --tty "$fifo_path" -- "${args.scriptPath}" ${args.commandLineArguments}
 			cleanup`
 		], {stdio: ["pipe", "pipe", "pipe", "pipe"]});
 
-
-// exec 3<> /tmp/foo  #open fd 3.
-// echo "test" >&3
-// exec 3>&- #close fd 3.
-
 		this.processDebugTerminalOutput(args.showDebugOutput == true);
 
-		this._debuggerProcess.stdin.write(`print "$PPID\n${BashDebugSession.END_MARKER}"\n`);
-
-		this._debuggerProcess.stdio[3].on("data", (data) => {
-			this.sendEvent(new OutputEvent(`${data}`, 'console'));
-		});
+		this._debuggerProcess.stdin.write(`print "$PPID"\nprint "${BashDebugSession.END_MARKER}"\n`);
 
 		this._debuggerProcess.stdout.on("data", (data) => {
-			if ( !this._pipeReadProcess ){
-				this._pipeReadProcess = ChildProcess.spawn("bash", ["-c", `
-					while [ -p "${this._fifoPath}" ]; do read line "${this._fifoPath}"; echo $line; done`
-				]);
-			}
-
 			this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
 		});
 
 		this._debuggerProcess.stderr.on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stderr'));
+		});
+
+		this._debuggerProcess.stdio[3].on("data", (data) => {
+			if (args.showDebugOutput) {
+				this.sendEvent(new OutputEvent(`${data}`, 'console'));
+			}
 		});
 
 		this.scheduleExecution(() => this.launchRequestFinalize(response, args));
@@ -479,26 +473,12 @@ class BashDebugSession extends DebugSession {
 	}
 
 	private processDebugTerminalOutput(sendOutput: boolean): void {
-		if (!existsSync(this._fifoPath)) {
-			this.scheduleExecution(() => this.processDebugTerminalOutput(sendOutput));
-			return;
-		}
 
-		var readStream = createReadStream(this._fifoPath, { flags: "r", mode: 0x124 })
-
-		readStream.on('data', (data) => {
-			if (sendOutput) {
-				this.sendEvent(new OutputEvent(`${data}`, 'console'));
-			}
-
+		this._debuggerProcess.stdio[3].on('data', (data) => {
 			var list = data.toString().split("\n", -1);
 			var fullLine = `${this._fullDebugOutput.pop()}${list.shift()}`;
 			this._fullDebugOutput.push(this.removePrompt(fullLine));
 			list.forEach(l => this._fullDebugOutput.push(this.removePrompt(l)));
-		})
-
-		readStream.on('end', (data) => {
-			this.scheduleExecution(() => this.processDebugTerminalOutput(sendOutput));
 		})
 	}
 
