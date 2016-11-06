@@ -1,15 +1,10 @@
 /// <reference types="es6-collections" />
 /// <reference types="node" />
 
-import {
-	DebugSession,
-	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent, Event,
-	Thread, StackFrame, Scope, Source, Handles, Breakpoint
-} from 'vscode-debugadapter';
+import {DebugSession, InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent, Event,	Thread, StackFrame, Scope, Source, Handles, Breakpoint} from 'vscode-debugadapter';
 import {DebugProtocol} from 'vscode-debugprotocol';
+import {ChildProcess, spawn} from "child_process";
 import {basename} from 'path';
-import {readFileSync, unlink, openSync, closeSync, createReadStream, ReadStream, existsSync, readFile} from 'fs';
-import * as ChildProcess from "child_process";
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -24,8 +19,7 @@ class BashDebugSession extends DebugSession {
 	private static THREAD_ID = 42;
 	private static END_MARKER = "############################################################";
 
-	private _debuggerProcess: ChildProcess.ChildProcess;
-	private _pipeReadProcess: ChildProcess.ChildProcess;
+	private _debuggerProcess: ChildProcess;
 
 	private _currentBreakpointIds = new Map<string, Array<number>>();
 
@@ -63,7 +57,7 @@ class BashDebugSession extends DebugSession {
 			this.sendResponse(response)
 		});
 
-		ChildProcess.spawn("bash", ["-c", `pkill -9 -P ${this._debuggerProcessParentId}`]);
+		spawn("bash", ["-c", `pkill -9 -P ${this._debuggerProcessParentId}`]);
 	}
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
@@ -74,7 +68,7 @@ class BashDebugSession extends DebugSession {
 
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
-		this._debuggerProcess = ChildProcess.spawn("bash", ["-c", `
+		this._debuggerProcess = spawn("bash", ["-c", `
 
 			# http://tldp.org/LDP/abs/html/io-redirection.html
 
