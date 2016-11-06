@@ -24,7 +24,8 @@ class BashDebugSession extends DebugSession {
 	private static THREAD_ID = 42;
 	private static END_MARKER = "############################################################";
 
-	protected _debuggerProcess: ChildProcess.ChildProcess;
+	private _debuggerProcess: ChildProcess.ChildProcess;
+	private _pipeReadProcess: ChildProcess.ChildProcess;
 
 	private _currentBreakpointIds = new Map<string, Array<number>>();
 
@@ -36,6 +37,7 @@ class BashDebugSession extends DebugSession {
 
 	private _responsivityFactor = 5;
 
+	private _debuggerProcessParentId = -1;
 	private _fifoPath = "/tmp/vscode-bash-debug.fifo";
 
 	public constructor() {
@@ -56,14 +58,13 @@ class BashDebugSession extends DebugSession {
 
 	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments): void {
 		this._debuggerExecutableBusy = false;
-		var kill = require('tree-kill');
 
 		this._debuggerProcess.on("exit", ()=> {
 			this._debuggerExecutableClosing = true;
 			this.sendResponse(response)
 		});
 
-		kill(this._debuggerProcess.pid, 'SIGTERM', (err)=> this._debuggerProcess.stdin.write(`quit\n`));
+		ChildProcess.spawn("bash", ["-c", `pkill -9 -P ${this._debuggerProcessParentId}`]);
 	}
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
@@ -75,18 +76,42 @@ class BashDebugSession extends DebugSession {
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
 		this._debuggerProcess = ChildProcess.spawn("bash", ["-c", `
+			# http://tldp.org/LDP/abs/html/io-redirection.html
+			function cleanup()
+			{
+				#exec 4>&
+				rm "${this._fifoPath}";
+				exit;
+			}
+			trap 'cleanup; exit 1;' ERR SIGINT SIGTERM
+			echo "test" >&3
+			#exec 4<> "${this._fifoPath}"
 			mkfifo "${this._fifoPath}"
-			trap 'echo "vscode-bash-debugger: SIGTERM" 1>&2' TERM
-			trap 'echo "vscode-bash-debugger: SIGINT" 1>&2' INT
-			trap 'rm "${this._fifoPath}"; echo "vscode-bash-debugger: EXIT ($?)" 1>&2; exit;' EXIT
-			${args.bashDbPath} --quiet --tty "${this._fifoPath}" -- "${args.scriptPath}" ${args.commandLineArguments}`
-		]);
+			echo "Starting ${args.scriptPath} ${args.commandLineArguments}"
+			${args.bashDbPath} --quiet --tty '&3' -- "${args.scriptPath}" ${args.commandLineArguments}
+			cleanup`
+		], {stdio: ["pipe", "pipe", "pipe", "pipe"]});
+
+
+// exec 3<> /tmp/foo  #open fd 3.
+// echo "test" >&3
+// exec 3>&- #close fd 3.
 
 		this.processDebugTerminalOutput(args.showDebugOutput == true);
 
-		this._debuggerProcess.stdin.write(`print '${BashDebugSession.END_MARKER}'\n`);
+		this._debuggerProcess.stdin.write(`print "$PPID\n${BashDebugSession.END_MARKER}"\n`);
+
+		this._debuggerProcess.stdio[3].on("data", (data) => {
+			this.sendEvent(new OutputEvent(`${data}`, 'console'));
+		});
 
 		this._debuggerProcess.stdout.on("data", (data) => {
+			if ( !this._pipeReadProcess ){
+				this._pipeReadProcess = ChildProcess.spawn("bash", ["-c", `
+					while [ -p "${this._fifoPath}" ]; do read line "${this._fifoPath}"; echo $line; done`
+				]);
+			}
+
 			this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
 		});
 
@@ -102,6 +127,7 @@ class BashDebugSession extends DebugSession {
 		for (var i = 0; i < this._fullDebugOutput.length; i++) {
 			if (this._fullDebugOutput[i] == BashDebugSession.END_MARKER) {
 
+				this._debuggerProcessParentId = parseInt(this._fullDebugOutput[i-1]);
 				this.sendResponse(response);
 				this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
 				this.sendEvent(new InitializedEvent());
