@@ -3,31 +3,41 @@
 import * as vscode from 'vscode';
 
 const initialConfigurations = {
-	configuration1: [
-	{
-		name: 'Bash-Debug (select script from list of sh files)',
-		type: 'bashdb',
-		request: 'launch',
-		scriptPath: '${command.SelectScriptName}',
-		commandLineArguments: ''
-	}],
-	configuration2: [
-	{
-		name: 'Bash-Debug (hardcoded script name)',
-		type: 'bashdb',
-		request: 'launch',
-		scriptPath: '${workspaceRoot}/path/to/script.sh',
-		commandLineArguments: ''
-	}],
-	configuration3: [
-	{
-		name: 'Bash-Debug (type in script name)',
-		type: 'bashdb',
-		request: 'launch',
-		scriptPath: '${workspaceRoot}/${command.AskForScriptName}',
-		commandLineArguments: ''
+	configuration1: {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				name: 'Bash-Debug (select script from list of sh files)',
+				type: 'bashdb',
+				request: 'launch',
+				scriptPath: '${command.SelectScriptName}',
+				commandLineArguments: ''
+			}]
+	},
+	configuration2: {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				name: 'Bash-Debug (hardcoded script name)',
+				type: 'bashdb',
+				request: 'launch',
+				scriptPath: '${workspaceRoot}/path/to/script.sh',
+				commandLineArguments: ''
+			}]
+	},
+	configuration3: {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				name: 'Bash-Debug (type in script name)',
+				type: 'bashdb',
+				request: 'launch',
+				scriptPath: '${workspaceRoot}/${command.AskForScriptName}',
+				commandLineArguments: ''
+			}
+		]
 	}
-	]}
+}
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -59,11 +69,11 @@ export function activate(context: vscode.ExtensionContext) {
 			switch(parseInt(result.substr(0,1)))
 			{
 				case 1:
-					return JSON.stringify(initialConfigurations.configuration1);
+					return JSON.stringify(initialConfigurations.configuration1, null, "\t");
 				case 2:
-					return JSON.stringify(initialConfigurations.configuration2);
+					return JSON.stringify(initialConfigurations.configuration2, null, "\t");
 				default:
-					return JSON.stringify(initialConfigurations.configuration3);
+					return JSON.stringify(initialConfigurations.configuration3, null, "\t");
 			}
 		})
 	}));
