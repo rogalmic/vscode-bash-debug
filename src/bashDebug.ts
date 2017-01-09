@@ -11,6 +11,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	scriptPath: string;
 	commandLineArguments: string;
 	bashDbPath: string;
+	bashPath: string;
 	showDebugOutput?: boolean;
 }
 
@@ -32,6 +33,8 @@ class BashDebugSession extends DebugSession {
 	private responsivityFactor = 5;
 
 	private debuggerProcessParentId = -1;
+
+	private debugPipeIndex = (process.platform == "win32") ? 2 : 3; // https://github.com/Microsoft/BashOnWindows/issues/1489
 
 	public constructor() {
 		super();
@@ -66,13 +69,17 @@ class BashDebugSession extends DebugSession {
 			args.bashDbPath = "bashdb";
 		}
 
+		if (!args.bashPath) {
+			args.bashPath = "bash";
+		}
+
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
-		this.debuggerProcess = spawn("bash", ["-c", `
+		this.debuggerProcess = spawn(args.bashPath, ["-c", `
 
 			# http://tldp.org/LDP/abs/html/io-redirection.html
 
-			fifo_path=$(mktemp --dry-run /tmp/vscode-bash-debug-fifo.XXXXXX)
+			fifo_path=$(mktemp -u /tmp/vscode-bash-debug-fifo.XXXXXX)
 
 			function cleanup()
 			{
@@ -82,22 +89,28 @@ class BashDebugSession extends DebugSession {
 				exit $exit_code;
 			}
 			trap 'cleanup' ERR SIGINT SIGTERM
+
 			mkfifo "$fifo_path"
-			cat "$fifo_path" >&3 & 		# Open for reading in background.
+			cat "$fifo_path" >&${this.debugPipeIndex} & 		# Open for reading in background.
 			exec 4>"$fifo_path" 		# Keep open for writing, bashdb seems close after every write.
 			${args.bashDbPath} --quiet --tty "$fifo_path" -- "${args.scriptPath}" ${args.commandLineArguments}
+
 			cleanup`
 		], {stdio: ["pipe", "pipe", "pipe", "pipe"]});
+
+		this.debuggerProcess.on("error", (error) => {
+			this.sendEvent(new OutputEvent(`${error}`, 'stderr'));
+		});
 
 		this.processDebugTerminalOutput();
 
 		this.debuggerProcess.stdin.write(`print "$PPID"\nhandle INT stop\nprint "${BashDebugSession.END_MARKER}"\n`);
 
-		this.debuggerProcess.stdout.on("data", (data) => {
+		this.debuggerProcess.stdio[1].on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
 		});
 
-		this.debuggerProcess.stderr.on("data", (data) => {
+		this.debuggerProcess.stdio[2].on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stderr'));
 		});
 
@@ -478,7 +491,7 @@ class BashDebugSession extends DebugSession {
 
 	private processDebugTerminalOutput(): void {
 
-		this.debuggerProcess.stdio[3].on('data', (data) => {
+		this.debuggerProcess.stdio[this.debugPipeIndex].on('data', (data) => {
 			var list = data.toString().split("\n", -1);
 			var fullLine = `${this.fullDebugOutput.pop()}${list.shift()}`;
 			this.fullDebugOutput.push(this.removePrompt(fullLine));
