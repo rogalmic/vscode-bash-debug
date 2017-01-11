@@ -11,6 +11,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	scriptPath: string;
 	commandLineArguments: string;
 	bashDbPath: string;
+	bashPath: string;
 	showDebugOutput?: boolean;
 }
 
@@ -19,19 +20,21 @@ class BashDebugSession extends DebugSession {
 	private static THREAD_ID = 42;
 	private static END_MARKER = "############################################################";
 
-	private _debuggerProcess: ChildProcess;
+	private debuggerProcess: ChildProcess;
 
-	private _currentBreakpointIds = new Map<string, Array<number>>();
+	private currentBreakpointIds = new Map<string, Array<number>>();
 
-	private _fullDebugOutput = [""];
-	private _fullDebugOutputIndex = 0;
+	private fullDebugOutput = [""];
+	private fullDebugOutputIndex = 0;
 
-	private _debuggerExecutableBusy = false;
-	private _debuggerExecutableClosing = false;
+	private debuggerExecutableBusy = false;
+	private debuggerExecutableClosing = false;
 
-	private _responsivityFactor = 5;
+	private responsivityFactor = 5;
 
-	private _debuggerProcessParentId = -1;
+	private debuggerProcessParentId = -1;
+
+	private debugPipeIndex = (process.platform == "win32") ? 2 : 3; // https://github.com/Microsoft/BashOnWindows/issues/1489
 
 	public constructor() {
 		super();
@@ -50,14 +53,14 @@ class BashDebugSession extends DebugSession {
 	}
 
 	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments): void {
-		this._debuggerExecutableBusy = false;
+		this.debuggerExecutableBusy = false;
 
-		this._debuggerProcess.on("exit", ()=> {
-			this._debuggerExecutableClosing = true;
+		this.debuggerProcess.on("exit", ()=> {
+			this.debuggerExecutableClosing = true;
 			this.sendResponse(response)
 		});
 
-		spawn("bash", ["-c", `pkill -9 -P ${this._debuggerProcessParentId}`]);
+		spawn("bash", ["-c", `pkill -KILL -P ${this.debuggerProcessParentId}`]);
 	}
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
@@ -66,13 +69,17 @@ class BashDebugSession extends DebugSession {
 			args.bashDbPath = "bashdb";
 		}
 
+		if (!args.bashPath) {
+			args.bashPath = "bash";
+		}
+
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
-		this._debuggerProcess = spawn("bash", ["-c", `
+		this.debuggerProcess = spawn(args.bashPath, ["-c", `
 
 			# http://tldp.org/LDP/abs/html/io-redirection.html
 
-			fifo_path=$(mktemp --dry-run /tmp/vscode-bash-debug-fifo.XXXXXX)
+			fifo_path=$(mktemp -u /tmp/vscode-bash-debug-fifo.XXXXXX)
 
 			function cleanup()
 			{
@@ -82,26 +89,32 @@ class BashDebugSession extends DebugSession {
 				exit $exit_code;
 			}
 			trap 'cleanup' ERR SIGINT SIGTERM
+
 			mkfifo "$fifo_path"
-			cat "$fifo_path" >&3 & 		# Open for reading in background.
+			cat "$fifo_path" >&${this.debugPipeIndex} & 		# Open for reading in background.
 			exec 4>"$fifo_path" 		# Keep open for writing, bashdb seems close after every write.
 			${args.bashDbPath} --quiet --tty "$fifo_path" -- "${args.scriptPath}" ${args.commandLineArguments}
+
 			cleanup`
 		], {stdio: ["pipe", "pipe", "pipe", "pipe"]});
 
-		this.processDebugTerminalOutput(args.showDebugOutput == true);
+		this.debuggerProcess.on("error", (error) => {
+			this.sendEvent(new OutputEvent(`${error}`, 'stderr'));
+		});
 
-		this._debuggerProcess.stdin.write(`print "$PPID"\nprint "${BashDebugSession.END_MARKER}"\n`);
+		this.processDebugTerminalOutput();
 
-		this._debuggerProcess.stdout.on("data", (data) => {
+		this.debuggerProcess.stdin.write(`print "$PPID"\nhandle INT stop\nprint "${BashDebugSession.END_MARKER}"\n`);
+
+		this.debuggerProcess.stdio[1].on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
 		});
 
-		this._debuggerProcess.stderr.on("data", (data) => {
+		this.debuggerProcess.stdio[2].on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stderr'));
 		});
 
-		this._debuggerProcess.stdio[3].on("data", (data) => {
+		this.debuggerProcess.stdio[3].on("data", (data) => {
 			if (args.showDebugOutput) {
 				this.sendEvent(new OutputEvent(`${data}`, 'console'));
 			}
@@ -112,18 +125,18 @@ class BashDebugSession extends DebugSession {
 
 	private launchRequestFinalize(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
 
-		for (var i = 0; i < this._fullDebugOutput.length; i++) {
-			if (this._fullDebugOutput[i] == BashDebugSession.END_MARKER) {
+		for (var i = 0; i < this.fullDebugOutput.length; i++) {
+			if (this.fullDebugOutput[i] == BashDebugSession.END_MARKER) {
 
-				this._debuggerProcessParentId = parseInt(this._fullDebugOutput[i-1]);
+				this.debuggerProcessParentId = parseInt(this.fullDebugOutput[i-1]);
 				this.sendResponse(response);
 				this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
 				this.sendEvent(new InitializedEvent());
 
 				var interval = setInterval((data) => {
-					for (; this._fullDebugOutputIndex < this._fullDebugOutput.length - 1; this._fullDebugOutputIndex++)
+					for (; this.fullDebugOutputIndex < this.fullDebugOutput.length - 1; this.fullDebugOutputIndex++)
 					{
-						var line = this._fullDebugOutput[this._fullDebugOutputIndex];
+						var line = this.fullDebugOutput[this.fullDebugOutputIndex];
 
 						if (line.indexOf("(/") == 0 && line.indexOf("):") == line.length-2)
 						{
@@ -138,7 +151,7 @@ class BashDebugSession extends DebugSession {
 						}
 					}
 				},
-				this._responsivityFactor);
+				this.responsivityFactor);
 				return;
 			}
 		}
@@ -149,22 +162,22 @@ class BashDebugSession extends DebugSession {
 
 	protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {
 
-		if (this._debuggerExecutableBusy)
+		if (this.debuggerExecutableBusy)
 		{
 			this.scheduleExecution(()=>	this.setBreakPointsRequest(response, args));
 			return;
 		}
 
-		if (!this._currentBreakpointIds[args.source.path]){
-			this._currentBreakpointIds[args.source.path] = [];
+		if (!this.currentBreakpointIds[args.source.path]){
+			this.currentBreakpointIds[args.source.path] = [];
 		}
 
-		var setBreakpointsCommand = `print 'delete <${this._currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this._currentBreakpointIds[args.source.path].join(" ")}\nload ${args.source.path}\n`;
+		var setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nload ${args.source.path}\n`;
 		args.breakpoints.forEach((b)=>{ setBreakpointsCommand += `print ' <${args.source.path}:${b.line}> '\nbreak ${args.source.path}:${b.line}\n` });
 
-		this._debuggerExecutableBusy = true;
-		var currentLine = this._fullDebugOutput.length;
-		this._debuggerProcess.stdin.write(`${setBreakpointsCommand}print '${BashDebugSession.END_MARKER}'\n`);
+		this.debuggerExecutableBusy = true;
+		var currentLine = this.fullDebugOutput.length;
+		this.debuggerProcess.stdin.write(`${setBreakpointsCommand}print '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(()=>	this.setBreakPointsRequestFinalize(response, args, currentLine));
 	}
 
@@ -172,23 +185,23 @@ class BashDebugSession extends DebugSession {
 
 		if (this.promptReached(currentOutputLength))
 		{
-			this._currentBreakpointIds[args.source.path] = [];
+			this.currentBreakpointIds[args.source.path] = [];
 			var breakpoints = new Array<Breakpoint>();
 
-			for (var i = currentOutputLength; i < this._fullDebugOutput.length - 2; i++ ){
+			for (var i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++ ){
 
-				if (this._fullDebugOutput[i-1].indexOf(" <") == 0 && this._fullDebugOutput[i-1].indexOf("> ") > 0) {
+				if (this.fullDebugOutput[i-1].indexOf(" <") == 0 && this.fullDebugOutput[i-1].indexOf("> ") > 0) {
 
-					var lineNodes = this._fullDebugOutput[i].split(" ");
+					var lineNodes = this.fullDebugOutput[i].split(" ");
 					const bp = <DebugProtocol.Breakpoint> new Breakpoint(true, this.convertDebuggerLineToClient(parseInt(lineNodes[lineNodes.length-1].replace(".",""))));
 					bp.id = parseInt(lineNodes[1]);
 					breakpoints.push(bp);
-					this._currentBreakpointIds[args.source.path].push(bp.id);
+					this.currentBreakpointIds[args.source.path].push(bp.id);
 				}
 			}
 
 			response.body = { breakpoints: breakpoints };
-			this._debuggerExecutableBusy = false;
+			this.debuggerExecutableBusy = false;
 			this.sendResponse(response);
 			return;
 		}
@@ -204,15 +217,15 @@ class BashDebugSession extends DebugSession {
 
 	protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
 
-		if (this._debuggerExecutableBusy)
+		if (this.debuggerExecutableBusy)
 		{
 			this.scheduleExecution(()=>	this.stackTraceRequest(response, args));
 			return;
 		}
 
-		this._debuggerExecutableBusy = true;
-		var currentLine = this._fullDebugOutput.length;
-		this._debuggerProcess.stdin.write(`print backtrace\nbacktrace\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.debuggerExecutableBusy = true;
+		var currentLine = this.fullDebugOutput.length;
+		this.debuggerProcess.stdin.write(`print backtrace\nbacktrace\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.stackTraceRequestFinalize(response, args, currentLine));
 	}
 
@@ -220,11 +233,11 @@ class BashDebugSession extends DebugSession {
 
 		if (this.promptReached(currentOutputLength))
 		{
-			var lastStackLineIndex = this._fullDebugOutput.length - 3;
+			var lastStackLineIndex = this.fullDebugOutput.length - 3;
 
 			var frames = new Array<StackFrame>();
 			for (var i= currentOutputLength; i <= lastStackLineIndex ; i++) {
-				var lineContent = this._fullDebugOutput[i];
+				var lineContent = this.fullDebugOutput[i];
 				var frameIndex = parseInt(lineContent.substr(2, 2));
 				var frameText = lineContent;
 				var frameSourcePath = lineContent.substr(lineContent.lastIndexOf("`") + 1, lineContent.lastIndexOf("'") - lineContent.lastIndexOf("`") - 1);
@@ -238,14 +251,14 @@ class BashDebugSession extends DebugSession {
 					));
 			}
 
-			var totalFrames = this._fullDebugOutput.length - currentOutputLength -1;
+			var totalFrames = this.fullDebugOutput.length - currentOutputLength -1;
 
 			const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
 			const maxLevels = typeof args.levels === 'number' ? args.levels : 100;
 			frames = frames.slice(startFrame, Math.min(startFrame + maxLevels, frames.length));
 
 			response.body = { stackFrames: frames, totalFrames: totalFrames };
-			this._debuggerExecutableBusy = false;
+			this.debuggerExecutableBusy = false;
 			this.sendResponse(response);
 			return;
 		}
@@ -255,14 +268,14 @@ class BashDebugSession extends DebugSession {
 
 	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
 
-		var scopes = [ new Scope("Local", this._fullDebugOutputIndex, false) ];
+		var scopes = [ new Scope("Local", this.fullDebugOutputIndex, false) ];
 		response.body = { scopes: scopes };
 		this.sendResponse(response);
 	}
 
 	protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
 
-		if (this._debuggerExecutableBusy)
+		if (this.debuggerExecutableBusy)
 		{
 			this.scheduleExecution(()=>	this.variablesRequest(response, args));
 			return;
@@ -277,9 +290,9 @@ class BashDebugSession extends DebugSession {
 
 		variableDefinitions.forEach((v)=>{ getVariablesCommand += `print ' <$${v}> '\nexamine $${v}\n` });
 
-		this._debuggerExecutableBusy = true;
-		var currentLine = this._fullDebugOutput.length;
-		this._debuggerProcess.stdin.write(`${getVariablesCommand}print '${BashDebugSession.END_MARKER}'\n`);
+		this.debuggerExecutableBusy = true;
+		var currentLine = this.fullDebugOutput.length;
+		this.debuggerProcess.stdin.write(`${getVariablesCommand}print '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(()=> this.variablesRequestFinalize(response, args, currentLine));
 	}
 
@@ -289,22 +302,22 @@ class BashDebugSession extends DebugSession {
 		{
 			var variables = [];
 
-			for (var i = currentOutputLength; i < this._fullDebugOutput.length - 2; i++ ){
+			for (var i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++ ){
 
-				if (this._fullDebugOutput[i-1].indexOf(" <") == 0 && this._fullDebugOutput[i-1].indexOf("> ") > 0) {
+				if (this.fullDebugOutput[i-1].indexOf(" <") == 0 && this.fullDebugOutput[i-1].indexOf("> ") > 0) {
 
-					var lineNodes = this._fullDebugOutput[i].split(" ");
+					var lineNodes = this.fullDebugOutput[i].split(" ");
 					variables.push({
-						name: `${this._fullDebugOutput[i-1].replace(" <", "").replace("> ", "")}`,
+						name: `${this.fullDebugOutput[i-1].replace(" <", "").replace("> ", "")}`,
 						type: "string",
-						value: this._fullDebugOutput[i],
+						value: this.fullDebugOutput[i],
 						variablesReference: 0
 					});
 				}
 			}
 
 			response.body = { variables: variables };
-			this._debuggerExecutableBusy = false;
+			this.debuggerExecutableBusy = false;
 			this.sendResponse(response);
 			return;
 		}
@@ -314,15 +327,15 @@ class BashDebugSession extends DebugSession {
 
 	protected continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments): void {
 
-		if (this._debuggerExecutableBusy)
+		if (this.debuggerExecutableBusy)
 		{
 			this.scheduleExecution(()=>	this.continueRequest(response, args));
 			return;
 		}
 
-		this._debuggerExecutableBusy = true;
-		var currentLine = this._fullDebugOutput.length;
-		this._debuggerProcess.stdin.write(`print continue\ncontinue\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.debuggerExecutableBusy = true;
+		var currentLine = this.fullDebugOutput.length;
+		this.debuggerProcess.stdin.write(`print continue\ncontinue\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(()=>this.continueRequestFinalize(response, args, currentLine));
 
@@ -334,7 +347,7 @@ class BashDebugSession extends DebugSession {
 
 		if (this.promptReached(currentOutputLength))
 		{
-			this._debuggerExecutableBusy = false;
+			this.debuggerExecutableBusy = false;
 			return;
 		}
 
@@ -343,15 +356,15 @@ class BashDebugSession extends DebugSession {
 
 	protected nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments): void {
 
-		if (this._debuggerExecutableBusy)
+		if (this.debuggerExecutableBusy)
 		{
 			this.scheduleExecution(()=>	this.nextRequest(response, args));
 			return;
 		}
 
-		this._debuggerExecutableBusy = true;
-		var currentLine = this._fullDebugOutput.length;
-		this._debuggerProcess.stdin.write(`print next\nnext\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.debuggerExecutableBusy = true;
+		var currentLine = this.fullDebugOutput.length;
+		this.debuggerProcess.stdin.write(`print next\nnext\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(()=>this.nextRequestFinalize(response, args, currentLine));
 
@@ -363,7 +376,7 @@ class BashDebugSession extends DebugSession {
 
 		if (this.promptReached(currentOutputLength))
 		{
-			this._debuggerExecutableBusy = false;
+			this.debuggerExecutableBusy = false;
 			return;
 		}
 
@@ -372,15 +385,15 @@ class BashDebugSession extends DebugSession {
 
 	protected stepInRequest(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments): void {
 
-		if (this._debuggerExecutableBusy)
+		if (this.debuggerExecutableBusy)
 		{
 			this.scheduleExecution(()=>	this.stepInRequest(response, args));
 			return;
 		}
 
-		this._debuggerExecutableBusy = true;
-		var currentLine = this._fullDebugOutput.length;
-		this._debuggerProcess.stdin.write(`print step\nstep\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.debuggerExecutableBusy = true;
+		var currentLine = this.fullDebugOutput.length;
+		this.debuggerProcess.stdin.write(`print step\nstep\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(()=>this.stepInRequestFinalize(response, args, currentLine));
 
@@ -391,7 +404,7 @@ class BashDebugSession extends DebugSession {
 	private stepInRequestFinalize(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments, currentOutputLength:number): void {
 		if (this.promptReached(currentOutputLength))
 		{
-			this._debuggerExecutableBusy = false;
+			this.debuggerExecutableBusy = false;
 			return;
 		}
 
@@ -400,15 +413,15 @@ class BashDebugSession extends DebugSession {
 
 	protected stepOutRequest(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments): void {
 
-		if (this._debuggerExecutableBusy)
+		if (this.debuggerExecutableBusy)
 		{
 			this.scheduleExecution(()=>	this.stepOutRequest(response, args));
 			return;
 		}
 
-		this._debuggerExecutableBusy = true;
-		var currentLine = this._fullDebugOutput.length;
-		this._debuggerProcess.stdin.write(`print finish\nfinish\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.debuggerExecutableBusy = true;
+		var currentLine = this.fullDebugOutput.length;
+		this.debuggerProcess.stdin.write(`print finish\nfinish\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(()=>this.stepOutRequestFinalize(response, args, currentLine));
 
@@ -419,7 +432,7 @@ class BashDebugSession extends DebugSession {
 	private stepOutRequestFinalize(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments, currentOutputLength:number): void {
 		if (this.promptReached(currentOutputLength))
 		{
-			this._debuggerExecutableBusy = false;
+			this.debuggerExecutableBusy = false;
 			return;
 		}
 
@@ -428,15 +441,15 @@ class BashDebugSession extends DebugSession {
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
 
-		if (this._debuggerExecutableBusy)
+		if (this.debuggerExecutableBusy)
 		{
 			this.scheduleExecution(()=>	this.evaluateRequest(response, args));
 			return;
 		}
 
-		this._debuggerExecutableBusy = true;
-		var currentLine = this._fullDebugOutput.length;
-		this._debuggerProcess.stdin.write(`print 'examine <${args.expression}>'\nexamine ${args.expression.replace("\"", "")}\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.debuggerExecutableBusy = true;
+		var currentLine = this.fullDebugOutput.length;
+		this.debuggerProcess.stdin.write(`print 'examine <${args.expression}>'\nexamine ${args.expression.replace("\"", "")}\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(()=>this.evaluateRequestFinalize(response, args, currentLine));
 	}
 
@@ -444,14 +457,24 @@ class BashDebugSession extends DebugSession {
 
 		if (this.promptReached(currentOutputLength))
 		{
-			response.body = { result: `${args.expression} = '${this._fullDebugOutput[currentOutputLength]}'`, variablesReference: 0	};
+			response.body = { result: `${args.expression} = '${this.fullDebugOutput[currentOutputLength]}'`, variablesReference: 0	};
 
-			this._debuggerExecutableBusy = false;
+			this.debuggerExecutableBusy = false;
 			this.sendResponse(response);
 			return;
 		}
 
 		this.scheduleExecution(()=>this.evaluateRequestFinalize(response, args, currentOutputLength));
+	}
+
+	protected pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments): void {
+		if (args.threadId == BashDebugSession.THREAD_ID) {
+			spawn("bash", ["-c", `pkill -INT -P ${this.debuggerProcessParentId} -f bashdb`]).on("exit", () => this.sendResponse(response));
+			return;
+		}
+
+		response.success = false;
+		this.sendResponse(response);
 	}
 
 	private removePrompt(line : string): string{
@@ -463,22 +486,22 @@ class BashDebugSession extends DebugSession {
 	}
 
 	private promptReached(currentOutputLength:number) : boolean{
-		return this._fullDebugOutput.length > currentOutputLength && this._fullDebugOutput[this._fullDebugOutput.length -2] == BashDebugSession.END_MARKER;
+		return this.fullDebugOutput.length > currentOutputLength && this.fullDebugOutput[this.fullDebugOutput.length -2] == BashDebugSession.END_MARKER;
 	}
 
-	private processDebugTerminalOutput(sendOutput: boolean): void {
+	private processDebugTerminalOutput(): void {
 
-		this._debuggerProcess.stdio[3].on('data', (data) => {
+		this.debuggerProcess.stdio[this.debugPipeIndex].on('data', (data) => {
 			var list = data.toString().split("\n", -1);
-			var fullLine = `${this._fullDebugOutput.pop()}${list.shift()}`;
-			this._fullDebugOutput.push(this.removePrompt(fullLine));
-			list.forEach(l => this._fullDebugOutput.push(this.removePrompt(l)));
+			var fullLine = `${this.fullDebugOutput.pop()}${list.shift()}`;
+			this.fullDebugOutput.push(this.removePrompt(fullLine));
+			list.forEach(l => this.fullDebugOutput.push(this.removePrompt(l)));
 		})
 	}
 
 	private scheduleExecution(callback: (...args: any[]) => void) : void {
-		if (!this._debuggerExecutableClosing) {
-			setTimeout(() => callback(), this._responsivityFactor);
+		if (!this.debuggerExecutableClosing) {
+			setTimeout(() => callback(), this.responsivityFactor);
 		}
 	}
 }

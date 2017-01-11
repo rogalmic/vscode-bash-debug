@@ -91,6 +91,11 @@
 								"description": "bashdb location.",
 								"default": "bashdb"
 							},
+							"bashPath": {
+								"type": "string",
+								"description": "bash location.",
+								"default": "bash"
+							},
 							"showDebugOutput": {
 								"type": "boolean",
 								"description": "Defines if bashdb output will be visible together with script output.",

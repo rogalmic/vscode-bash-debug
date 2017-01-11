@@ -11,7 +11,16 @@ const initialConfigurations = {
 				type: 'bashdb',
 				request: 'launch',
 				scriptPath: '${command.SelectScriptName}',
-				commandLineArguments: ''
+				commandLineArguments: '',
+				windows: {
+					bashPath: "C:\\Windows\\sysnative\\bash.exe"
+				},
+				linux: {
+					bashPath: "bash"
+				},
+				osx: {
+					bashPath: "bash"
+				}
 			}]
 	},
 	configuration2: {
@@ -22,7 +31,16 @@ const initialConfigurations = {
 				type: 'bashdb',
 				request: 'launch',
 				scriptPath: '${workspaceRoot}/path/to/script.sh',
-				commandLineArguments: ''
+				commandLineArguments: '',
+				windows: {
+					bashPath: "C:\\Windows\\sysnative\\bash.exe"
+				},
+				linux: {
+					bashPath: "bash"
+				},
+				osx: {
+					bashPath: "bash"
+				}
 			}]
 	},
 	configuration3: {
@@ -33,7 +51,16 @@ const initialConfigurations = {
 				type: 'bashdb',
 				request: 'launch',
 				scriptPath: '${workspaceRoot}/${command.AskForScriptName}',
-				commandLineArguments: ''
+				commandLineArguments: '',
+				windows: {
+					bashPath: "C:\\Windows\\sysnative\\bash.exe"
+				},
+				linux: {
+					bashPath: "bash"
+				},
+				osx: {
+					bashPath: "bash"
+				}
 			}
 		]
 	}
