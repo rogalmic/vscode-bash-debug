@@ -15,4 +15,4 @@ Works at least on Kubuntu.
 All the pieces seems to be there, but for some reason bash support needs some kick off (https://github.com/Microsoft/BashOnWindows/issues/2#issuecomment-209118529). Lets see...
 
 ## On OS X
-There seems to be bash in OS X, but no way of checking this out now.
+There seems to be bash in OS X, but no way of checking this out now. (https://github.com/rogalmic/vscode-bash-debug/issues/19)

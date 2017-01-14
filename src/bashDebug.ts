@@ -34,7 +34,9 @@ class BashDebugSession extends DebugSession {
 
 	private debuggerProcessParentId = -1;
 
-	private debugPipeIndex = (process.platform == "win32") ? 2 : 3; // https://github.com/Microsoft/BashOnWindows/issues/1489
+	// https://github.com/Microsoft/BashOnWindows/issues/1489
+	// private debugPipeIndex = (process.platform == "win32") ? 2 : 3;
+	private debugPipeIndex = 3;
 
 	public constructor() {
 		super();
@@ -73,27 +75,27 @@ class BashDebugSession extends DebugSession {
 			args.bashPath = "bash";
 		}
 
+		var fifo_path = "/tmp/vscode-bash-debug-fifo-" + Math.floor(Math.random() * 1000) + 1000;
+
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
 		this.debuggerProcess = spawn(args.bashPath, ["-c", `
 
 			# http://tldp.org/LDP/abs/html/io-redirection.html
 
-			fifo_path=$(mktemp -u /tmp/vscode-bash-debug-fifo.XXXXXX)
-
 			function cleanup()
 			{
 				exit_code=$?
 				exec 4>&-
-				rm "$fifo_path";
+				rm "${fifo_path}";
 				exit $exit_code;
 			}
 			trap 'cleanup' ERR SIGINT SIGTERM
 
-			mkfifo "$fifo_path"
-			cat "$fifo_path" >&${this.debugPipeIndex} & 		# Open for reading in background.
-			exec 4>"$fifo_path" 		# Keep open for writing, bashdb seems close after every write.
-			${args.bashDbPath} --quiet --tty "$fifo_path" -- "${args.scriptPath}" ${args.commandLineArguments}
+			mkfifo "${fifo_path}"
+			cat "${fifo_path}" >&${this.debugPipeIndex} &
+			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
+			while read -t 10000 line; do echo "$line"; done | ${args.bashDbPath} --quiet --tty "${fifo_path}" -- "${args.scriptPath}" ${args.commandLineArguments}
 
 			cleanup`
 		], {stdio: ["pipe", "pipe", "pipe", "pipe"]});

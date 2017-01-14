@@ -24,7 +24,7 @@ Sample usage animation:
 
 Dependencies:
 1. bashdb 4.3
-2. cat, mkfifo, mktemp, rm, pkill
+2. cat, mkfifo, rm, pkill
 
 ![unfortunatly no animation for you](images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
 
