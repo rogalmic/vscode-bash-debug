@@ -1,3 +1,10 @@
+0.0.3
+=====
+## [Bugfix release v0.0.3](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.3-alpha.3)
+- remove usage of mktemp (https://github.com/rogalmic/vscode-bash-debug/issues/19)
+- partial pause support (not finalized yet)
+- preparations for Windows 10 support (once fixes are made in BashOnWindows)
+
 0.0.2
 =====
 ## [Bugfix release v0.0.2](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.2-alpha.2)
