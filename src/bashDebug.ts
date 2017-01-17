@@ -75,7 +75,7 @@ class BashDebugSession extends DebugSession {
 			args.bashPath = "bash";
 		}
 
-		var fifo_path = "/tmp/vscode-bash-debug-fifo-" + Math.floor(Math.random() * 1000) + 1000;
+		var fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
 
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
@@ -494,6 +494,12 @@ class BashDebugSession extends DebugSession {
 	private processDebugTerminalOutput(): void {
 
 		this.debuggerProcess.stdio[this.debugPipeIndex].on('data', (data) => {
+
+			if (this.fullDebugOutput.length == 1 && data.indexOf("Reading ") == 0) {
+				// Before debug run, there is no newline
+				return;
+			}
+
 			var list = data.toString().split("\n", -1);
 			var fullLine = `${this.fullDebugOutput.pop()}${list.shift()}`;
 			this.fullDebugOutput.push(this.removePrompt(fullLine));

@@ -1,3 +1,8 @@
+0.0.4
+=====
+## [Bugfix release v0.0.4](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.4-alpha.4)
+- fix for larger scripts (https://github.com/rogalmic/vscode-bash-debug/issues/22)
+
 0.0.3
 =====
 ## [Bugfix release v0.0.3](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.3-alpha.3)
