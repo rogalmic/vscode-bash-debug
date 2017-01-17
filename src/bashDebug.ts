@@ -494,6 +494,12 @@ class BashDebugSession extends DebugSession {
 	private processDebugTerminalOutput(): void {
 
 		this.debuggerProcess.stdio[this.debugPipeIndex].on('data', (data) => {
+
+			if (this.fullDebugOutput.length == 1 && data.indexOf("Reading ") == 0) {
+				// Before debug run, there is no newline
+				return;
+			}
+
 			var list = data.toString().split("\n", -1);
 			var fullLine = `${this.fullDebugOutput.pop()}${list.shift()}`;
 			this.fullDebugOutput.push(this.removePrompt(fullLine));
