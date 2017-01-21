@@ -35,8 +35,7 @@ class BashDebugSession extends DebugSession {
 	private debuggerProcessParentId = -1;
 
 	// https://github.com/Microsoft/BashOnWindows/issues/1489
-	// private debugPipeIndex = (process.platform == "win32") ? 2 : 3;
-	private debugPipeIndex = 3;
+	 private debugPipeIndex = (process.platform == "win32") ? 2 : 3;
 
 	public constructor() {
 		super();
@@ -95,7 +94,7 @@ class BashDebugSession extends DebugSession {
 			mkfifo "${fifo_path}"
 			cat "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
-			while read -t 10000 line; do echo "$line"; done | ${args.bashDbPath} --quiet --tty "${fifo_path}" -- "${args.scriptPath}" ${args.commandLineArguments}
+			cat | ${args.bashDbPath} --quiet --tty "${fifo_path}" -- "${args.scriptPath}" ${args.commandLineArguments}
 
 			cleanup`
 		], {stdio: ["pipe", "pipe", "pipe", "pipe"]});
@@ -174,8 +173,10 @@ class BashDebugSession extends DebugSession {
 			this.currentBreakpointIds[args.source.path] = [];
 		}
 
-		var setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nload ${args.source.path}\n`;
-		args.breakpoints.forEach((b)=>{ setBreakpointsCommand += `print ' <${args.source.path}:${b.line}> '\nbreak ${args.source.path}:${b.line}\n` });
+		var sourcePath = (process.platform == "win32") ? this.getLinuxPathFromWindows(args.source.path) : args.source.path;
+
+		var setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nload ${sourcePath}\n`;
+		args.breakpoints.forEach((b)=>{ setBreakpointsCommand += `print ' <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
 
 		this.debuggerExecutableBusy = true;
 		var currentLine = this.fullDebugOutput.length;
@@ -245,6 +246,11 @@ class BashDebugSession extends DebugSession {
 				var frameSourcePath = lineContent.substr(lineContent.lastIndexOf("`") + 1, lineContent.lastIndexOf("'") - lineContent.lastIndexOf("`") - 1);
 				var frameLine = parseInt(lineContent.substr(lineContent.lastIndexOf(" ")));
 
+				if ((process.platform == "win32"))
+				{
+					frameSourcePath = this.getWindowsPathFromLinux(frameSourcePath);
+				}
+				
 				frames.push(new StackFrame(
 					frameIndex,
 					frameText,
@@ -511,6 +517,14 @@ class BashDebugSession extends DebugSession {
 		if (!this.debuggerExecutableClosing) {
 			setTimeout(() => callback(), this.responsivityFactor);
 		}
+	}
+	
+	private getWindowsPathFromLinux(linuxPath:string) : string {
+		return linuxPath.substr("/mnt/".length, 1).toUpperCase() + ":" + linuxPath.substr("/mnt/".length + 1).split("/").join("\\");
+	}
+
+	private getLinuxPathFromWindows(windowsPath:string) : string {
+		return "/mnt/" + windowsPath.substr(0, 1).toLowerCase() + windowsPath.substr("X:".length).split("\\").join("/");
 	}
 }
 
