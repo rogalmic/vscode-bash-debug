@@ -1,3 +1,8 @@
+0.0.5
+=====
+## [Feature release v0.0.5](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.5-alpha.5)
+- windows 10 experimental support (verified on insider build 15014)
+
 0.0.4
 =====
 ## [Bugfix release v0.0.4](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.4-alpha.4)
