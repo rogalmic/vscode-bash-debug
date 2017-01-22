@@ -80,10 +80,11 @@ export function activate(context: vscode.ExtensionContext) {
 		return vscode.workspace.findFiles("**/*.sh", "").then((uris) => {
 			var list = new Array<string>();
 			for (var i = 0 ; i < uris.length ; i++){
-				var path = (process.platform == "win32") ? "/mnt/" + uris[i].fsPath.substr(0, 1).toLowerCase() + uris[i].fsPath.substr("X:".length).split("\\").join("/") : uris[i].fsPath;
-				list.push(path);
+				list.push(uris[i].fsPath);
 			}
-			return vscode.window.showQuickPick(list);
+			return vscode.window.showQuickPick(list).then((result)=>{
+				return (process.platform == "win32") ? "/mnt/" + result.substr(0, 1).toLowerCase() + result.substr("X:".length).split("\\").join("/") : result;
+			});
 		});
 	}));
 
