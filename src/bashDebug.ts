@@ -250,7 +250,7 @@ class BashDebugSession extends DebugSession {
 				{
 					frameSourcePath = this.getWindowsPathFromLinux(frameSourcePath);
 				}
-				
+
 				frames.push(new StackFrame(
 					frameIndex,
 					frameText,
@@ -449,6 +449,13 @@ class BashDebugSession extends DebugSession {
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
 
+		if (this.debuggerProcess == null){
+			response.body = { result: `${args.expression} = ''`, variablesReference: 0	};
+			this.debuggerExecutableBusy = false;
+			this.sendResponse(response);
+			return;
+		}
+
 		if (this.debuggerExecutableBusy)
 		{
 			this.scheduleExecution(()=>	this.evaluateRequest(response, args));
@@ -518,7 +525,7 @@ class BashDebugSession extends DebugSession {
 			setTimeout(() => callback(), this.responsivityFactor);
 		}
 	}
-	
+
 	private getWindowsPathFromLinux(linuxPath:string) : string {
 		return linuxPath.substr("/mnt/".length, 1).toUpperCase() + ":" + linuxPath.substr("/mnt/".length + 1).split("/").join("\\");
 	}
