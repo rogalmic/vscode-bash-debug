@@ -82,7 +82,9 @@ export function activate(context: vscode.ExtensionContext) {
 			for (var i = 0 ; i < uris.length ; i++){
 				list.push(uris[i].fsPath);
 			}
-			return vscode.window.showQuickPick(list);
+			return vscode.window.showQuickPick(list).then((result)=>{
+				return (process.platform == "win32") ? "/mnt/" + result.substr(0, 1).toLowerCase() + result.substr("X:".length).split("\\").join("/") : result;
+			});
 		});
 	}));
 
