@@ -1,3 +1,9 @@
+0.0.7
+=====
+## [Bugfix release v0.0.7](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.7-alpha.7)
+- fix redundant watch value data, explain watch expressions (https://github.com/rogalmic/vscode-bash-debug/issues/26)
+- fix manual extering of script to run (BashOnWindows case)
+
 0.0.6
 =====
 ## [Bugfix release v0.0.6](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.6-alpha.6)
