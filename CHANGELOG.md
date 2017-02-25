@@ -1,3 +1,9 @@
+0.0.6
+=====
+## [Bugfix release v0.0.6](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.6-alpha.6)
+- fix for watch feature (https://github.com/rogalmic/vscode-bash-debug/issues/26)
+- bashdb installation explained (https://github.com/rogalmic/vscode-bash-debug/issues/18)
+
 0.0.5
 =====
 ## [Feature release v0.0.5](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.5-alpha.5)

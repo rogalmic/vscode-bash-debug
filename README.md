@@ -1,6 +1,28 @@
 # VS Code Bash Debug
 A bash debugger GUI frontend based on awesome bashdb scripts.
 
+**Install bashdb** before usage:
+* [apt](https://en.wikipedia.org/wiki/Advanced_Packaging_Tool) package manager
+```{r, engine='bash'}
+sudo apt-get install bashdb
+```
+* [yum](https://en.wikipedia.org/wiki/Yellowdog_Updater,_Modified) package manager
+```{r, engine='bash'}
+sudo yum install bashdb
+```
+* installation from sources (advanced):
+```{r, engine='bash'}
+tar -xvf bashdb-*.tar.gz
+cd bashdb-*
+./configure
+make
+sudo make install
+```
+* verification
+```{r, engine='bash'}
+bashdb --version
+```
+
 Helpful links:
 
 [https://en.wikipedia.org/wiki/Bash_(Unix_shell)](https://en.wikipedia.org/wiki/Bash_%28Unix_shell%29)
