@@ -472,7 +472,7 @@ class BashDebugSession extends DebugSession {
 
 		if (this.promptReached(currentOutputLength))
 		{
-			response.body = { result: `${args.expression} = '${this.fullDebugOutput[currentOutputLength]}'`, variablesReference: 0	};
+			response.body = { result: `'${this.fullDebugOutput[currentOutputLength]}'`, variablesReference: 0	};
 
 			this.debuggerExecutableBusy = false;
 			this.sendResponse(response);

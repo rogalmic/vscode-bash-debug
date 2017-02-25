@@ -51,6 +51,7 @@ Dependencies:
 ![unfortunatly no animation for you](images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
 
 ## Limitations and known problems
+* Watch variables should be specified with $ at the beginning (this expression is evaluated in bash - for example `${#PWD}` returns path length)
 * Currently debugger stops at first command.
 * Executing "set -e" causes debugging script to exit (bashdb limitation). Consider using "trap 'exit $?' ERR" instead.
 * Newest Windows 10 insider build 15014 seems to be working with some hacks (https://github.com/Microsoft/BashOnWindows/issues/2#issuecomment-209118529, https://github.com/Microsoft/BashOnWindows/issues/1489);
