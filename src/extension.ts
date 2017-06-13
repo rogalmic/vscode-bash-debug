@@ -10,7 +10,7 @@ const initialConfigurations = {
 				name: 'Bash-Debug (select script from list of sh files)',
 				type: 'bashdb',
 				request: 'launch',
-				scriptPath: '${command.SelectScriptName}',
+				scriptPath: '${command:SelectScriptName}',
 				commandLineArguments: '',
 				windows: {
 					bashPath: "C:\\Windows\\sysnative\\bash.exe"
@@ -50,7 +50,7 @@ const initialConfigurations = {
 				name: 'Bash-Debug (type in script name)',
 				type: 'bashdb',
 				request: 'launch',
-				scriptPath: '${workspaceRoot}/${command.AskForScriptName}',
+				scriptPath: '${workspaceRoot}/${command:AskForScriptName}',
 				commandLineArguments: '',
 				windows: {
 					bashPath: "C:\\Windows\\sysnative\\bash.exe"
