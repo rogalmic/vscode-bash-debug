@@ -1,3 +1,8 @@
+0.0.8
+=====
+## [Bugfix release v0.0.8](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.8-alpha.8)
+- fix deprecated launch.json format
+
 0.0.7
 =====
 ## [Bugfix release v0.0.7](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.7-alpha.7)
