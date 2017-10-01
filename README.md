@@ -40,15 +40,20 @@ This is a SIMPLE bashdb debugger frontend. Useful for learning bash shell usage 
 
 Hopefully bash will land on 3 leading platforms making this extension very useful.
 
-Sample usage animation:
-1. Creating launch configuration with "wizzard"
-2. Running debug session
+## Usage
+1. Press ctrl+shift+P (cmd+shift+P) and run "Debug: Open launch.json"
+2. Select "Bash Debug" and choose the configuration you prefer
+3. Running debug session
 
-Dependencies:
-1. bashdb 4.3
-2. cat, mkfifo, rm, pkill
+See https://code.visualstudio.com/docs/editor/debugging for general usage.
+
+NOTE: step 2. is skipped if `${workspaceRoot}/.vscode/launch.json` exists. Rename it temporary before, to create the configuration.
 
 ![unfortunatly no animation for you](images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
+
+## Dependencies
+1. bashdb 4.3
+2. cat, mkfifo, rm, pkill
 
 ## Limitations and known problems
 * Watch variables should be specified with $ at the beginning (this expression is evaluated in bash - for example `${#PWD}` returns path length)
