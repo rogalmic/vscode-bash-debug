@@ -10,6 +10,7 @@ const initialConfigurations = {
 				name: 'Bash-Debug (select script from list of sh files)',
 				type: 'bashdb',
 				request: 'launch',
+				executionDirectory: '${workspaceRoot}',
 				scriptPath: '${command:SelectScriptName}',
 				commandLineArguments: '',
 				windows: {
@@ -30,6 +31,7 @@ const initialConfigurations = {
 				name: 'Bash-Debug (hardcoded script name)',
 				type: 'bashdb',
 				request: 'launch',
+				executionDirectory: '${workspaceRoot}',
 				scriptPath: '${workspaceRoot}/path/to/script.sh',
 				commandLineArguments: '',
 				windows: {
@@ -50,6 +52,7 @@ const initialConfigurations = {
 				name: 'Bash-Debug (type in script name)',
 				type: 'bashdb',
 				request: 'launch',
+				executionDirectory: '${workspaceRoot}',
 				scriptPath: '${workspaceRoot}/${command:AskForScriptName}',
 				commandLineArguments: '',
 				windows: {
