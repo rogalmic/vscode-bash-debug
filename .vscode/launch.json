@@ -2,7 +2,7 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Run Extension",
+			"name": "Extension",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
@@ -14,7 +14,7 @@
 			"preLaunchTask": "npm"
 		},
 		{
-			"name": "Run Server",
+			"name": "Server",
 			"type": "node",
 			"request": "launch",
 			"runtimeArgs": [ "--nolazy" ],
@@ -26,7 +26,7 @@
 			"cwd": "${workspaceRoot}"
 		},
 		{
-			"name": "Run Tests",
+			"name": "Tests",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
