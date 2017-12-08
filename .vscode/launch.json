@@ -42,5 +42,11 @@
 			"cwd": "${workspaceRoot}",
 			"internalConsoleOptions": "openOnSessionStart"
 		}
+	],
+	"compounds": [
+		{
+			"name": "Extension + Server",
+			"configurations": [ "Extension", "Server" ]
+		}
 	]
 }
