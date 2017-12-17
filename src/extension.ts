@@ -71,7 +71,7 @@ const initialConfigurations = {
 
 export function activate(context: vscode.ExtensionContext) {
 
-	context.subscriptions.push(vscode.commands.registerCommand('extension.getProgramName', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.getProgramName', () => {
 		return vscode.window.showInputBox({
 			placeHolder: "Please enter the relative path to bash script.",
 			value: (process.platform == "win32") ? "{workspaceRoot}\\path\\to\\script.sh" : "{workspaceRoot}/path/to/script.sh"
@@ -82,7 +82,7 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('extension.selectProgramName', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.selectProgramName', () => {
 
 		return vscode.workspace.findFiles("**/*.sh", "").then((uris) => {
 			var list = new Array<string>();

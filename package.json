@@ -49,8 +49,8 @@
 	},
 	"main": "./out/extension",
 	"activationEvents": [
-		"onCommand:extension.getProgramName",
-		"onCommand:extension.selectProgramName",
+		"onCommand:extension.bash-debug.getProgramName",
+		"onCommand:extension.bash-debug.selectProgramName",
 		"onCommand:extension.bash-debug.provideInitialConfigurations"
 	],
 	"contributes": {
@@ -68,8 +68,8 @@
 				"runtime": "node",
 
 				"variables": {
-					"AskForScriptName": "extension.getProgramName",
-					"SelectScriptName": "extension.selectProgramName"
+					"AskForScriptName": "extension.bash-debug.getProgramName",
+					"SelectScriptName": "extension.bash-debug.selectProgramName"
 				},
 
 				"configurationAttributes": {
