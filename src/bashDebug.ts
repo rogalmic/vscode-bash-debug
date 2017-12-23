@@ -1,6 +1,3 @@
-/// <reference types="es6-collections" />
-/// <reference types="node" />
-
 import {DebugSession, InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent, Event,	Thread, StackFrame, Scope, Source, Handles, Breakpoint} from 'vscode-debugadapter';
 import {DebugProtocol} from 'vscode-debugprotocol';
 import {ChildProcess, spawn} from "child_process";
