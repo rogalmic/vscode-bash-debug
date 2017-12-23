@@ -80,7 +80,7 @@
 							"type": "bashdb",
 							"request": "launch",
 							"name": "{2:Launch Program}",
-							"program": "\\${workspaceRoot}/{1:Program}"
+							"program": "^\"\\${workspaceRoot}/${1:Program}\""
 						}
 					}
 				],
