@@ -8,6 +8,9 @@
 		"outDir": "../out",
 		"noImplicitAny": false,
 		"removeComments": false,
-		"preserveConstEnums": true
+		"preserveConstEnums": true,
+		"strictNullChecks": true,
+		"noUnusedParameters": false,
+		"noUnusedLocals": true
 	}
 }

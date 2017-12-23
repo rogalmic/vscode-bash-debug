@@ -1,7 +1,7 @@
 import {
-	Logger,
+	Logger, logger,
 	DebugSession, LoggingDebugSession,
-	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent, Event,
+	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent,
 	Thread, StackFrame, Scope, Source, Handles, Breakpoint
 } from 'vscode-debugadapter';
 import {DebugProtocol} from 'vscode-debugprotocol';
@@ -50,6 +50,8 @@ class BashDebugSession extends LoggingDebugSession {
 
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
 
+		response.body = response.body || {};
+
 		response.body.supportsConditionalBreakpoints = false;
 		response.body.supportsConfigurationDoneRequest = false;
 		response.body.supportsEvaluateForHovers = true;
@@ -71,9 +73,8 @@ class BashDebugSession extends LoggingDebugSession {
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
 
-		if (args.trace) {
-			Logger.setup(Logger.LogLevel.Verbose, /*logToFile=*/false);
-		}
+		// make sure to 'Stop' the buffered logging if 'trace' is not set
+		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
 		if (!args.bashDbPath) {
 			args.bashDbPath = "bashdb";
