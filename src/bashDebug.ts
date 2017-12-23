@@ -364,6 +364,10 @@ class BashDebugSession extends DebugSession {
 		this.scheduleExecution(()=>this.continueRequestFinalize(response, args, currentOutputLength));
 	}
 
+	// bashdb doesn't support reverse execution
+	// protected reverseContinueRequest(response: DebugProtocol.ReverseContinueResponse, args: DebugProtocol.ReverseContinueArguments) : void {
+	// }
+
 	protected nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments): void {
 
 		if (this.debuggerExecutableBusy)
@@ -448,6 +452,10 @@ class BashDebugSession extends DebugSession {
 
 		this.scheduleExecution(()=>this.stepOutRequestFinalize(response, args, currentOutputLength));
 	}
+
+	// bashdb doesn't support reverse execution
+	// protected stepBackRequest(response: DebugProtocol.StepBackResponse, args: DebugProtocol.StepBackArguments): void {
+	// }
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
 
