@@ -79,8 +79,8 @@
 						"body": {
 							"type": "bashdb",
 							"request": "launch",
-							"name": "{{2:Launch Program}}",
-							"program": "${workspaceRoot}/{{1:Program}}"
+							"name": "{2:Launch Program}",
+							"program": "${workspaceRoot}/{1:Program}"
 						}
 					}
 				],
