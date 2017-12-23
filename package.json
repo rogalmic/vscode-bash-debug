@@ -74,6 +74,8 @@
 					"SelectScriptName": "extension.bash-debug.selectProgramName"
 				},
 
+				"initialConfigurations": "extension.bash-debug.provideInitialConfigurations",
+
 				"configurationSnippets": [
 					{
 						"label": "Bash Debug: Launch",
@@ -123,8 +125,7 @@
 							}
 						}
 					}
-				},
-				"initialConfigurations": "extension.bash-debug.provideInitialConfigurations"
+				}
 			}
 		]
 	}
