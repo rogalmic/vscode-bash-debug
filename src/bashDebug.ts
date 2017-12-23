@@ -1,4 +1,8 @@
-import {DebugSession, InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent, Event,	Thread, StackFrame, Scope, Source, Handles, Breakpoint} from 'vscode-debugadapter';
+import {
+	DebugSession, LoggingDebugSession,
+	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent, Event,
+	Thread, StackFrame, Scope, Source, Handles, Breakpoint
+} from 'vscode-debugadapter';
 import {DebugProtocol} from 'vscode-debugprotocol';
 import {ChildProcess, spawn} from "child_process";
 import {basename} from 'path';
@@ -13,7 +17,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	showDebugOutput?: boolean;
 }
 
-class BashDebugSession extends DebugSession {
+class BashDebugSession extends LoggingDebugSession {
 
 	private static THREAD_ID = 42;
 	private static END_MARKER = "############################################################";
@@ -36,7 +40,7 @@ class BashDebugSession extends DebugSession {
 	 private debugPipeIndex = (process.platform == "win32") ? 2 : 3;
 
 	public constructor() {
-		super();
+		super("log.txt");
 		this.setDebuggerLinesStartAt1(true);
 		this.setDebuggerColumnsStartAt1(true);
 	}
