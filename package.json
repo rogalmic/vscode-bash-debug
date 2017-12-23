@@ -72,6 +72,19 @@
 					"SelectScriptName": "extension.bash-debug.selectProgramName"
 				},
 
+				"configurationSnippets": [
+					{
+						"label": "Bash Debug: Launch",
+						"description": "A new configuration for launching a bash debug program",
+						"body": {
+							"type": "bashdb",
+							"request": "launch",
+							"name": "{{2:Launch Program}}",
+							"program": "${workspaceRoot}/{{1:Program}}"
+						}
+					}
+				],
+
 				"configurationAttributes": {
 					"launch": {
 						"required": [ "scriptPath", "commandLineArguments" ],
