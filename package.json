@@ -25,8 +25,8 @@
 		"url": "https://github.com/rogalmic/vscode-bash-debug/issues"
 	},
 	"dependencies": {
-		"vscode-debugprotocol": "^1.17.0",
-		"vscode-debugadapter": "^1.17.0",
+		"vscode-debugprotocol": "^1.18.0-pre.2",
+		"vscode-debugadapter": "^1.18.0-pre.4",
 		"child-process": "^1.0.2"
 	},
 	"devDependencies": {
@@ -113,6 +113,11 @@
 								"type": "boolean",
 								"description": "Defines if bashdb output will be visible together with script output.",
 								"default": false
+							},
+							"trace": {
+								"type": "boolean",
+								"description": "Enable logging of the Debug Adapter Protocol.",
+								"default": true
 							}
 						}
 					}

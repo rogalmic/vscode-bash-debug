@@ -1,4 +1,5 @@
 import {
+	Logger,
 	DebugSession, LoggingDebugSession,
 	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent, Event,
 	Thread, StackFrame, Scope, Source, Handles, Breakpoint
@@ -15,6 +16,8 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	bashDbPath: string;
 	bashPath: string;
 	showDebugOutput?: boolean;
+	/** enable logging the Debug Adapter Protocol */
+	trace?: boolean;
 }
 
 class BashDebugSession extends LoggingDebugSession {
@@ -40,7 +43,7 @@ class BashDebugSession extends LoggingDebugSession {
 	 private debugPipeIndex = (process.platform == "win32") ? 2 : 3;
 
 	public constructor() {
-		super("log.txt");
+		super("bash-debug.txt");
 		this.setDebuggerLinesStartAt1(true);
 		this.setDebuggerColumnsStartAt1(true);
 	}
@@ -67,6 +70,10 @@ class BashDebugSession extends LoggingDebugSession {
 	}
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
+
+		if (args.trace) {
+			Logger.setup(Logger.LogLevel.Verbose, /*logToFile=*/false);
+		}
 
 		if (!args.bashDbPath) {
 			args.bashDbPath = "bashdb";
