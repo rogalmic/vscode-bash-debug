@@ -122,4 +122,5 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
+	// nothing to do
 }
