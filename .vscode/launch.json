@@ -11,7 +11,7 @@
 				"--extensionDevelopmentPath=${workspaceRoot}"
 			],
 			"sourceMaps": true,
-			"outFiles": [ "${workspaceRoot}/out/*.js" ]
+			"outFiles": [ "${workspaceRoot}/out/**/*.js" ]
 		},
 		{
 			"type": "node",
@@ -21,7 +21,7 @@
 			"program": "${workspaceRoot}/src/bashDebug.ts",
 			"args": [ "--server=4711" ],
 			"sourceMaps": true,
-			"outFiles": [ "${workspaceRoot}/out/*.js" ]
+			"outFiles": [ "${workspaceRoot}/out/**/*.js" ]
 		},
 		{
 			"type": "node",
@@ -37,7 +37,7 @@
 				"./out/tests/"
 			],
 			"sourceMaps": true,
-			"outDir": "${workspaceRoot}/out",
+			"outFiles": [ "${workspaceRoot}/out/**/*.js" ],
 			"internalConsoleOptions": "openOnSessionStart"
 		}
 	],
