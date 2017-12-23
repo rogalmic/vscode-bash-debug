@@ -7,9 +7,9 @@ const initialConfigurations = {
 		"version": "0.2.0",
 		"configurations": [
 			{
-				name: 'Bash-Debug (select script from list of sh files)',
 				type: 'bashdb',
 				request: 'launch',
+				name: 'Bash-Debug (select script from list of sh files)',
 				executionDirectory: '${workspaceRoot}',
 				scriptPath: '${command:SelectScriptName}',
 				commandLineArguments: '',
@@ -28,9 +28,9 @@ const initialConfigurations = {
 		"version": "0.2.0",
 		"configurations": [
 			{
-				name: 'Bash-Debug (hardcoded script name)',
 				type: 'bashdb',
 				request: 'launch',
+				name: 'Bash-Debug (hardcoded script name)',
 				executionDirectory: '${workspaceRoot}',
 				scriptPath: '${workspaceRoot}/path/to/script.sh',
 				commandLineArguments: '',
@@ -49,9 +49,9 @@ const initialConfigurations = {
 		"version": "0.2.0",
 		"configurations": [
 			{
-				name: 'Bash-Debug (type in script name)',
 				type: 'bashdb',
 				request: 'launch',
+				name: 'Bash-Debug (type in script name)',
 				executionDirectory: '${workspaceRoot}',
 				scriptPath: '${workspaceRoot}/${command:AskForScriptName}',
 				commandLineArguments: '',

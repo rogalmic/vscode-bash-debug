@@ -2,33 +2,32 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Extension",
 			"type": "extensionHost",
 			"request": "launch",
+			"name": "Extension",
+			"preLaunchTask": "npm",
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceRoot}"
 			],
 			"sourceMaps": true,
-			"outDir": "${workspaceRoot}/out",
-			"preLaunchTask": "npm"
+			"outFiles": [ "${workspaceRoot}/out/*.js" ]
 		},
 		{
-			"name": "Server",
 			"type": "node",
 			"request": "launch",
-			"runtimeArgs": [ "--nolazy" ],
+			"name": "Server",
+			"cwd": "${workspaceRoot}",
 			"program": "${workspaceRoot}/src/bashDebug.ts",
-			"stopOnEntry": false,
 			"args": [ "--server=4711" ],
 			"sourceMaps": true,
-			"outDir": "${workspaceRoot}/out",
-			"cwd": "${workspaceRoot}"
+			"outFiles": [ "${workspaceRoot}/out/*.js" ]
 		},
 		{
-			"name": "Tests",
 			"type": "node",
 			"request": "launch",
+			"name": "Tests",
+			"cwd": "${workspaceRoot}",
 			"program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
 			"runtimeArgs": [ "--nolazy" ],
 			"args": [
@@ -39,7 +38,6 @@
 			],
 			"sourceMaps": true,
 			"outDir": "${workspaceRoot}/out",
-			"cwd": "${workspaceRoot}",
 			"internalConsoleOptions": "openOnSessionStart"
 		}
 	],
