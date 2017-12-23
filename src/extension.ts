@@ -102,15 +102,21 @@ export function activate(context: vscode.ExtensionContext) {
 			"2. Script path should be hardcoded in launch task",
 			"3. Script path should be typed in by developer when launching"
 		]).then((result)=>{
+			let selectedConfig: Object;
 			switch(parseInt(result.substr(0,1)))
 			{
 				case 1:
-					return JSON.stringify(initialConfigurations.configuration1, null, "\t");
+					selectedConfig = initialConfigurations.configuration1;
 				case 2:
-					return JSON.stringify(initialConfigurations.configuration2, null, "\t");
+					selectedConfig = initialConfigurations.configuration2;
 				default:
-					return JSON.stringify(initialConfigurations.configuration3, null, "\t");
+					selectedConfig = initialConfigurations.configuration3;
 			}
+			return [
+				'// Use IntelliSense to learn about possible Mock debug attributes.',
+				'// Hover to view descriptions of existing attributes.',
+				JSON.stringify(selectedConfig, null, '\t')
+			].join('\n');
 		})
 	}));
 }
