@@ -1,7 +1,9 @@
 import {
 	Logger, logger,
 	DebugSession, LoggingDebugSession,
+	// @ts-ignore: error TS6133: 'BreakpointEvent' is declared but its value is never read.
 	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent,
+	// @ts-ignore: error TS6133: 'Handles' is declared but its value is never read.
 	Thread, StackFrame, Scope, Source, Handles, Breakpoint
 } from 'vscode-debugadapter';
 import {DebugProtocol} from 'vscode-debugprotocol';
@@ -40,7 +42,7 @@ class BashDebugSession extends LoggingDebugSession {
 	private debuggerProcessParentId = -1;
 
 	// https://github.com/Microsoft/BashOnWindows/issues/1489
-	 private debugPipeIndex = (process.platform == "win32") ? 2 : 3;
+	private debugPipeIndex = (process.platform === "win32") ? 2 : 3;
 
 	public constructor() {
 		super("bash-debug.txt");
@@ -84,7 +86,7 @@ class BashDebugSession extends LoggingDebugSession {
 			args.bashPath = "bash";
 		}
 
-		var fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
+		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
 
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
@@ -137,20 +139,20 @@ class BashDebugSession extends LoggingDebugSession {
 
 	private launchRequestFinalize(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
 
-		for (var i = 0; i < this.fullDebugOutput.length; i++) {
-			if (this.fullDebugOutput[i] == BashDebugSession.END_MARKER) {
+		for (let i = 0; i < this.fullDebugOutput.length; i++) {
+			if (this.fullDebugOutput[i] === BashDebugSession.END_MARKER) {
 
 				this.debuggerProcessParentId = parseInt(this.fullDebugOutput[i-1]);
 				this.sendResponse(response);
 				this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
 				this.sendEvent(new InitializedEvent());
 
-				var interval = setInterval((data) => {
+				const interval = setInterval((data) => {
 					for (; this.fullDebugOutputIndex < this.fullDebugOutput.length - 1; this.fullDebugOutputIndex++)
 					{
-						var line = this.fullDebugOutput[this.fullDebugOutputIndex];
+						const line = this.fullDebugOutput[this.fullDebugOutputIndex];
 
-						if (line.indexOf("(/") == 0 && line.indexOf("):") == line.length-2)
+						if (line.indexOf("(/") === 0 && line.indexOf("):") === line.length - 2)
 						{
 							this.sendEvent(new OutputEvent(`Sending StoppedEvent`, 'telemetry'));
 							this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
@@ -180,33 +182,45 @@ class BashDebugSession extends LoggingDebugSession {
 			return;
 		}
 
+		if (!args.source.path) {
+			this.sendEvent(new OutputEvent("Error: setBreakPointsRequest(): args.source.path is undefined.", 'stderr'));
+			return;
+		}
+
 		if (!this.currentBreakpointIds[args.source.path]){
 			this.currentBreakpointIds[args.source.path] = [];
 		}
 
-		var sourcePath = (process.platform == "win32") ? this.getLinuxPathFromWindows(args.source.path) : args.source.path;
+		const sourcePath = (process.platform === "win32") ? this.getLinuxPathFromWindows(args.source.path) : args.source.path;
 
-		var setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nload ${sourcePath}\n`;
-		args.breakpoints.forEach((b)=>{ setBreakpointsCommand += `print ' <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
+		let setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nload ${sourcePath}\n`;
+		if (args.breakpoints) {
+			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print ' <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
+		}
 
 		this.debuggerExecutableBusy = true;
-		var currentLine = this.fullDebugOutput.length;
+		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`${setBreakpointsCommand}print '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(()=>	this.setBreakPointsRequestFinalize(response, args, currentLine));
 	}
 
 	private setBreakPointsRequestFinalize(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, currentOutputLength:number): void {
 
+		if (!args.source.path) {
+			this.sendEvent(new OutputEvent("Error: setBreakPointsRequestFinalize(): args.source.path is undefined.", 'stderr'));
+			return;
+		}
+
 		if (this.promptReached(currentOutputLength))
 		{
 			this.currentBreakpointIds[args.source.path] = [];
-			var breakpoints = new Array<Breakpoint>();
+			const breakpoints = new Array<Breakpoint>();
 
-			for (var i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++ ){
+			for (let i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++) {
 
-				if (this.fullDebugOutput[i-1].indexOf(" <") == 0 && this.fullDebugOutput[i-1].indexOf("> ") > 0) {
+				if (this.fullDebugOutput[i - 1].indexOf(" <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
 
-					var lineNodes = this.fullDebugOutput[i].split(" ");
+					const lineNodes = this.fullDebugOutput[i].split(" ");
 					const bp = <DebugProtocol.Breakpoint> new Breakpoint(true, this.convertDebuggerLineToClient(parseInt(lineNodes[lineNodes.length-1].replace(".",""))));
 					bp.id = parseInt(lineNodes[1]);
 					breakpoints.push(bp);
@@ -238,7 +252,7 @@ class BashDebugSession extends LoggingDebugSession {
 		}
 
 		this.debuggerExecutableBusy = true;
-		var currentLine = this.fullDebugOutput.length;
+		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`print backtrace\nbacktrace\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.stackTraceRequestFinalize(response, args, currentLine));
 	}
@@ -247,17 +261,17 @@ class BashDebugSession extends LoggingDebugSession {
 
 		if (this.promptReached(currentOutputLength))
 		{
-			var lastStackLineIndex = this.fullDebugOutput.length - 3;
+			const lastStackLineIndex = this.fullDebugOutput.length - 3;
 
-			var frames = new Array<StackFrame>();
-			for (var i= currentOutputLength; i <= lastStackLineIndex ; i++) {
-				var lineContent = this.fullDebugOutput[i];
-				var frameIndex = parseInt(lineContent.substr(2, 2));
-				var frameText = lineContent;
-				var frameSourcePath = lineContent.substr(lineContent.lastIndexOf("`") + 1, lineContent.lastIndexOf("'") - lineContent.lastIndexOf("`") - 1);
-				var frameLine = parseInt(lineContent.substr(lineContent.lastIndexOf(" ")));
+			let frames = new Array<StackFrame>();
+			for (let i = currentOutputLength; i <= lastStackLineIndex; i++) {
+				const lineContent = this.fullDebugOutput[i];
+				const frameIndex = parseInt(lineContent.substr(2, 2));
+				const frameText = lineContent;
+				let frameSourcePath = lineContent.substr(lineContent.lastIndexOf("`") + 1, lineContent.lastIndexOf("'") - lineContent.lastIndexOf("`") - 1);
+				const frameLine = parseInt(lineContent.substr(lineContent.lastIndexOf(" ")));
 
-				if ((process.platform == "win32"))
+				if ((process.platform === "win32"))
 				{
 					frameSourcePath = this.getWindowsPathFromLinux(frameSourcePath);
 				}
@@ -270,7 +284,7 @@ class BashDebugSession extends LoggingDebugSession {
 					));
 			}
 
-			var totalFrames = this.fullDebugOutput.length - currentOutputLength -1;
+			const totalFrames = this.fullDebugOutput.length - currentOutputLength - 1;
 
 			const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
 			const maxLevels = typeof args.levels === 'number' ? args.levels : 100;
@@ -287,7 +301,7 @@ class BashDebugSession extends LoggingDebugSession {
 
 	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
 
-		var scopes = [ new Scope("Local", this.fullDebugOutputIndex, false) ];
+		const scopes = [new Scope("Local", this.fullDebugOutputIndex, false)];
 		response.body = { scopes: scopes };
 		this.sendResponse(response);
 	}
@@ -300,17 +314,17 @@ class BashDebugSession extends LoggingDebugSession {
 			return;
 		}
 
-		var getVariablesCommand = `info program\n`;
+		let getVariablesCommand = `info program\n`;
 
 		const count = typeof args.count === 'number' ? args.count : 100;
 		const start = typeof args.start === 'number' ? args.start : 0;
-		var variableDefinitions = ["PWD", "EUID","#","0","-"];
+		let variableDefinitions = ["PWD", "EUID", "#", "0", "-"];
 		variableDefinitions = variableDefinitions.slice(start, Math.min(start + count, variableDefinitions.length));
 
 		variableDefinitions.forEach((v)=>{ getVariablesCommand += `print ' <$${v}> '\nexamine $${v}\n` });
 
 		this.debuggerExecutableBusy = true;
-		var currentLine = this.fullDebugOutput.length;
+		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`${getVariablesCommand}print '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(()=> this.variablesRequestFinalize(response, args, currentLine));
 	}
@@ -319,13 +333,12 @@ class BashDebugSession extends LoggingDebugSession {
 
 		if (this.promptReached(currentOutputLength))
 		{
-			var variables = [];
+			let variables: any[] = [];
 
-			for (var i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++ ){
+			for (let i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++) {
 
-				if (this.fullDebugOutput[i-1].indexOf(" <") == 0 && this.fullDebugOutput[i-1].indexOf("> ") > 0) {
+				if (this.fullDebugOutput[i - 1].indexOf(" <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
 
-					var lineNodes = this.fullDebugOutput[i].split(" ");
 					variables.push({
 						name: `${this.fullDebugOutput[i-1].replace(" <", "").replace("> ", "")}`,
 						type: "string",
@@ -353,7 +366,7 @@ class BashDebugSession extends LoggingDebugSession {
 		}
 
 		this.debuggerExecutableBusy = true;
-		var currentLine = this.fullDebugOutput.length;
+		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`print continue\ncontinue\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(()=>this.continueRequestFinalize(response, args, currentLine));
@@ -386,7 +399,7 @@ class BashDebugSession extends LoggingDebugSession {
 		}
 
 		this.debuggerExecutableBusy = true;
-		var currentLine = this.fullDebugOutput.length;
+		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`print next\nnext\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(()=>this.nextRequestFinalize(response, args, currentLine));
@@ -415,7 +428,7 @@ class BashDebugSession extends LoggingDebugSession {
 		}
 
 		this.debuggerExecutableBusy = true;
-		var currentLine = this.fullDebugOutput.length;
+		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`print step\nstep\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(()=>this.stepInRequestFinalize(response, args, currentLine));
@@ -443,7 +456,7 @@ class BashDebugSession extends LoggingDebugSession {
 		}
 
 		this.debuggerExecutableBusy = true;
-		var currentLine = this.fullDebugOutput.length;
+		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`print finish\nfinish\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(()=>this.stepOutRequestFinalize(response, args, currentLine));
@@ -468,7 +481,7 @@ class BashDebugSession extends LoggingDebugSession {
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
 
-		if (this.debuggerProcess == null){
+		if (this.debuggerProcess === null) {
 			response.body = { result: `${args.expression} = ''`, variablesReference: 0	};
 			this.debuggerExecutableBusy = false;
 			this.sendResponse(response);
@@ -482,7 +495,7 @@ class BashDebugSession extends LoggingDebugSession {
 		}
 
 		this.debuggerExecutableBusy = true;
-		var currentLine = this.fullDebugOutput.length;
+		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`print 'examine <${args.expression}>'\nexamine ${args.expression.replace("\"", "")}\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(()=>this.evaluateRequestFinalize(response, args, currentLine));
 	}
@@ -502,7 +515,7 @@ class BashDebugSession extends LoggingDebugSession {
 	}
 
 	protected pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments): void {
-		if (args.threadId == BashDebugSession.THREAD_ID) {
+		if (args.threadId === BashDebugSession.THREAD_ID) {
 			spawn("bash", ["-c", `pkill -INT -P ${this.debuggerProcessParentId} -f bashdb`]).on("exit", () => this.sendResponse(response));
 			return;
 		}
@@ -512,7 +525,7 @@ class BashDebugSession extends LoggingDebugSession {
 	}
 
 	private removePrompt(line : string): string{
-		if (line.indexOf("bashdb<") == 0) {
+		if (line.indexOf("bashdb<") === 0) {
 			return line.substr(line.indexOf("> ") + 2);
 		}
 
@@ -520,20 +533,20 @@ class BashDebugSession extends LoggingDebugSession {
 	}
 
 	private promptReached(currentOutputLength:number) : boolean{
-		return this.fullDebugOutput.length > currentOutputLength && this.fullDebugOutput[this.fullDebugOutput.length -2] == BashDebugSession.END_MARKER;
+		return this.fullDebugOutput.length > currentOutputLength && this.fullDebugOutput[this.fullDebugOutput.length - 2] === BashDebugSession.END_MARKER;
 	}
 
 	private processDebugTerminalOutput(): void {
 
 		this.debuggerProcess.stdio[this.debugPipeIndex].on('data', (data) => {
 
-			if (this.fullDebugOutput.length == 1 && data.indexOf("Reading ") == 0) {
+			if (this.fullDebugOutput.length === 1 && data.indexOf("Reading ") === 0) {
 				// Before debug run, there is no newline
 				return;
 			}
 
-			var list = data.toString().split("\n", -1);
-			var fullLine = `${this.fullDebugOutput.pop()}${list.shift()}`;
+			const list = data.toString().split("\n", -1);
+			const fullLine = `${this.fullDebugOutput.pop()}${list.shift()}`;
 			this.fullDebugOutput.push(this.removePrompt(fullLine));
 			list.forEach(l => this.fullDebugOutput.push(this.removePrompt(l)));
 		})

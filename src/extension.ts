@@ -74,23 +74,23 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.getProgramName', config => {
 		return vscode.window.showInputBox({
 			placeHolder: "Please enter the relative path to bash script.",
-			value: (process.platform == "win32") ? "{workspaceRoot}\\path\\to\\script.sh" : "{workspaceRoot}/path/to/script.sh"
+			value: (process.platform === "win32") ? "{workspaceRoot}\\path\\to\\script.sh" : "{workspaceRoot}/path/to/script.sh"
 		}).then((result)=>{
 			return result.replace("{workspaceRoot}", vscode.workspace.rootPath);
 		}).then((result)=>{
-			return (process.platform == "win32") ? "/mnt/" + result.substr(0, 1).toLowerCase() + result.substr("X:".length).split("\\").join("/") : result;
+			return (process.platform === "win32") ? "/mnt/" + result.substr(0, 1).toLowerCase() + result.substr("X:".length).split("\\").join("/") : result;
 		});
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.selectProgramName', config => {
 
 		return vscode.workspace.findFiles("**/*.sh", "").then((uris) => {
-			var list = new Array<string>();
-			for (var i = 0 ; i < uris.length ; i++){
+			const list = new Array<string>();
+			for (let i = 0; i < uris.length; i++) {
 				list.push(uris[i].fsPath);
 			}
 			return vscode.window.showQuickPick(list).then((result)=>{
-				return (process.platform == "win32") ? "/mnt/" + result.substr(0, 1).toLowerCase() + result.substr("X:".length).split("\\").join("/") : result;
+				return (process.platform === "win32") ? "/mnt/" + result.substr(0, 1).toLowerCase() + result.substr("X:".length).split("\\").join("/") : result;
 			});
 		});
 	}));
