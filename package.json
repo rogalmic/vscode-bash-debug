@@ -28,8 +28,8 @@
 		"url": "https://github.com/rogalmic/vscode-bash-debug/issues"
 	},
 	"dependencies": {
-		"vscode-debugprotocol": "^1.24.0",
-		"vscode-debugadapter": "^1.24.0",
+		"vscode-debugprotocol": "^1.25.0-pre.0",
+		"vscode-debugadapter": "^1.25.0-pre.0",
 		"child-process": "^1.0.2"
 	},
 	"devDependencies": {
@@ -60,7 +60,9 @@
 	],
 	"contributes": {
 		"breakpoints": [
-			{ "language": "shellscript" }
+			{
+				"language": "shellscript"
+			}
 		],
 		"debuggers": [
 			{
@@ -70,7 +72,10 @@
 				"runtime": "node",
 				"configurationAttributes": {
 					"launch": {
-						"required": [ "scriptPath", "commandLineArguments" ],
+						"required": [
+							"scriptPath",
+							"commandLineArguments"
+						],
 						"properties": {
 							"scriptPath": {
 								"type": "string",
