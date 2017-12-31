@@ -279,7 +279,7 @@ class BashDebugSession extends LoggingDebugSession {
 				frames.push(new StackFrame(
 					frameIndex,
 					frameText,
-					new Source(basename(frameSourcePath), this.convertDebuggerPathToClient(frameSourcePath)),
+					new Source(basename(frameSourcePath), this.convertDebuggerPathToClient(frameSourcePath), undefined, undefined, 'bash-adapter-data'),
 					this.convertDebuggerLineToClient(frameLine)
 					));
 			}
