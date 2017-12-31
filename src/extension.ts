@@ -8,12 +8,12 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.getProgramName', config => {
 		return vscode.window.showInputBox({
 			placeHolder: "Please enter the relative path to bash script.",
-			value: (process.platform === "win32") ? "{workspaceRoot}\\path\\to\\script.sh" : "{workspaceRoot}/path/to/script.sh"
+			value: (process.platform === "win32") ? "{workspaceFolder}\\path\\to\\script.sh" : "{workspaceFolder}/path/to/script.sh"
 		}).then((result)=>{
 			if (!result) {
 				return undefined; // canceled, abort launch
 			};
-			result = result.replace("{workspaceRoot}", <string>vscode.workspace.rootPath);
+			result = result.replace("{workspaceFolder}", <string>vscode.workspace.rootPath);
 			return (process.platform === "win32") ? "/mnt/" + result.substr(0, 1).toLowerCase() + result.substr("X:".length).split("\\").join("/") : result;
 		});
 	}));

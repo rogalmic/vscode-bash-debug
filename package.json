@@ -8,6 +8,9 @@
 		"name": "Michal Rogalinski",
 		"email": "rogalinsky@gmail.com"
 	},
+	"keywords": [
+		"multi-root ready"
+	],
 	"engines": {
 		"vscode": "^1.17.0",
 		"node": "^7.9.0"
@@ -72,7 +75,7 @@
 							"scriptPath": {
 								"type": "string",
 								"description": "Absolute path to a script.",
-								"default": "${workspaceRoot}/${command:SelectScriptName}"
+								"default": "${workspaceFolder}/${command:SelectScriptName}"
 							},
 							"commandLineArguments": {
 								"type": "string",
@@ -107,7 +110,7 @@
 						"type": "bashdb",
 						"request": "launch",
 						"name": "Bash-Debug (select script from list of sh files)",
-						"executionDirectory": "${workspaceRoot}",
+						"executionDirectory": "${workspaceFolder}",
 						"scriptPath": "${command:SelectScriptName}",
 						"commandLineArguments": "",
 						"windows": {
@@ -124,8 +127,8 @@
 						"type": "bashdb",
 						"request": "launch",
 						"name": "Bash-Debug (hardcoded script name)",
-						"executionDirectory": "${workspaceRoot}",
-						"scriptPath": "${workspaceRoot}/path/to/script.sh",
+						"executionDirectory": "${workspaceFolder}",
+						"scriptPath": "${workspaceFolder}/path/to/script.sh",
 						"commandLineArguments": "",
 						"windows": {
 							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
@@ -141,8 +144,8 @@
 						"type": "bashdb",
 						"request": "launch",
 						"name": "Bash-Debug (type in script name)",
-						"executionDirectory": "${workspaceRoot}",
-						"scriptPath": "${workspaceRoot}/${command:AskForScriptName}",
+						"executionDirectory": "${workspaceFolder}",
+						"scriptPath": "${workspaceFolder}/${command:AskForScriptName}",
 						"commandLineArguments": "",
 						"windows": {
 							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
@@ -163,7 +166,7 @@
 							"type": "bashdb",
 							"request": "launch",
 							"name": "{2:Launch Program}",
-							"program": "^\"\\${workspaceRoot}/${1:Program}\""
+							"program": "^\"\\${workspaceFolder}/${1:Program}\""
 						}
 					}
 				],

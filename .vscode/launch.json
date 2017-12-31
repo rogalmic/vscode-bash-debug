@@ -8,25 +8,25 @@
 			"preLaunchTask": "npm",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}"
+				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
-			"outFiles": [ "${workspaceRoot}/out/**/*.js" ]
+			"outFiles": [ "${workspaceFolder}/out/**/*.js" ]
 		},
 		{
 			"type": "node",
 			"request": "launch",
 			"name": "Server",
-			"cwd": "${workspaceRoot}",
-			"program": "${workspaceRoot}/src/bashDebug.ts",
+			"cwd": "${workspaceFolder}",
+			"program": "${workspaceFolder}/src/bashDebug.ts",
 			"args": [ "--server=4711" ],
-			"outFiles": [ "${workspaceRoot}/out/**/*.js" ]
+			"outFiles": [ "${workspaceFolder}/out/**/*.js" ]
 		},
 		{
 			"type": "node",
 			"request": "launch",
 			"name": "Tests",
-			"cwd": "${workspaceRoot}",
-			"program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+			"cwd": "${workspaceFolder}",
+			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
 			"runtimeArgs": [ "--nolazy" ],
 			"args": [
 				"-u", "tdd",
@@ -34,7 +34,7 @@
 				"--colors",
 				"./out/tests/"
 			],
-			"outFiles": [ "${workspaceRoot}/out/**/*.js" ],
+			"outFiles": [ "${workspaceFolder}/out/**/*.js" ],
 			"internalConsoleOptions": "openOnSessionStart"
 		}
 	],
