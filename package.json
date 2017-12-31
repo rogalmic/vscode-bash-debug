@@ -9,8 +9,8 @@
 		"email": "rogalinsky@gmail.com"
 	},
 	"engines": {
-		"vscode": "^1.7.1",
-		"node": "^6.5.0"
+		"vscode": "^1.17.0",
+		"node": "^7.9.0"
 	},
 	"icon": "images/bash-debug-icon.svg",
 	"categories": [
@@ -51,44 +51,20 @@
 	},
 	"main": "./out/extension",
 	"activationEvents": [
+		"onDebug",
 		"onCommand:extension.bash-debug.getProgramName",
-		"onCommand:extension.bash-debug.selectProgramName",
-		"onCommand:extension.bash-debug.provideInitialConfigurations"
+		"onCommand:extension.bash-debug.selectProgramName"
 	],
 	"contributes": {
 		"breakpoints": [
-			{
-				"language": "shellscript"
-			}
+			{ "language": "shellscript" }
 		],
 		"debuggers": [
 			{
 				"type": "bashdb",
 				"label": "Bash Debug",
-
 				"program": "./out/bashDebug.js",
 				"runtime": "node",
-
-				"variables": {
-					"AskForScriptName": "extension.bash-debug.getProgramName",
-					"SelectScriptName": "extension.bash-debug.selectProgramName"
-				},
-
-				"initialConfigurations": "extension.bash-debug.provideInitialConfigurations",
-
-				"configurationSnippets": [
-					{
-						"label": "Bash Debug: Launch",
-						"description": "A new configuration for launching a bash debug program",
-						"body": {
-							"type": "bashdb",
-							"request": "launch",
-							"name": "{2:Launch Program}",
-							"program": "^\"\\${workspaceRoot}/${1:Program}\""
-						}
-					}
-				],
-
 				"configurationAttributes": {
 					"launch": {
 						"required": [ "scriptPath", "commandLineArguments" ],
@@ -125,6 +101,75 @@
 							}
 						}
 					}
+				},
+				"initialConfigurations": [
+					{
+						"type": "bashdb",
+						"request": "launch",
+						"name": "Bash-Debug (select script from list of sh files)",
+						"executionDirectory": "${workspaceRoot}",
+						"scriptPath": "${command:SelectScriptName}",
+						"commandLineArguments": "",
+						"windows": {
+							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
+						},
+						"linux": {
+							"bashPath": "bash"
+						},
+						"osx": {
+							"bashPath": "bash"
+						}
+					},
+					{
+						"type": "bashdb",
+						"request": "launch",
+						"name": "Bash-Debug (hardcoded script name)",
+						"executionDirectory": "${workspaceRoot}",
+						"scriptPath": "${workspaceRoot}/path/to/script.sh",
+						"commandLineArguments": "",
+						"windows": {
+							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
+						},
+						"linux": {
+							"bashPath": "bash"
+						},
+						"osx": {
+							"bashPath": "bash"
+						}
+					},
+					{
+						"type": "bashdb",
+						"request": "launch",
+						"name": "Bash-Debug (type in script name)",
+						"executionDirectory": "${workspaceRoot}",
+						"scriptPath": "${workspaceRoot}/${command:AskForScriptName}",
+						"commandLineArguments": "",
+						"windows": {
+							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
+						},
+						"linux": {
+							"bashPath": "bash"
+						},
+						"osx": {
+							"bashPath": "bash"
+						}
+					}
+				],
+				"configurationSnippets": [
+					{
+						"label": "Bash Debug: Launch",
+						"description": "A new configuration for launching a bash debug program",
+						"body": {
+							"type": "bashdb",
+							"request": "launch",
+							"name": "{2:Launch Program}",
+							"program": "^\"\\${workspaceRoot}/${1:Program}\""
+						}
+					}
+				],
+				"variables": {
+					"AskForScriptName": "extension.bash-debug.getProgramName",
+					"SelectScriptName": "extension.bash-debug.selectProgramName"
 				}
 			}
 		]

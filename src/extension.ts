@@ -1,73 +1,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-
-const initialConfigurations = {
-	configuration1: {
-		"version": "0.2.0",
-		"configurations": [
-			{
-				type: 'bashdb',
-				request: 'launch',
-				name: 'Bash-Debug (select script from list of sh files)',
-				executionDirectory: '${workspaceRoot}',
-				scriptPath: '${command:SelectScriptName}',
-				commandLineArguments: '',
-				windows: {
-					bashPath: "C:\\Windows\\sysnative\\bash.exe"
-				},
-				linux: {
-					bashPath: "bash"
-				},
-				osx: {
-					bashPath: "bash"
-				}
-			}]
-	},
-	configuration2: {
-		"version": "0.2.0",
-		"configurations": [
-			{
-				type: 'bashdb',
-				request: 'launch',
-				name: 'Bash-Debug (hardcoded script name)',
-				executionDirectory: '${workspaceRoot}',
-				scriptPath: '${workspaceRoot}/path/to/script.sh',
-				commandLineArguments: '',
-				windows: {
-					bashPath: "C:\\Windows\\sysnative\\bash.exe"
-				},
-				linux: {
-					bashPath: "bash"
-				},
-				osx: {
-					bashPath: "bash"
-				}
-			}]
-	},
-	configuration3: {
-		"version": "0.2.0",
-		"configurations": [
-			{
-				type: 'bashdb',
-				request: 'launch',
-				name: 'Bash-Debug (type in script name)',
-				executionDirectory: '${workspaceRoot}',
-				scriptPath: '${workspaceRoot}/${command:AskForScriptName}',
-				commandLineArguments: '',
-				windows: {
-					bashPath: "C:\\Windows\\sysnative\\bash.exe"
-				},
-				linux: {
-					bashPath: "bash"
-				},
-				osx: {
-					bashPath: "bash"
-				}
-			}
-		]
-	}
-}
+import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -95,32 +29,41 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.provideInitialConfigurations', config => {
-
-		return vscode.window.showQuickPick(
-			["1. Script path should be selected from drop-down list of shell scripts in workspace",
-			"2. Script path should be hardcoded in launch task",
-			"3. Script path should be typed in by developer when launching"
-		]).then((result)=>{
-			let selectedConfig: Object;
-			switch(parseInt(result.substr(0,1)))
-			{
-				case 1:
-					selectedConfig = initialConfigurations.configuration1;
-				case 2:
-					selectedConfig = initialConfigurations.configuration2;
-				default:
-					selectedConfig = initialConfigurations.configuration3;
-			}
-			return [
-				'// Use IntelliSense to learn about possible Mock debug attributes.',
-				'// Hover to view descriptions of existing attributes.',
-				JSON.stringify(selectedConfig, null, '\t')
-			].join('\n');
-		})
-	}));
+	// register a configuration provider for 'bash' debug type
+	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('mock', new BashConfigurationProvider()));
 }
 
 export function deactivate() {
 	// nothing to do
+}
+
+class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
+
+	/**
+	 * Massage a debug configuration just before a debug session is being launched,
+	 * e.g. add all missing attributes to the debug configuration.
+	 */
+	resolveDebugConfiguration(folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
+
+		// if launch.json is missing or empty
+		if (!config.type && !config.request && !config.name) {
+			const editor = vscode.window.activeTextEditor;
+			if (editor && editor.document.languageId === 'shellscript' ) {
+				config.type = 'bashdb';
+				config.name = 'Launch';
+				config.request = 'launch';
+				config.program = '${file}';
+				config.stopOnEntry = true;
+				// TODO etc
+			}
+		}
+
+		if (!config.program) {
+			return vscode.window.showInformationMessage("Cannot find a program to debug").then(_ => {
+				return undefined;	// abort launch
+			});
+		}
+
+		return config;
+	}
 }
