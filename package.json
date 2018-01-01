@@ -8,9 +8,13 @@
 		"name": "Michal Rogalinski",
 		"email": "rogalinsky@gmail.com"
 	},
+	"license": "MIT",
+	"keywords": [
+		"multi-root ready"
+	],
 	"engines": {
-		"vscode": "^1.7.1",
-		"node": "^6.5.0"
+		"vscode": "^1.18.0",
+		"node": "^7.9.0"
 	},
 	"icon": "images/bash-debug-icon.svg",
 	"categories": [
@@ -25,33 +29,35 @@
 		"url": "https://github.com/rogalmic/vscode-bash-debug/issues"
 	},
 	"dependencies": {
-		"vscode-debugprotocol": "^1.14.0",
-		"vscode-debugadapter": "^1.14.0",
+		"vscode-debugprotocol": "1.25.0",
+		"vscode-debugadapter": "1.25.0",
 		"child-process": "^1.0.2"
 	},
 	"devDependencies": {
-		"@types/es6-collections": "^0.5.29",
-		"@types/es6-promise": "^0.0.32",
-		"@types/mocha": "^2.2.32",
-		"@types/node": "^6.0.46",
-		"typescript": "^2.0.6",
-		"mocha": "^3.1.2",
-		"vscode": "^1.0.3",
-		"vscode-debugadapter-testsupport": "^1.14.0",
-		"vsce": "^1.16.1"
+	"@types/node": "7.0.43",
+	"@types/mocha": "2.2.45",
+	"typescript": "2.6.2",
+	"mocha": "4.0.1",
+	"vscode": "1.1.10",
+	"vscode-debugadapter-testsupport": "1.25.0",
+	"tslint": "5.8.0",
+	"vsce": "1.35.0"
 	},
 	"scripts": {
-		"prepublish": "node ./node_modules/typescript/bin/tsc -p ./src",
-		"compile": "node ./node_modules/typescript/bin/tsc -p ./src",
-		"watch": "node ./node_modules/typescript/bin/tsc -w -p ./src",
-		"test": "node ./node_modules/mocha/bin/mocha -u tdd ./out/tests/",
-		"postinstall": "node ./node_modules/vscode/bin/install"
+		"prepublish": "tsc -p ./src",
+		"compile": "tsc -p ./src",
+		"tslint": "tslint ./src/**/*.ts",
+		"watch": "tsc -w -p ./src",
+		"test": "mocha -u tdd ./out/tests/",
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"package": "vsce package",
+		"publish": "vsce publish"
 	},
 	"main": "./out/extension",
 	"activationEvents": [
-		"onCommand:extension.getProgramName",
-		"onCommand:extension.selectProgramName",
-		"onCommand:extension.bash-debug.provideInitialConfigurations"
+		"onDebug",
+		"onCommand:extension.bash-debug.getProgramName",
+		"onCommand:extension.bash-debug.selectProgramName"
 	],
 	"contributes": {
 		"breakpoints": [
@@ -63,23 +69,19 @@
 			{
 				"type": "bashdb",
 				"label": "Bash Debug",
-
 				"program": "./out/bashDebug.js",
 				"runtime": "node",
-
-				"variables": {
-					"AskForScriptName": "extension.getProgramName",
-					"SelectScriptName": "extension.selectProgramName"
-				},
-
 				"configurationAttributes": {
 					"launch": {
-						"required": [ "scriptPath", "commandLineArguments" ],
+						"required": [
+							"scriptPath",
+							"commandLineArguments"
+						],
 						"properties": {
 							"scriptPath": {
 								"type": "string",
 								"description": "Absolute path to a script.",
-								"default": "${workspaceRoot}/${command.SelectScriptName}"
+								"default": "${workspaceFolder}/${command:SelectScriptName}"
 							},
 							"commandLineArguments": {
 								"type": "string",
@@ -100,11 +102,84 @@
 								"type": "boolean",
 								"description": "Defines if bashdb output will be visible together with script output.",
 								"default": false
+							},
+							"trace": {
+								"type": "boolean",
+								"description": "Enable logging of the Debug Adapter Protocol.",
+								"default": true
 							}
 						}
 					}
 				},
-				"initialConfigurations": "extension.bash-debug.provideInitialConfigurations"
+				"initialConfigurations": [
+					{
+						"type": "bashdb",
+						"request": "launch",
+						"name": "Bash-Debug (select script from list of sh files)",
+						"executionDirectory": "${workspaceFolder}",
+						"scriptPath": "${command:SelectScriptName}",
+						"commandLineArguments": "",
+						"windows": {
+							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
+						},
+						"linux": {
+							"bashPath": "bash"
+						},
+						"osx": {
+							"bashPath": "bash"
+						}
+					},
+					{
+						"type": "bashdb",
+						"request": "launch",
+						"name": "Bash-Debug (hardcoded script name)",
+						"executionDirectory": "${workspaceFolder}",
+						"scriptPath": "${workspaceFolder}/path/to/script.sh",
+						"commandLineArguments": "",
+						"windows": {
+							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
+						},
+						"linux": {
+							"bashPath": "bash"
+						},
+						"osx": {
+							"bashPath": "bash"
+						}
+					},
+					{
+						"type": "bashdb",
+						"request": "launch",
+						"name": "Bash-Debug (type in script name)",
+						"executionDirectory": "${workspaceFolder}",
+						"scriptPath": "${workspaceFolder}/${command:AskForScriptName}",
+						"commandLineArguments": "",
+						"windows": {
+							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
+						},
+						"linux": {
+							"bashPath": "bash"
+						},
+						"osx": {
+							"bashPath": "bash"
+						}
+					}
+				],
+				"configurationSnippets": [
+					{
+						"label": "Bash Debug: Launch",
+						"description": "A new configuration for 'debugging' a user selected shell script file.",
+						"body": {
+							"type": "bashdb",
+							"request": "launch",
+							"name": "Ask for file name",
+							"program": "^\"\\${workspaceFolder}/\\${command:AskForScriptName}\""
+						}
+					}
+				],
+				"variables": {
+					"AskForScriptName": "extension.bash-debug.getProgramName",
+					"SelectScriptName": "extension.bash-debug.selectProgramName"
+				}
 			}
 		]
 	}

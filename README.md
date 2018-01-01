@@ -47,7 +47,7 @@ Hopefully bash will land on 3 leading platforms making this extension very usefu
 
 See https://code.visualstudio.com/docs/editor/debugging for general usage.
 
-NOTE: step 2. is skipped if `${workspaceRoot}/.vscode/launch.json` exists. Rename it temporary before, to create the configuration.
+NOTE: step 2. is skipped if `${workspaceFolder}/.vscode/launch.json` exists. Rename it temporary before, to create the configuration.
 
 ![unfortunatly no animation for you](images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
 
