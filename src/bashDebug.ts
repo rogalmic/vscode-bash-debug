@@ -6,9 +6,9 @@ import {
 	// @ts-ignore: error TS6133: 'Handles' is declared but its value is never read.
 	Thread, StackFrame, Scope, Source, Handles, Breakpoint
 } from 'vscode-debugadapter';
-import {DebugProtocol} from 'vscode-debugprotocol';
-import {ChildProcess, spawn} from "child_process";
-import {basename} from 'path';
+import { DebugProtocol } from 'vscode-debugprotocol';
+import { ChildProcess, spawn } from "child_process";
+import { basename } from 'path';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -65,7 +65,7 @@ class BashDebugSession extends LoggingDebugSession {
 	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments): void {
 		this.debuggerExecutableBusy = false;
 
-		this.debuggerProcess.on("exit", ()=> {
+		this.debuggerProcess.on("exit", () => {
 			this.debuggerExecutableClosing = true;
 			this.sendResponse(response)
 		});
@@ -110,7 +110,7 @@ class BashDebugSession extends LoggingDebugSession {
 			cat | ${args.bashDbPath} --quiet --tty "${fifo_path}" -- "${args.scriptPath}" ${args.commandLineArguments}
 
 			cleanup`
-		], {stdio: ["pipe", "pipe", "pipe", "pipe"]});
+		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
 
 		this.debuggerProcess.on("error", (error) => {
 			this.sendEvent(new OutputEvent(`${error}`, 'stderr'));
@@ -142,43 +142,39 @@ class BashDebugSession extends LoggingDebugSession {
 		for (let i = 0; i < this.fullDebugOutput.length; i++) {
 			if (this.fullDebugOutput[i] === BashDebugSession.END_MARKER) {
 
-				this.debuggerProcessParentId = parseInt(this.fullDebugOutput[i-1]);
+				this.debuggerProcessParentId = parseInt(this.fullDebugOutput[i - 1]);
 				this.sendResponse(response);
 				this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
 				this.sendEvent(new InitializedEvent());
 
 				const interval = setInterval((data) => {
-					for (; this.fullDebugOutputIndex < this.fullDebugOutput.length - 1; this.fullDebugOutputIndex++)
-					{
+					for (; this.fullDebugOutputIndex < this.fullDebugOutput.length - 1; this.fullDebugOutputIndex++) {
 						const line = this.fullDebugOutput[this.fullDebugOutputIndex];
 
-						if (line.indexOf("(/") === 0 && line.indexOf("):") === line.length - 2)
-						{
+						if (line.indexOf("(/") === 0 && line.indexOf("):") === line.length - 2) {
 							this.sendEvent(new OutputEvent(`Sending StoppedEvent`, 'telemetry'));
 							this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
 						}
-						else if (line.indexOf("terminated") > 0)
-						{
+						else if (line.indexOf("terminated") > 0) {
 							clearInterval(interval);
 							this.sendEvent(new OutputEvent(`Sending TerminatedEvent`, 'telemetry'));
 							this.sendEvent(new TerminatedEvent());
 						}
 					}
 				},
-				this.responsivityFactor);
+					this.responsivityFactor);
 				return;
 			}
 		}
 
-		this.scheduleExecution(()=>this.launchRequestFinalize(response, args));
+		this.scheduleExecution(() => this.launchRequestFinalize(response, args));
 	}
 
 
 	protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {
 
-		if (this.debuggerExecutableBusy)
-		{
-			this.scheduleExecution(()=>	this.setBreakPointsRequest(response, args));
+		if (this.debuggerExecutableBusy) {
+			this.scheduleExecution(() => this.setBreakPointsRequest(response, args));
 			return;
 		}
 
@@ -187,7 +183,7 @@ class BashDebugSession extends LoggingDebugSession {
 			return;
 		}
 
-		if (!this.currentBreakpointIds[args.source.path]){
+		if (!this.currentBreakpointIds[args.source.path]) {
 			this.currentBreakpointIds[args.source.path] = [];
 		}
 
@@ -201,18 +197,17 @@ class BashDebugSession extends LoggingDebugSession {
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`${setBreakpointsCommand}print '${BashDebugSession.END_MARKER}'\n`);
-		this.scheduleExecution(()=>	this.setBreakPointsRequestFinalize(response, args, currentLine));
+		this.scheduleExecution(() => this.setBreakPointsRequestFinalize(response, args, currentLine));
 	}
 
-	private setBreakPointsRequestFinalize(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, currentOutputLength:number): void {
+	private setBreakPointsRequestFinalize(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, currentOutputLength: number): void {
 
 		if (!args.source.path) {
 			this.sendEvent(new OutputEvent("Error: setBreakPointsRequestFinalize(): args.source.path is undefined.", 'stderr'));
 			return;
 		}
 
-		if (this.promptReached(currentOutputLength))
-		{
+		if (this.promptReached(currentOutputLength)) {
 			this.currentBreakpointIds[args.source.path] = [];
 			const breakpoints = new Array<Breakpoint>();
 
@@ -221,7 +216,7 @@ class BashDebugSession extends LoggingDebugSession {
 				if (this.fullDebugOutput[i - 1].indexOf(" <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
 
 					const lineNodes = this.fullDebugOutput[i].split(" ");
-					const bp = <DebugProtocol.Breakpoint> new Breakpoint(true, this.convertDebuggerLineToClient(parseInt(lineNodes[lineNodes.length-1].replace(".",""))));
+					const bp = <DebugProtocol.Breakpoint>new Breakpoint(true, this.convertDebuggerLineToClient(parseInt(lineNodes[lineNodes.length - 1].replace(".", ""))));
 					bp.id = parseInt(lineNodes[1]);
 					breakpoints.push(bp);
 					this.currentBreakpointIds[args.source.path].push(bp.id);
@@ -234,20 +229,19 @@ class BashDebugSession extends LoggingDebugSession {
 			return;
 		}
 
-		this.scheduleExecution(()=> this.setBreakPointsRequestFinalize(response, args, currentOutputLength));
+		this.scheduleExecution(() => this.setBreakPointsRequestFinalize(response, args, currentOutputLength));
 	}
 
 	protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
 
-		response.body = { threads: [ new Thread(BashDebugSession.THREAD_ID, "Bash thread") ]};
+		response.body = { threads: [new Thread(BashDebugSession.THREAD_ID, "Bash thread")] };
 		this.sendResponse(response);
 	}
 
 	protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
 
-		if (this.debuggerExecutableBusy)
-		{
-			this.scheduleExecution(()=>	this.stackTraceRequest(response, args));
+		if (this.debuggerExecutableBusy) {
+			this.scheduleExecution(() => this.stackTraceRequest(response, args));
 			return;
 		}
 
@@ -257,10 +251,9 @@ class BashDebugSession extends LoggingDebugSession {
 		this.scheduleExecution(() => this.stackTraceRequestFinalize(response, args, currentLine));
 	}
 
-	private stackTraceRequestFinalize(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments, currentOutputLength:number): void {
+	private stackTraceRequestFinalize(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments, currentOutputLength: number): void {
 
-		if (this.promptReached(currentOutputLength))
-		{
+		if (this.promptReached(currentOutputLength)) {
 			const lastStackLineIndex = this.fullDebugOutput.length - 3;
 
 			let frames = new Array<StackFrame>();
@@ -271,8 +264,7 @@ class BashDebugSession extends LoggingDebugSession {
 				let frameSourcePath = lineContent.substr(lineContent.lastIndexOf("`") + 1, lineContent.lastIndexOf("'") - lineContent.lastIndexOf("`") - 1);
 				const frameLine = parseInt(lineContent.substr(lineContent.lastIndexOf(" ")));
 
-				if ((process.platform === "win32"))
-				{
+				if ((process.platform === "win32")) {
 					frameSourcePath = this.getWindowsPathFromLinux(frameSourcePath);
 				}
 
@@ -281,7 +273,7 @@ class BashDebugSession extends LoggingDebugSession {
 					frameText,
 					new Source(basename(frameSourcePath), this.convertDebuggerPathToClient(frameSourcePath), undefined, undefined, 'bash-adapter-data'),
 					this.convertDebuggerLineToClient(frameLine)
-					));
+				));
 			}
 
 			const totalFrames = this.fullDebugOutput.length - currentOutputLength - 1;
@@ -308,9 +300,8 @@ class BashDebugSession extends LoggingDebugSession {
 
 	protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
 
-		if (this.debuggerExecutableBusy)
-		{
-			this.scheduleExecution(()=>	this.variablesRequest(response, args));
+		if (this.debuggerExecutableBusy) {
+			this.scheduleExecution(() => this.variablesRequest(response, args));
 			return;
 		}
 
@@ -321,18 +312,17 @@ class BashDebugSession extends LoggingDebugSession {
 		let variableDefinitions = ["PWD", "EUID", "#", "0", "-"];
 		variableDefinitions = variableDefinitions.slice(start, Math.min(start + count, variableDefinitions.length));
 
-		variableDefinitions.forEach((v)=>{ getVariablesCommand += `print ' <$${v}> '\nexamine $${v}\n` });
+		variableDefinitions.forEach((v) => { getVariablesCommand += `print ' <$${v}> '\nexamine $${v}\n` });
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`${getVariablesCommand}print '${BashDebugSession.END_MARKER}'\n`);
-		this.scheduleExecution(()=> this.variablesRequestFinalize(response, args, currentLine));
+		this.scheduleExecution(() => this.variablesRequestFinalize(response, args, currentLine));
 	}
 
-	private variablesRequestFinalize(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments, currentOutputLength:number): void {
+	private variablesRequestFinalize(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments, currentOutputLength: number): void {
 
-		if (this.promptReached(currentOutputLength))
-		{
+		if (this.promptReached(currentOutputLength)) {
 			let variables: any[] = [];
 
 			for (let i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++) {
@@ -340,7 +330,7 @@ class BashDebugSession extends LoggingDebugSession {
 				if (this.fullDebugOutput[i - 1].indexOf(" <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
 
 					variables.push({
-						name: `${this.fullDebugOutput[i-1].replace(" <", "").replace("> ", "")}`,
+						name: `${this.fullDebugOutput[i - 1].replace(" <", "").replace("> ", "")}`,
 						type: "string",
 						value: this.fullDebugOutput[i],
 						variablesReference: 0
@@ -354,14 +344,13 @@ class BashDebugSession extends LoggingDebugSession {
 			return;
 		}
 
-		this.scheduleExecution(()=> this.variablesRequestFinalize(response, args, currentOutputLength));
+		this.scheduleExecution(() => this.variablesRequestFinalize(response, args, currentOutputLength));
 	}
 
 	protected continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments): void {
 
-		if (this.debuggerExecutableBusy)
-		{
-			this.scheduleExecution(()=>	this.continueRequest(response, args));
+		if (this.debuggerExecutableBusy) {
+			this.scheduleExecution(() => this.continueRequest(response, args));
 			return;
 		}
 
@@ -369,21 +358,20 @@ class BashDebugSession extends LoggingDebugSession {
 		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`print continue\ncontinue\nprint '${BashDebugSession.END_MARKER}'\n`);
 
-		this.scheduleExecution(()=>this.continueRequestFinalize(response, args, currentLine));
+		this.scheduleExecution(() => this.continueRequestFinalize(response, args, currentLine));
 
 		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
-	private continueRequestFinalize(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments, currentOutputLength:number): void {
+	private continueRequestFinalize(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments, currentOutputLength: number): void {
 
-		if (this.promptReached(currentOutputLength))
-		{
+		if (this.promptReached(currentOutputLength)) {
 			this.debuggerExecutableBusy = false;
 			return;
 		}
 
-		this.scheduleExecution(()=>this.continueRequestFinalize(response, args, currentOutputLength));
+		this.scheduleExecution(() => this.continueRequestFinalize(response, args, currentOutputLength));
 	}
 
 	// bashdb doesn't support reverse execution
@@ -392,9 +380,8 @@ class BashDebugSession extends LoggingDebugSession {
 
 	protected nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments): void {
 
-		if (this.debuggerExecutableBusy)
-		{
-			this.scheduleExecution(()=>	this.nextRequest(response, args));
+		if (this.debuggerExecutableBusy) {
+			this.scheduleExecution(() => this.nextRequest(response, args));
 			return;
 		}
 
@@ -402,28 +389,26 @@ class BashDebugSession extends LoggingDebugSession {
 		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`print next\nnext\nprint '${BashDebugSession.END_MARKER}'\n`);
 
-		this.scheduleExecution(()=>this.nextRequestFinalize(response, args, currentLine));
+		this.scheduleExecution(() => this.nextRequestFinalize(response, args, currentLine));
 
 		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
-	private nextRequestFinalize(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments, currentOutputLength:number): void {
+	private nextRequestFinalize(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments, currentOutputLength: number): void {
 
-		if (this.promptReached(currentOutputLength))
-		{
+		if (this.promptReached(currentOutputLength)) {
 			this.debuggerExecutableBusy = false;
 			return;
 		}
 
-		this.scheduleExecution(()=>this.nextRequestFinalize(response, args, currentOutputLength));
+		this.scheduleExecution(() => this.nextRequestFinalize(response, args, currentOutputLength));
 	}
 
 	protected stepInRequest(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments): void {
 
-		if (this.debuggerExecutableBusy)
-		{
-			this.scheduleExecution(()=>	this.stepInRequest(response, args));
+		if (this.debuggerExecutableBusy) {
+			this.scheduleExecution(() => this.stepInRequest(response, args));
 			return;
 		}
 
@@ -431,27 +416,25 @@ class BashDebugSession extends LoggingDebugSession {
 		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`print step\nstep\nprint '${BashDebugSession.END_MARKER}'\n`);
 
-		this.scheduleExecution(()=>this.stepInRequestFinalize(response, args, currentLine));
+		this.scheduleExecution(() => this.stepInRequestFinalize(response, args, currentLine));
 
 		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
-	private stepInRequestFinalize(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments, currentOutputLength:number): void {
-		if (this.promptReached(currentOutputLength))
-		{
+	private stepInRequestFinalize(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments, currentOutputLength: number): void {
+		if (this.promptReached(currentOutputLength)) {
 			this.debuggerExecutableBusy = false;
 			return;
 		}
 
-		this.scheduleExecution(()=>this.stepInRequestFinalize(response, args, currentOutputLength));
+		this.scheduleExecution(() => this.stepInRequestFinalize(response, args, currentOutputLength));
 	}
 
 	protected stepOutRequest(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments): void {
 
-		if (this.debuggerExecutableBusy)
-		{
-			this.scheduleExecution(()=>	this.stepOutRequest(response, args));
+		if (this.debuggerExecutableBusy) {
+			this.scheduleExecution(() => this.stepOutRequest(response, args));
 			return;
 		}
 
@@ -459,20 +442,19 @@ class BashDebugSession extends LoggingDebugSession {
 		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`print finish\nfinish\nprint '${BashDebugSession.END_MARKER}'\n`);
 
-		this.scheduleExecution(()=>this.stepOutRequestFinalize(response, args, currentLine));
+		this.scheduleExecution(() => this.stepOutRequestFinalize(response, args, currentLine));
 
 		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
-	private stepOutRequestFinalize(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments, currentOutputLength:number): void {
-		if (this.promptReached(currentOutputLength))
-		{
+	private stepOutRequestFinalize(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments, currentOutputLength: number): void {
+		if (this.promptReached(currentOutputLength)) {
 			this.debuggerExecutableBusy = false;
 			return;
 		}
 
-		this.scheduleExecution(()=>this.stepOutRequestFinalize(response, args, currentOutputLength));
+		this.scheduleExecution(() => this.stepOutRequestFinalize(response, args, currentOutputLength));
 	}
 
 	// bashdb doesn't support reverse execution
@@ -482,36 +464,34 @@ class BashDebugSession extends LoggingDebugSession {
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
 
 		if (this.debuggerProcess === null) {
-			response.body = { result: `${args.expression} = ''`, variablesReference: 0	};
+			response.body = { result: `${args.expression} = ''`, variablesReference: 0 };
 			this.debuggerExecutableBusy = false;
 			this.sendResponse(response);
 			return;
 		}
 
-		if (this.debuggerExecutableBusy)
-		{
-			this.scheduleExecution(()=>	this.evaluateRequest(response, args));
+		if (this.debuggerExecutableBusy) {
+			this.scheduleExecution(() => this.evaluateRequest(response, args));
 			return;
 		}
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.debuggerProcess.stdin.write(`print 'examine <${args.expression}>'\nexamine ${args.expression.replace("\"", "")}\nprint '${BashDebugSession.END_MARKER}'\n`);
-		this.scheduleExecution(()=>this.evaluateRequestFinalize(response, args, currentLine));
+		this.scheduleExecution(() => this.evaluateRequestFinalize(response, args, currentLine));
 	}
 
-	private evaluateRequestFinalize(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments, currentOutputLength:number): void {
+	private evaluateRequestFinalize(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments, currentOutputLength: number): void {
 
-		if (this.promptReached(currentOutputLength))
-		{
-			response.body = { result: `'${this.fullDebugOutput[currentOutputLength]}'`, variablesReference: 0	};
+		if (this.promptReached(currentOutputLength)) {
+			response.body = { result: `'${this.fullDebugOutput[currentOutputLength]}'`, variablesReference: 0 };
 
 			this.debuggerExecutableBusy = false;
 			this.sendResponse(response);
 			return;
 		}
 
-		this.scheduleExecution(()=>this.evaluateRequestFinalize(response, args, currentOutputLength));
+		this.scheduleExecution(() => this.evaluateRequestFinalize(response, args, currentOutputLength));
 	}
 
 	protected pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments): void {
@@ -524,7 +504,7 @@ class BashDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	private removePrompt(line : string): string{
+	private removePrompt(line: string): string {
 		if (line.indexOf("bashdb<") === 0) {
 			return line.substr(line.indexOf("> ") + 2);
 		}
@@ -532,7 +512,7 @@ class BashDebugSession extends LoggingDebugSession {
 		return line;
 	}
 
-	private promptReached(currentOutputLength:number) : boolean{
+	private promptReached(currentOutputLength: number): boolean {
 		return this.fullDebugOutput.length > currentOutputLength && this.fullDebugOutput[this.fullDebugOutput.length - 2] === BashDebugSession.END_MARKER;
 	}
 
@@ -552,17 +532,17 @@ class BashDebugSession extends LoggingDebugSession {
 		})
 	}
 
-	private scheduleExecution(callback: (...args: any[]) => void) : void {
+	private scheduleExecution(callback: (...args: any[]) => void): void {
 		if (!this.debuggerExecutableClosing) {
 			setTimeout(() => callback(), this.responsivityFactor);
 		}
 	}
 
-	private getWindowsPathFromLinux(linuxPath:string) : string {
+	private getWindowsPathFromLinux(linuxPath: string): string {
 		return linuxPath.substr("/mnt/".length, 1).toUpperCase() + ":" + linuxPath.substr("/mnt/".length + 1).split("/").join("\\");
 	}
 
-	private getLinuxPathFromWindows(windowsPath:string) : string {
+	private getLinuxPathFromWindows(windowsPath: string): string {
 		return "/mnt/" + windowsPath.substr(0, 1).toLowerCase() + windowsPath.substr("X:".length).split("\\").join("/");
 	}
 }

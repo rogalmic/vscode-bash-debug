@@ -9,7 +9,7 @@ export function activate(context: vscode.ExtensionContext) {
 		return vscode.window.showInputBox({
 			placeHolder: "Please enter the relative path to bash script.",
 			value: (process.platform === "win32") ? "{workspaceFolder}\\path\\to\\script.sh" : "{workspaceFolder}/path/to/script.sh"
-		}).then((result)=>{
+		}).then((result) => {
 			if (!result) {
 				return undefined; // canceled, abort launch
 			};
@@ -19,13 +19,12 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.selectProgramName', config => {
-
 		return vscode.workspace.findFiles("**/*.sh", "").then((uris) => {
 			const list = new Array<string>();
 			for (let i = 0; i < uris.length; i++) {
 				list.push(uris[i].fsPath);
 			}
-			return vscode.window.showQuickPick(list).then((result)=>{
+			return vscode.window.showQuickPick(list).then((result) => {
 				if (!result) {
 					return undefined; // canceled, abort launch
 				}
@@ -53,7 +52,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		// if launch.json is missing or empty
 		if (!config.type && !config.request && !config.name) {
 			const editor = vscode.window.activeTextEditor;
-			if (editor && editor.document.languageId === 'shellscript' ) {
+			if (editor && editor.document.languageId === 'shellscript') {
 				config.type = 'bashdb';
 				config.name = 'Launch';
 				config.request = 'launch';
