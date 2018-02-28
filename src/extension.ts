@@ -33,8 +33,8 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}));
 
-	// register a configuration provider for 'bash' debug type
-	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('mock', new BashConfigurationProvider()));
+	// register a configuration provider for 'bashdb' debug type
+	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('bashdb', new BashConfigurationProvider()));
 }
 
 export function deactivate() {
