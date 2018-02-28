@@ -75,15 +75,20 @@
 					"launch": {
 						"required": [
 							"program",
-							"commandLineArguments"
+							"args"
 						],
 						"properties": {
+							"commandLineArguments": {
+								"type": "string",
+								"description": "Deprecated. Use `args` instead.",
+								"default": "`commandLineArguments` is deprecated. Use `args` instead."
+							},
 							"scriptPath": {
 								"type": "string",
 								"description": "Deprecated. Use `program` instead.",
 								"default": "`scriptPath` is deprecated. Use `program` instead."
 							},
-							"commandLineArguments": {
+							"args": {
 								"type": "string",
 								"description": "Command line arguments.",
 								"default": ""
@@ -121,9 +126,9 @@
 						"type": "bashdb",
 						"request": "launch",
 						"name": "Bash-Debug (select script from list of sh files)",
-						"executionDirectory": "${workspaceFolder}",
+						"cwd": "${workspaceFolder}",
 						"program": "${command:SelectScriptName}",
-						"commandLineArguments": "",
+						"args": "",
 						"windows": {
 							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
 						},
@@ -138,9 +143,9 @@
 						"type": "bashdb",
 						"request": "launch",
 						"name": "Bash-Debug (hardcoded script name)",
-						"executionDirectory": "${workspaceFolder}",
+						"cwd": "${workspaceFolder}",
 						"program": "${workspaceFolder}/path/to/script.sh",
-						"commandLineArguments": "",
+						"args": "",
 						"windows": {
 							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
 						},
@@ -155,9 +160,9 @@
 						"type": "bashdb",
 						"request": "launch",
 						"name": "Bash-Debug (type in script name)",
-						"executionDirectory": "${workspaceFolder}",
+						"cwd": "${workspaceFolder}",
 						"program": "${workspaceFolder}/${command:AskForScriptName}",
-						"commandLineArguments": "",
+						"args": "",
 						"windows": {
 							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
 						},
