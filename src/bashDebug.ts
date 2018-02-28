@@ -13,7 +13,7 @@ import { basename } from 'path';
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
 	executionDirectory: string;
-	scriptPath: string;
+	program: string;
 	commandLineArguments: string;
 	bashDbPath: string;
 	bashPath: string;
@@ -107,7 +107,7 @@ class BashDebugSession extends LoggingDebugSession {
 			cat "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
 			cd ${args.executionDirectory}
-			cat | ${args.bashDbPath} --quiet --tty "${fifo_path}" -- "${args.scriptPath}" ${args.commandLineArguments}
+			cat | ${args.bashDbPath} --quiet --tty "${fifo_path}" -- "${args.program}" ${args.commandLineArguments}
 
 			cleanup`
 		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
