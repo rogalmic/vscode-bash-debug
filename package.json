@@ -74,14 +74,14 @@
 				"configurationAttributes": {
 					"launch": {
 						"required": [
-							"scriptPath",
+							"program",
 							"commandLineArguments"
 						],
 						"properties": {
 							"scriptPath": {
 								"type": "string",
-								"description": "Absolute path to a script.",
-								"default": "${workspaceFolder}/${command:SelectScriptName}"
+								"description": "Deprecated. Use `program` instead.",
+								"default": "`scriptPath` is deprecated. Use `program` instead."
 							},
 							"commandLineArguments": {
 								"type": "string",
@@ -97,6 +97,11 @@
 								"type": "string",
 								"description": "bash location.",
 								"default": "bash"
+							},
+							"program": {
+								"type": "string",
+								"description": "Absolute path to a script.",
+								"default": "${workspaceFolder}/${command:SelectScriptName}"
 							},
 							"showDebugOutput": {
 								"type": "boolean",
@@ -117,7 +122,7 @@
 						"request": "launch",
 						"name": "Bash-Debug (select script from list of sh files)",
 						"executionDirectory": "${workspaceFolder}",
-						"scriptPath": "${command:SelectScriptName}",
+						"program": "${command:SelectScriptName}",
 						"commandLineArguments": "",
 						"windows": {
 							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
@@ -134,7 +139,7 @@
 						"request": "launch",
 						"name": "Bash-Debug (hardcoded script name)",
 						"executionDirectory": "${workspaceFolder}",
-						"scriptPath": "${workspaceFolder}/path/to/script.sh",
+						"program": "${workspaceFolder}/path/to/script.sh",
 						"commandLineArguments": "",
 						"windows": {
 							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
@@ -151,7 +156,7 @@
 						"request": "launch",
 						"name": "Bash-Debug (type in script name)",
 						"executionDirectory": "${workspaceFolder}",
-						"scriptPath": "${workspaceFolder}/${command:AskForScriptName}",
+						"program": "${workspaceFolder}/${command:AskForScriptName}",
 						"commandLineArguments": "",
 						"windows": {
 							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
