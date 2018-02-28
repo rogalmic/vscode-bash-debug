@@ -6,6 +6,8 @@ import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken 
 export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.getProgramName', config => {
+		// Invoked if any property in client's launch.json has ${command:AskForScriptName} (mapped to getProgramName
+		// in package.json) in its value.
 		return vscode.window.showInputBox({
 			placeHolder: "Please enter the relative path to bash script.",
 			value: (process.platform === "win32") ? "{workspaceFolder}\\path\\to\\script.sh" : "{workspaceFolder}/path/to/script.sh"
@@ -19,6 +21,8 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.selectProgramName', config => {
+		// Invoked if any property in client's launch.json has ${command:SelectScriptName} (mapped to selectProgramName
+		// in package.json) in its value.
 		return vscode.workspace.findFiles("**/*.sh", "").then((uris) => {
 			const list = new Array<string>();
 			for (let i = 0; i < uris.length; i++) {
