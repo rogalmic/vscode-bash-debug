@@ -8,8 +8,6 @@ import { convertWindowsPath } from './extension_utils';
  * @example <caption>When escape pressed. Abort launch.</caption>
  * expandPath(undefined); // => undefined
 
- * @example <caption>Relative path, on linux and darwin</caption>
- * expandPath("path/to/script.sh"); // => "path/to/script.sh"
  * @example <caption>Absolute path, on linux and darwin</caption>
  * expandPath("/home/wsh/proj0/path/to/script.sh");
  * // => "/home/wsh/proj0/path/to/script.sh"
@@ -17,9 +15,6 @@ import { convertWindowsPath } from './extension_utils';
  * expandPath("{workspaceFolder}/path/to/script.sh");
  * // => "/home/wsh/proj0/path/to/script.sh"
 
- * @example <caption>Relative path, on windows</caption>
- * // TODO: invalid!
- * expandPath("path\\to\\script.sh"); // => "/mnt/pth/to/script.sh"
  * @example <caption>Absolute path, on windows</caption>
  * expandPath("C:\\Users\\wsh\\proj0\\path\\to\\script.sh");
  * // => "/mnt/c/Users/wsh/proj0/path/to/script.sh"
@@ -44,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// Invoked if any property in client's launch.json has ${command:AskForScriptName} (mapped to getProgramName
 		// in package.json) in its value.
 		return vscode.window.showInputBox({
-			placeHolder: "Please enter the relative path to bash script.",
+			placeHolder: "Type absolute path to bash script.",
 			value: (process.platform === "win32") ? "{workspaceFolder}\\path\\to\\script.sh" : "{workspaceFolder}/path/to/script.sh"
 		}).then(expandPath);
 	}));
