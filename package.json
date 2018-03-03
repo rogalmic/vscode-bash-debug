@@ -106,7 +106,7 @@
 							"program": {
 								"type": "string",
 								"description": "Absolute path to a script.",
-								"default": "${workspaceFolder}/${command:SelectScriptName}"
+								"default": "\\${workspaceFolder}/\\${command:SelectScriptName}"
 							},
 							"showDebugOutput": {
 								"type": "boolean",
@@ -131,65 +131,75 @@
 					{
 						"type": "bashdb",
 						"request": "launch",
-						"name": "Bash-Debug (select script from list of sh files)",
-						"cwd": "${workspaceFolder}",
-						"program": "${command:SelectScriptName}",
-						"args": "",
-						"windows": {
-							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
-						},
-						"linux": {
-							"bashPath": "bash"
-						},
-						"osx": {
-							"bashPath": "bash"
-						}
-					},
-					{
-						"type": "bashdb",
-						"request": "launch",
-						"name": "Bash-Debug (hardcoded script name)",
+						"name": "Bash Debug (script path hardcoded)",
 						"cwd": "${workspaceFolder}",
 						"program": "${workspaceFolder}/path/to/script.sh",
-						"args": "",
-						"windows": {
-							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
-						},
-						"linux": {
-							"bashPath": "bash"
-						},
-						"osx": {
-							"bashPath": "bash"
-						}
-					},
-					{
-						"type": "bashdb",
-						"request": "launch",
-						"name": "Bash-Debug (type in script name)",
-						"cwd": "${workspaceFolder}",
-						"program": "${workspaceFolder}/${command:AskForScriptName}",
-						"args": "",
-						"windows": {
-							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
-						},
-						"linux": {
-							"bashPath": "bash"
-						},
-						"osx": {
-							"bashPath": "bash"
-						}
+						"args": "--some-option some-arg"
 					}
 				],
 				"// Added when select 'Add configuration...' -> 'Bash Debug' in debug pane": null,
 				"configurationSnippets": [
 					{
-						"label": "Bash Debug: Launch",
-						"description": "A new configuration for 'debugging' a user selected shell script file.",
+						"label": "Bash-Debug (hardcoded script name)",
+						"description": "Debug a bash script (specify the path to the script in launch.json)",
 						"body": {
 							"type": "bashdb",
 							"request": "launch",
-							"name": "Ask for file name",
-							"program": "^\"\\${workspaceFolder}/\\${command:AskForScriptName}\""
+							"name": "Bash-Debug (hardcoded script name)",
+							"cwd": "^\"\\${workspaceFolder}\"",
+							"program": "^\"\\${workspaceFolder}/path/to/script.sh\"",
+							"args": "",
+							"windows": {
+								"bashPath": "^\"C:\\\\\\\\Windows\\\\\\\\sysnative\\\\\\\\bash\\\\\\\\.exe\""
+							},
+							"linux": {
+								"bashPath": "bash"
+							},
+							"osx": {
+								"bashPath": "bash"
+							}
+						}
+					},
+					{
+						"label": "Bash-Debug (select script from list of sh files)",
+						"description": "Debug a bash script (select script from the list of sh files before starting debug)",
+						"body": {
+							"type": "bashdb",
+							"request": "launch",
+							"name": "Bash-Debug (select script from list of sh files)",
+							"cwd": "^\"\\${workspaceFolder}\"",
+							"program": "^\"\\${command:SelectScriptName}\"",
+							"args": "",
+							"windows": {
+								"bashPath": "^\"C:\\\\\\\\Windows\\\\\\\\sysnative\\\\\\\\bash.exe\""
+							},
+							"linux": {
+								"bashPath": "bash"
+							},
+							"osx": {
+								"bashPath": "bash"
+							}
+						}
+					},
+					{
+						"label": "Bash-Debug (type in script name)",
+						"description": "Debug a bash script (specify the script path before starting debug)",
+						"body": {
+							"type": "bashdb",
+							"request": "launch",
+							"name": "Bash-Debug (type in script name)",
+							"cwd": "^\"\\${workspaceFolder}\"",
+							"program": "^\"\\${workspaceFolder}/\\${command:AskForScriptName}\"",
+							"args": "",
+							"windows": {
+								"bashPath": "^\"C:\\\\\\\\Windows\\\\\\\\sysnative\\\\\\\\bash.exe\""
+							},
+							"linux": {
+								"bashPath": "bash"
+							},
+							"osx": {
+								"bashPath": "bash"
+							}
 						}
 					}
 				],
