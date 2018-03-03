@@ -2,6 +2,41 @@
 
 import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
+import { convertWindowsPath } from './extension_utils';
+
+/**
+ * @example <caption>When escape pressed. Abort launch.</caption>
+ * expandPath(undefined); // => undefined
+
+ * @example <caption>Relative path, on linux and darwin</caption>
+ * expandPath("path/to/script.sh"); // => "path/to/script.sh"
+ * @example <caption>Absolute path, on linux and darwin</caption>
+ * expandPath("/home/wsh/proj0/path/to/script.sh");
+ * // => "/home/wsh/proj0/path/to/script.sh"
+ * @example <caption>Using {workspaceFolder}, on linux and darwin</caption>
+ * expandPath("{workspaceFolder}/path/to/script.sh");
+ * // => "/home/wsh/proj0/path/to/script.sh"
+
+ * @example <caption>Relative path, on windows</caption>
+ * // TODO: invalid!
+ * expandPath("path\\to\\script.sh"); // => "/mnt/pth/to/script.sh"
+ * @example <caption>Absolute path, on windows</caption>
+ * expandPath("C:\\Users\\wsh\\proj0\\path\\to\\script.sh");
+ * // => "/mnt/c/Users/wsh/proj0/path/to/script.sh"
+ * @example <caption>Using {workspaceFolder}, on windows</caption>
+ * expandPath("{workspaceFolder}\\path\\to\\script.sh");
+ * // => "/mnt/c/Users/wsh/proj0/path/to/script.sh"
+ */
+function expandPath(path?: string): string | undefined {
+	if (!path) { return undefined; };
+
+	path = path.replace("{workspaceFolder}", <string>vscode.workspace.rootPath);
+	if (process.platform === "win32") {
+		path = "/mnt/" + path.substr(0, 1).toLowerCase() + path.substr("X:".length).split("\\").join("/");
+	}
+
+	return path;
+}
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -11,13 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
 		return vscode.window.showInputBox({
 			placeHolder: "Please enter the relative path to bash script.",
 			value: (process.platform === "win32") ? "{workspaceFolder}\\path\\to\\script.sh" : "{workspaceFolder}/path/to/script.sh"
-		}).then((result) => {
-			if (!result) {
-				return undefined; // canceled, abort launch
-			};
-			result = result.replace("{workspaceFolder}", <string>vscode.workspace.rootPath);
-			return (process.platform === "win32") ? "/mnt/" + result.substr(0, 1).toLowerCase() + result.substr("X:".length).split("\\").join("/") : result;
-		});
+		}).then(expandPath);
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.selectProgramName', config => {
