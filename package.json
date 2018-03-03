@@ -121,6 +121,12 @@
 						}
 					}
 				},
+				"// Template for initial launch.json": null,
+				"// Added when: launch.json is missing && (": null,
+				"//   Add configuration... (in debug pane) -> Bash Debug ||": null,
+				"//   >Debug: Open launch.json -> Bash Debug ||": null,
+				"//   (>Debug: Start Debugging -> Bash Debug && file type is not shellscript)": null,
+				"// )": null,
 				"initialConfigurations": [
 					{
 						"type": "bashdb",
@@ -174,6 +180,7 @@
 						}
 					}
 				],
+				"// Added when select 'Add configuration...' -> 'Bash Debug' in debug pane": null,
 				"configurationSnippets": [
 					{
 						"label": "Bash Debug: Launch",
