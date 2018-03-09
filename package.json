@@ -1,7 +1,7 @@
 {
 	"name": "bash-debug",
 	"displayName": "Bash Debug",
-	"version": "0.0.8",
+	"version": "0.1.1",
 	"publisher": "rogalmic",
 	"description": "A debugger extension for bash scripts (using bashdb).",
 	"author": {
@@ -16,7 +16,7 @@
 		"vscode": "^1.18.0",
 		"node": "^7.9.0"
 	},
-	"icon": "images/bash-debug-icon.svg",
+	"icon": "images/bash-debug-icon.png",
 	"categories": [
 		"Debuggers"
 	],
@@ -29,19 +29,19 @@
 		"url": "https://github.com/rogalmic/vscode-bash-debug/issues"
 	},
 	"dependencies": {
-		"vscode-debugprotocol": "1.25.0",
-		"vscode-debugadapter": "1.25.0",
-		"child-process": "^1.0.2"
+		"vscode-debugadapter": "1.27.0",
+		"vscode-debugprotocol": "1.27.0",
+		"child-process": "1.0.2"
 	},
 	"devDependencies": {
-		"@types/node": "7.0.43",
-		"@types/mocha": "2.2.45",
+		"@types/node": "7.0.55",
+		"@types/mocha": "2.2.48",
 		"typescript": "2.6.2",
-		"mocha": "4.0.1",
+		"mocha": "5.0.1",
 		"vscode": "1.1.10",
-		"vscode-debugadapter-testsupport": "1.25.0",
-		"tslint": "5.8.0",
-		"vsce": "1.35.0"
+		"vscode-debugadapter-testsupport": "1.27.0",
+		"tslint": "5.9.1",
+		"vsce": "1.37.5"
 	},
 	"scripts": {
 		"prepublish": "tsc -p ./src",
@@ -93,6 +93,11 @@
 								"description": "Command line arguments.",
 								"default": ""
 							},
+							"cwd": {
+								"type": "string",
+								"description": "Working directory.",
+								"default": "\\${workspaceFolder}"
+							},
 							"bashDbPath": {
 								"type": "string",
 								"description": "bashdb location.",
@@ -131,10 +136,19 @@
 					{
 						"type": "bashdb",
 						"request": "launch",
-						"name": "Bash Debug (script path hardcoded)",
+						"name": "Bash-Debug (select script from list of sh files)",
 						"cwd": "${workspaceFolder}",
-						"program": "${workspaceFolder}/path/to/script.sh",
-						"args": "--some-option some-arg"
+						"program": "${command:SelectScriptName}",
+						"args": "",
+						"windows": {
+							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
+						},
+						"linux": {
+							"bashPath": "bash"
+						},
+						"osx": {
+							"bashPath": "bash"
+						}
 					}
 				],
 				"// Added when select 'Add configuration...' -> 'Bash Debug' in debug pane": null,

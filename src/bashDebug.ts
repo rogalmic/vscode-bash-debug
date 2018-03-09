@@ -7,8 +7,9 @@ import {
 	Thread, StackFrame, Scope, Source, Handles, Breakpoint
 } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, spawn } from 'child_process';
 import { basename } from 'path';
+import { expandPath } from './expandPath';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -22,7 +23,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	trace?: boolean;
 }
 
-class BashDebugSession extends LoggingDebugSession {
+export class BashDebugSession extends LoggingDebugSession {
 
 	private static THREAD_ID = 42;
 	private static END_MARKER = "############################################################";
@@ -84,6 +85,11 @@ class BashDebugSession extends LoggingDebugSession {
 
 		if (!args.bashPath) {
 			args.bashPath = "bash";
+		}
+
+		if (process.platform === "win32") {
+			args.cwd = `${expandPath(args.cwd)}`;
+			args.program = `${expandPath(args.program)}`;
 		}
 
 		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);

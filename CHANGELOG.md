@@ -1,6 +1,13 @@
-0.0.8
+0.1.1
 =====
-## [Bugfix release v0.0.8](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.8-alpha.8)
+## [Bugfix release v0.1.1](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.1.1)
+- fix default launch.json generation after breaking change in Microsoft's debug adapter interface
+- various fixes
+- dependency update to mirror vscode-mock-debug
+
+0.1.0
+=====
+## [Bugfix release v0.1.0](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.1.0)
 - fix deprecated launch.json format
 
 0.0.7
