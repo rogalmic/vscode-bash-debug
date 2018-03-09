@@ -41,13 +41,10 @@ This is a SIMPLE bashdb debugger frontend. Useful for learning bash shell usage 
 Hopefully bash will land on 3 leading platforms making this extension very useful.
 
 ## Usage
-1. Press ctrl+shift+P (cmd+shift+P) and run "Debug: Open launch.json"
-2. Select "Bash Debug" and choose the configuration you prefer
-3. Running debug session
+1. Select "Debug -> Start Debugging (F5)" to start debugging (if launch.json is not available, it will be created with default configuration)
+2. Select "Debug -> Add Configuration" to add custom debug configuration
 
 See https://code.visualstudio.com/docs/editor/debugging for general usage.
-
-NOTE: step 2. is skipped if `${workspaceFolder}/.vscode/launch.json` exists. Rename it temporary before, to create the configuration.
 
 ![unfortunatly no animation for you](images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
 
@@ -59,4 +56,4 @@ NOTE: step 2. is skipped if `${workspaceFolder}/.vscode/launch.json` exists. Ren
 * Watch variables should be specified with $ at the beginning (this expression is evaluated in bash - for example `${#PWD}` returns path length)
 * Currently debugger stops at first command.
 * Executing "set -e" causes debugging script to exit (bashdb limitation). Consider using "trap 'exit $?' ERR" instead.
-* Newest Windows 10 insider build 15014 seems to be working with some hacks (https://github.com/Microsoft/BashOnWindows/issues/2#issuecomment-209118529, https://github.com/Microsoft/BashOnWindows/issues/1489);
+* Windows Subsystem Linux in Windows 10 (>=15014) seems to be working with some hacks (https://github.com/Microsoft/BashOnWindows/issues/2#issuecomment-209118529, https://github.com/Microsoft/BashOnWindows/issues/1489);
