@@ -103,19 +103,19 @@ export class BashDebugSession extends LoggingDebugSession {
 			function cleanup()
 			{
 				exit_code=$?
+				trap '' ERR SIGINT SIGTERM EXIT
 				exec 4>&-
 				rm "${fifo_path}";
 				exit $exit_code;
 			}
-			trap 'cleanup' ERR SIGINT SIGTERM
+			trap 'cleanup' ERR SIGINT SIGTERM EXIT
 
 			mkfifo "${fifo_path}"
 			cat "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
 			cd ${args.cwd}
 			cat | ${args.bashDbPath} --quiet --tty "${fifo_path}" -- "${args.program}" ${args.args}
-
-			cleanup`
+			`
 		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
 
 		this.debuggerProcess.on("error", (error) => {
@@ -163,12 +163,12 @@ export class BashDebugSession extends LoggingDebugSession {
 						}
 						else if (line.indexOf("terminated") > 0) {
 							clearInterval(interval);
+							this.debuggerProcess.stdin.write(`\nq\n`);
 							this.sendEvent(new OutputEvent(`Sending TerminatedEvent`, 'telemetry'));
 							this.sendEvent(new TerminatedEvent());
 						}
 					}
-				},
-					this.responsivityFactor);
+				}, this.responsivityFactor);
 				return;
 			}
 		}
