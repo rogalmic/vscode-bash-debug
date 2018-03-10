@@ -96,7 +96,7 @@
 							"cwd": {
 								"type": "string",
 								"description": "Working directory.",
-								"default": "\\${workspaceFolder}"
+								"default": "${workspaceFolder}"
 							},
 							"bashDbPath": {
 								"type": "string",
@@ -111,7 +111,7 @@
 							"program": {
 								"type": "string",
 								"description": "Absolute path to a script.",
-								"default": "\\${workspaceFolder}/\\${command:SelectScriptName}"
+								"default": "${command:SelectScriptName}"
 							},
 							"showDebugOutput": {
 								"type": "boolean",
