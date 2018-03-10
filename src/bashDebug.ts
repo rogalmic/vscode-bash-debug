@@ -9,15 +9,20 @@ import {
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { ChildProcess, spawn } from 'child_process';
 import { basename } from 'path';
+import { validatePath } from './bashRuntime';
 import { expandPath } from './expandPath';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
+	// Non-optional arguments are guaranteed to be defined in extension.ts: resolveDebugConfiguration().
+	args: string[];
 	cwd: string;
 	program: string;
-	args: string;
-	bashDbPath: string;
-	bashPath: string;
+	pathBash: string;
+	pathBashdb: string;
+	pathCat: string;
+	pathMkfifo: string;
+	pathPkill: string;
 	showDebugOutput?: boolean;
 	/** enable logging the Debug Adapter Protocol */
 	trace?: boolean;
@@ -27,6 +32,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	private static THREAD_ID = 42;
 	private static END_MARKER = "############################################################";
+
+	private launchArgs: LaunchRequestArguments;
 
 	private debuggerProcess: ChildProcess;
 
@@ -71,32 +78,39 @@ export class BashDebugSession extends LoggingDebugSession {
 			this.sendResponse(response)
 		});
 
-		spawn("bash", ["-c", `pkill -KILL -P ${this.debuggerProcessParentId}`]);
+		spawn("bash", ["-c", `${this.launchArgs.pathPkill} -KILL -P ${this.debuggerProcessParentId}`]);
 	}
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
 
-		// make sure to 'Stop' the buffered logging if 'trace' is not set
+		this.launchArgs = args;
+
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
-
-		if (!args.bashDbPath) {
-			args.bashDbPath = "bashdb";
-		}
-
-		if (!args.bashPath) {
-			args.bashPath = "bash";
-		}
 
 		if (process.platform === "win32") {
 			args.cwd = `${expandPath(args.cwd)}`;
 			args.program = `${expandPath(args.program)}`;
 		}
 
+		{
+			const errorMessage = validatePath(
+				args.cwd, args.pathBash, args.pathBashdb, args.pathCat, args.pathMkfifo, args.pathPkill);
+
+			if (errorMessage !== "") {
+				response.success = false;
+				response.message = errorMessage;
+				this.sendResponse(response);
+				return;
+			}
+		}
+
 		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
 
+		// TODO: treat whitespace in args.args:
+		//       i.e. at this moment, ["arg0", "arg1 with space"] will be expanded to "arg0 arg1 with space"
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
-		this.debuggerProcess = spawn(args.bashPath, ["-c", `
+		this.debuggerProcess = spawn(args.pathBash, ["-c", `
 
 			# http://tldp.org/LDP/abs/html/io-redirection.html
 
@@ -111,10 +125,10 @@ export class BashDebugSession extends LoggingDebugSession {
 			trap 'cleanup' ERR SIGINT SIGTERM EXIT
 
 			mkfifo "${fifo_path}"
-			cat "${fifo_path}" >&${this.debugPipeIndex} &
+			${args.pathCat} "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
 			cd ${args.cwd}
-			cat | ${args.bashDbPath} --quiet --tty "${fifo_path}" -- "${args.program}" ${args.args}
+			${args.pathCat} | ${args.pathBashdb} --quiet --tty "${fifo_path}" -- "${args.program}" ${args.args.join(" ")}
 			`
 		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
 
@@ -502,7 +516,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	protected pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments): void {
 		if (args.threadId === BashDebugSession.THREAD_ID) {
-			spawn("bash", ["-c", `pkill -INT -P ${this.debuggerProcessParentId} -f bashdb`]).on("exit", () => this.sendResponse(response));
+			spawn("bash", ["-c", `${this.launchArgs.pathPkill} -INT -P ${this.debuggerProcessParentId} -f bashdb`]).on("exit", () => this.sendResponse(response));
 			return;
 		}
 

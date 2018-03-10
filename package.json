@@ -73,50 +73,55 @@
 				"runtime": "node",
 				"configurationAttributes": {
 					"launch": {
+						"// `type`, `request` and `name` are required implicitly.": null,
 						"required": [
-							"program",
-							"args"
+							"program"
 						],
 						"properties": {
-							"commandLineArguments": {
-								"type": "string",
-								"description": "Deprecated. Use `args` instead.",
-								"default": "`commandLineArguments` is deprecated. Use `args` instead."
-							},
-							"scriptPath": {
-								"type": "string",
-								"description": "Deprecated. Use `program` instead.",
-								"default": "`scriptPath` is deprecated. Use `program` instead."
-							},
 							"args": {
-								"type": "string",
-								"description": "Command line arguments.",
-								"default": ""
+								"// type: Array<string> -> warning `Incorrect type. Expected Array<string>` in launch.json": null,
+								"description": "Command line arguments. (i.e. [\"--opt\", \"arg\"])",
+								"default": []
 							},
 							"cwd": {
 								"type": "string",
-								"description": "Working directory.",
+								"description": "Working directory. (i.e. `cd $cwd; bashdb <options> $program` will be executed internally).",
 								"default": "${workspaceFolder}"
-							},
-							"bashDbPath": {
-								"type": "string",
-								"description": "bashdb location.",
-								"default": "bashdb"
-							},
-							"bashPath": {
-								"type": "string",
-								"description": "bash location.",
-								"default": "bash"
 							},
 							"program": {
 								"type": "string",
-								"description": "Absolute path to a script.",
-								"default": "${command:SelectScriptName}"
+								"description": "Absolute path to a script. See also: https://code.visualstudio.com/docs/editor/variables-reference",
+								"default": "${file}"
+							},
+							"pathBash": {
+								"type": "string",
+								"description": "Specify absolute path to bash. TODO doc",
+								"default": "C:\\Windows\\System32\\bash.exe"
+							},
+							"pathBashdb": {
+								"type": "string",
+								"description": "Specify absolute path to bashdb (on Windows, path in Linux Subsystem).",
+								"default": "/usr/local/bin/bashdb"
+							},
+							"pathCat": {
+								"type": "string",
+								"description": "Specify absolute path to cat (on Windows, path in Linux Subsystem).",
+								"default": "/usr/bin/cat"
+							},
+							"pathMkfifo": {
+								"type": "string",
+								"description": "Specify absolute path to mkfifo (on Windows, path in Linux Subsystem).",
+								"default": "/usr/bin/mkfifo"
+							},
+							"pathPkill": {
+								"type": "string",
+								"description": "Specify absolute path to pkill (on Windows, path in Linux Subsystem). On macOS, please use /usr/bin/pkill instead of /usr/local/bin/pkill, otherwise vscode crashes (#38).",
+								"default": "/usr/local/bin/pkill"
 							},
 							"showDebugOutput": {
 								"type": "boolean",
 								"description": "Defines if bashdb output will be visible together with script output.",
-								"default": false
+								"default": true
 							},
 							"trace": {
 								"type": "boolean",
@@ -136,22 +141,15 @@
 					{
 						"type": "bashdb",
 						"request": "launch",
-						"name": "Bash-Debug (select script from list of sh files)",
-						"cwd": "${workspaceFolder}",
-						"program": "${command:SelectScriptName}",
-						"args": "",
-						"windows": {
-							"bashPath": "C:\\Windows\\sysnative\\bash.exe"
-						},
-						"linux": {
-							"bashPath": "bash"
-						},
+						"name": "Bash-Debug (simplest configuration)",
+						"program": "${file}",
 						"osx": {
-							"bashPath": "bash"
+							"pathPkill": "/usr/bin/pkill"
 						}
 					}
 				],
 				"// Added when select 'Add configuration...' -> 'Bash Debug' in debug pane": null,
+				"// `label` is shown in IntelliSense and `name` is shown in DEBUG side-bar.": null,
 				"configurationSnippets": [
 					{
 						"label": "Bash-Debug (hardcoded script name)",
@@ -162,15 +160,12 @@
 							"name": "Bash-Debug (hardcoded script name)",
 							"cwd": "^\"\\${workspaceFolder}\"",
 							"program": "^\"\\${workspaceFolder}/path/to/script.sh\"",
-							"args": "",
+							"args": [],
 							"windows": {
-								"bashPath": "^\"C:\\\\\\\\Windows\\\\\\\\sysnative\\\\\\\\bash\\\\\\\\.exe\""
-							},
-							"linux": {
-								"bashPath": "bash"
+								"pathBash": "^\"C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\bash\\\\\\\\.exe\""
 							},
 							"osx": {
-								"bashPath": "bash"
+								"pathPkill": "/usr/bin/pkill"
 							}
 						}
 					},
@@ -183,40 +178,34 @@
 							"name": "Bash-Debug (select script from list of sh files)",
 							"cwd": "^\"\\${workspaceFolder}\"",
 							"program": "^\"\\${command:SelectScriptName}\"",
-							"args": "",
+							"args": [],
 							"windows": {
-								"bashPath": "^\"C:\\\\\\\\Windows\\\\\\\\sysnative\\\\\\\\bash.exe\""
-							},
-							"linux": {
-								"bashPath": "bash"
+								"pathBash": "^\"C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\bash.exe\""
 							},
 							"osx": {
-								"bashPath": "bash"
+								"pathPkill": "/usr/bin/pkill"
 							}
 						}
 					},
 					{
 						"label": "Bash-Debug (type in script name)",
 						"description": "Debug a bash script (specify the script path before starting debug)",
-						"body": {
-							"type": "bashdb",
-							"request": "launch",
+ 						"body": {
+ 							"type": "bashdb",
+ 							"request": "launch",
 							"name": "Bash-Debug (type in script name)",
-							"cwd": "^\"\\${workspaceFolder}\"",
+ 							"cwd": "^\"\\${workspaceFolder}\"",
 							"program": "^\"\\${workspaceFolder}/\\${command:AskForScriptName}\"",
-							"args": "",
+							"args": [],
 							"windows": {
-								"bashPath": "^\"C:\\\\\\\\Windows\\\\\\\\sysnative\\\\\\\\bash.exe\""
-							},
-							"linux": {
-								"bashPath": "bash"
+								"pathBash": "^\"C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\bash.exe\""
 							},
 							"osx": {
-								"bashPath": "bash"
+								"pathPkill": "/usr/bin/pkill"
 							}
-						}
-					}
-				],
+ 						}
+ 					}
+ 				],
 				"variables": {
 					"AskForScriptName": "extension.bash-debug.getProgramName",
 					"SelectScriptName": "extension.bash-debug.selectProgramName"
