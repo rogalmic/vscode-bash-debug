@@ -26,7 +26,6 @@ deploy:
     file: "*.vsix"
     skip_cleanup: true
     on:
-      tags: true
       branch: master
       condition: "$TRAVIS_OS_NAME == linux"
   - provider: script
@@ -34,5 +33,5 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      branch: stable
+      branch: master
       condition: "$TRAVIS_OS_NAME == linux"
