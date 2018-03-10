@@ -7,8 +7,9 @@ import {
 	Thread, StackFrame, Scope, Source, Handles, Breakpoint
 } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, spawn } from 'child_process';
 import { basename } from 'path';
+import { expandPath } from './expandPath';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -22,7 +23,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	trace?: boolean;
 }
 
-class BashDebugSession extends LoggingDebugSession {
+export class BashDebugSession extends LoggingDebugSession {
 
 	private static THREAD_ID = 42;
 	private static END_MARKER = "############################################################";
@@ -86,6 +87,11 @@ class BashDebugSession extends LoggingDebugSession {
 			args.bashPath = "bash";
 		}
 
+		if (process.platform === "win32") {
+			args.cwd = `${expandPath(args.cwd)}`;
+			args.program = `${expandPath(args.program)}`;
+		}
+
 		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
 
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
@@ -97,19 +103,19 @@ class BashDebugSession extends LoggingDebugSession {
 			function cleanup()
 			{
 				exit_code=$?
+				trap '' ERR SIGINT SIGTERM EXIT
 				exec 4>&-
 				rm "${fifo_path}";
 				exit $exit_code;
 			}
-			trap 'cleanup' ERR SIGINT SIGTERM
+			trap 'cleanup' ERR SIGINT SIGTERM EXIT
 
 			mkfifo "${fifo_path}"
 			cat "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
 			cd ${args.cwd}
 			cat | ${args.bashDbPath} --quiet --tty "${fifo_path}" -- "${args.program}" ${args.args}
-
-			cleanup`
+			`
 		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
 
 		this.debuggerProcess.on("error", (error) => {
@@ -157,12 +163,12 @@ class BashDebugSession extends LoggingDebugSession {
 						}
 						else if (line.indexOf("terminated") > 0) {
 							clearInterval(interval);
+							this.debuggerProcess.stdin.write(`\nq\n`);
 							this.sendEvent(new OutputEvent(`Sending TerminatedEvent`, 'telemetry'));
 							this.sendEvent(new TerminatedEvent());
 						}
 					}
-				},
-					this.responsivityFactor);
+				}, this.responsivityFactor);
 				return;
 			}
 		}
