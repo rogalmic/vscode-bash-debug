@@ -11,6 +11,10 @@ branches:
   only:
   - master
 
+env:
+  global:
+    - RELEASE_TAG_EXPRESSION=^v?[0-9]+\.[0-9]+\.[0-9]+$
+
 install:
 - npm install -g vsce
 - npm install -g typescript
@@ -34,4 +38,4 @@ deploy:
     on:
       tags: true
       branch: master
-      condition: "$TRAVIS_OS_NAME == linux"
+      condition: "$TRAVIS_OS_NAME == linux && $TRAVIS_TAG =~ $RELEASE_TAG_EXPRESSION"
