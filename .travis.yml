@@ -35,4 +35,4 @@ deploy:
     on:
       tags: true
       branch: stable
-      condition: "$TRAVIS_OS_NAME == linux
+      condition: "$TRAVIS_OS_NAME == linux"
