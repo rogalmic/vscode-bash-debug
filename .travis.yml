@@ -1,0 +1,38 @@
+language: node_js
+
+node_js:
+- 'node'
+
+os:
+- linux
+dist: trusty
+
+branches:
+  only:
+  - master
+
+install:
+- npm install -g vsce
+- npm install -g typescript
+- npm install
+
+script:
+- vsce package
+
+deploy:
+  - provider: releases
+    api_key: $GITHUB_TOKEN
+    file_glob: true
+    file: "*.vsix"
+    skip_cleanup: true
+    on:
+      tags: true
+      branch: master
+      condition: "$TRAVIS_OS_NAME == linux"
+  - provider: script
+    script: vsce publish -p $VSCE_TOKEN --packagePath *.vsix
+    skip_cleanup: true
+    on:
+      tags: true
+      branch: stable
+      condition: "$TRAVIS_OS_NAME == linux
