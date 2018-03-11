@@ -99,6 +99,9 @@ function _validatePath(cwd: string,
 export function validatePath(cwd: string,
 	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, pathPkill: string): string {
 
+	const askReport = "If it is reproducible, please report it to " +
+		"https://github.com/rogalmic/vscode-bash-debug/issues";
+
 	const rc = _validatePath(cwd, pathBash, pathBashdb, pathCat, pathMkfifo, pathPkill);
 
 	switch (rc) {
@@ -124,12 +127,15 @@ export function validatePath(cwd: string,
 			return `Error: pkill not found. (pathPkill: ${pathPkill})`;
 		}
 		case validatePathResult.timeout: {
-			return "Error: BUG: timeout while validating environment. Please report it to https://github.com/rogalmic/vscode-bash-debug/issues";
+			return "Error: BUG: timeout " +
+				"while validating environment. " + askReport;
 		}
 		case validatePathResult.unknown: {
-			return "Error: BUG: unknown error ocurred while validating environment. Please report it to https://github.com/rogalmic/vscode-bash-debug/issues";
+			return "Error: BUG: unknown error ocurred " +
+				"while validating environment. " + askReport;
 		}
 	}
 
-	return "Error: BUG: reached to unreachable code while validating environment. Please report it to https://github.com/rogalmic/vscode-bash-debug/issues";
+	return "Error: BUG: reached to unreachable code " +
+		"while validating environment. " + askReport;
 }

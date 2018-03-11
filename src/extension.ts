@@ -50,7 +50,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		// Else launch.json exists
 		if (!config.type || !config.name) {
 			let msg = "BUG in Bash Debug: reached to unreachable code.";
-			msg += "\nPlease report this bug on: https://github.com/rogalmic/vscode-bash-debug/issues";
+			msg += "\nIf it is reproducible, please report this bug on: https://github.com/rogalmic/vscode-bash-debug/issues";
 			msg += "\nYou can avoid this bug by setting \"type\" and \"name\" attributes in launch.json.";
 			return vscode.window.showErrorMessage(msg).then(_ => { return undefined; });
 		}
