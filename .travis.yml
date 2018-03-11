@@ -19,9 +19,11 @@ install:
 - npm install -g vsce
 - npm install -g typescript
 - npm install
+- sudo apt install bashdb
 
 script:
 - vsce package
+- npm test
 
 deploy:
   - provider: releases
