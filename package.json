@@ -96,7 +96,7 @@
 							},
 							"pathBash": {
 								"type": "string",
-								"description": "Specify absolute path to bash. Refer to https://github.com/rogalmic/vscode-bash-debug/blob/master/README.md#usage.",
+								"description": "Specify absolute path to bash. Refer to https://github.com/rogalmic/vscode-bash-debug/blob/master/README.md#usage",
 								"default": ""
 							},
 							"pathBashdb": {
@@ -162,9 +162,6 @@
 							"cwd": "^\"\\${workspaceFolder}\"",
 							"program": "^\"\\${workspaceFolder}/path/to/script.sh\"",
 							"args": [],
-							"windows": {
-								"pathBash": "^\"C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\bash\\\\\\\\.exe\""
-							},
 							"osx": {
 								"pathPkill": "/usr/bin/pkill"
 							}
@@ -180,9 +177,6 @@
 							"cwd": "^\"\\${workspaceFolder}\"",
 							"program": "^\"\\${command:SelectScriptName}\"",
 							"args": [],
-							"windows": {
-								"pathBash": "^\"C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\bash.exe\""
-							},
 							"osx": {
 								"pathPkill": "/usr/bin/pkill"
 							}
@@ -198,9 +192,6 @@
  							"cwd": "^\"\\${workspaceFolder}\"",
 							"program": "^\"\\${workspaceFolder}/\\${command:AskForScriptName}\"",
 							"args": [],
-							"windows": {
-								"pathBash": "^\"C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\bash.exe\""
-							},
 							"osx": {
 								"pathPkill": "/usr/bin/pkill"
 							}

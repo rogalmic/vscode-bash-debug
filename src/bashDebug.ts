@@ -10,7 +10,7 @@ import { DebugProtocol } from 'vscode-debugprotocol';
 import { ChildProcess, spawn } from 'child_process';
 import { basename } from 'path';
 import { validatePath } from './bashRuntime';
-import { expandPath } from './expandPath';
+import { getWSLPath } from './handlePath';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -88,8 +88,8 @@ export class BashDebugSession extends LoggingDebugSession {
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
 		if (process.platform === "win32") {
-			args.cwd = `${expandPath(args.cwd)}`;
-			args.program = `${expandPath(args.program)}`;
+			args.cwd = `${getWSLPath(args.cwd)}`;
+			args.program = `${getWSLPath(args.program)}`;
 		}
 
 		{
