@@ -18,3 +18,12 @@ Currently, with some hacks, seems to be working on Windows 10. The scripts are e
 
 ## On OS X
 There seems to be bash in OS X, but I have no way of checking this out now. See following link for more info. (https://github.com/rogalmic/vscode-bash-debug/issues/19)
+
+# Build CI
+
+Using Travis CI (https://travis-ci.org/rogalmic/vscode-bash-debug)
+
+- Every push to master will create a release in github (untagged)
+- Every push to master with commit tag matching "v1.2.3" will trigger a deploy to VSCode extension repo with this version.
+  - Keep version in project.json same as version in git tag.
+  - Remember to update CHANGELOG.md.
