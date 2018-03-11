@@ -95,8 +95,8 @@
 							},
 							"pathBash": {
 								"type": "string",
-								"description": "Specify absolute path to bash. TODO doc",
-								"default": "C:\\Windows\\System32\\bash.exe"
+								"description": "Specify absolute path to bash. Refer to https://github.com/rogalmic/vscode-bash-debug/blob/master/README.md#usage.",
+								"default": ""
 							},
 							"pathBashdb": {
 								"type": "string",
