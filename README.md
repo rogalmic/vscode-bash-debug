@@ -38,13 +38,18 @@ Sources:
 # Overview
 This is a SIMPLE bashdb debugger frontend. Useful for learning bash shell usage and writing simple scripts.
 
-Hopefully bash will land on 3 leading platforms making this extension very useful.
+Hopefully bash will land on 3 leading platforms making this extension very useful. Useful hint: shellcheck extension does a great job with finding common script errors before debugging.
 
 ## Usage
 1. Select "Debug -> Start Debugging (F5)" to start debugging (if launch.json is not available, it will be created with default configuration)
 2. Select "Debug -> Add Configuration" to add custom debug configuration
 
 See https://code.visualstudio.com/docs/editor/debugging for general usage.
+
+For Windows users:
+1. Install "Windows Subsystem Linux"
+2. Install bashdb through bash console: "sudo apt-get install bashdb"
+3. In launch.json, set "pathBash" to either "C:/Windows/System32/bash.exe", or "C:/Windows/sysnative/bash.exe" in case of 32bit VSCode on 64bit OS
 
 ![unfortunatly no animation for you](images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
 
