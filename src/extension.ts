@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
-import { expandPath } from './expandPath';
+import { expandPath } from './handlePath';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -81,7 +81,15 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		// Fill non-"required" attributes with default values to prevent bashdb (or other programs) from panic
 		if (!config.args) { config.args = [] }
 		if (!config.cwd) { config.cwd = "./" }
-		if (!config.pathBash) { config.pathBash = "bash" }
+		if (!config.pathBash) {
+			if (process.platform === "win32") {
+				config.pathBash = process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432') ?
+					"C:\\Windows\\sysnative\\bash.exe" : "C:\\Windows\\System32\\bash.exe";
+			}
+			else {
+				config.pathBash = "bash"
+			}
+		}
 		if (!config.pathBashdb) { config.pathBashdb = "bashdb" }
 		if (!config.pathCat) { config.pathCat = "cat" }
 		if (!config.pathMkfifo) { config.pathMkfifo = "mkfifo" }
@@ -91,7 +99,6 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		// - config.showDebugOutput
 		// - config.trace
 
-		// Launch it
 		return config;
 	}
 }
