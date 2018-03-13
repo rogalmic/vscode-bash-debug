@@ -17,7 +17,7 @@ All the pieces seem to be there, but for some reason bash support needs some kic
 Currently, with some hacks, seems to be working on Windows 10. The scripts are executed in bash@linux realm,so all the paths inside scripts need to refer to linux filesystem (/mnt/c/..).
 
 ## On OS X
-There seems to be bash in OS X, but I have no way of checking this out now. See following link for more info. (https://github.com/rogalmic/vscode-bash-debug/issues/19)
+Seeems to be working when path to "pkill" is changed.
 
 # Build CI
 

@@ -1,9 +1,14 @@
 0.1.1
 =====
 ## [Bugfix release v0.1.1](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.1.1)
+- new launch parameters: program, args, cwd, pathBash, pathBashdb, pathCat, pathMkfifo, pathPkill, trace
+- [BREAKING]deprecated parameters: scriptPath -> program, commandLineArguments -> args, bashDbPath -> pathBashdb, bashPath -> pathBash
 - fix default launch.json generation after breaking change in Microsoft's debug adapter interface
-- various fixes
+- fix pkill usage on macOS
 - dependency update to mirror vscode-mock-debug
+- dynamic default pathBash generation, allowing 32bit and 64bit VSCode usage on Windows
+- update icon to png (svg deprecated in package.json)
+- automated deployment (possibility to download pre-release extension's vsix directly from github)
 
 0.1.0
 =====
