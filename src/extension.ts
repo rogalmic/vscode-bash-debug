@@ -47,8 +47,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 			return undefined;
 		}
 
-		if (!folder)
-		{
+		if (!folder) {
 			let msg = "Unable to determine workspace folder.";
 			return vscode.window.showErrorMessage(msg).then(_ => { return undefined; });
 		}

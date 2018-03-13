@@ -49,8 +49,6 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	private debuggerProcessParentId = -1;
 
-	private workingDirectory = "";
-
 	// https://github.com/Microsoft/BashOnWindows/issues/1489
 	private debugPipeIndex = (process.platform === "win32") ? 2 : 3;
 
@@ -93,8 +91,6 @@ export class BashDebugSession extends LoggingDebugSession {
 			args.cwd = `${getWSLPath(args.cwd)}`;
 			args.program = `${getWSLPath(args.program)}`;
 		}
-
-		this.workingDirectory = args.cwd;
 
 		{
 			const errorMessage = validatePath(
@@ -290,7 +286,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 				if ((process.platform === "win32")) {
 
-					frameSourcePath = frameSourcePath.startsWith("/") ? reverseWSLPath(frameSourcePath) : reverseWSLPath(`${this.workingDirectory}/${frameSourcePath}`);
+					frameSourcePath = frameSourcePath.startsWith("/") ? reverseWSLPath(frameSourcePath) : reverseWSLPath(`${this.launchArgs.cwd}/${frameSourcePath}`);
 				}
 
 				frames.push(new StackFrame(
