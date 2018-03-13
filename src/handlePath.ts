@@ -9,7 +9,7 @@
  *
  * @example <caption>Using {workspaceFolder}, on windows</caption>
  * expandPath("{workspaceFolder}\\path\\to\\script.sh", "C:\\Users\\wsh\\proj0");
- * // => "C:/Users/wsh/proj0/path/to/script.sh" 
+ * // => "C:/Users/wsh/proj0/path/to/script.sh"
  */
 export function expandPath(path?: string, rootPath?: string): string | undefined {
 
@@ -48,4 +48,13 @@ export function getWSLPath(path?: string): string | undefined {
 	}
 
 	return path;
+}
+
+/**
+ * @example <caption>Absolute path</caption>
+ * reverseWSLPath("/mnt/c/Users/wsh/proj0/path/to/script.sh");
+ * // => "C:\\Users\\wsh\\proj0\\path\\to\\script.sh"
+ */
+export function reverseWSLPath(wslPath: string): string {
+	return wslPath.substr("/mnt/".length, 1).toUpperCase() + ":" + wslPath.substr("/mnt/".length + 1).split("/").join("\\");
 }

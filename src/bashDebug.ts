@@ -10,7 +10,7 @@ import { DebugProtocol } from 'vscode-debugprotocol';
 import { ChildProcess, spawn } from 'child_process';
 import { basename } from 'path';
 import { validatePath } from './bashRuntime';
-import { getWSLPath } from './handlePath';
+import { getWSLPath, reverseWSLPath } from './handlePath';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -48,6 +48,8 @@ export class BashDebugSession extends LoggingDebugSession {
 	private responsivityFactor = 5;
 
 	private debuggerProcessParentId = -1;
+
+	private workingDirectory = "";
 
 	// https://github.com/Microsoft/BashOnWindows/issues/1489
 	private debugPipeIndex = (process.platform === "win32") ? 2 : 3;
@@ -91,6 +93,8 @@ export class BashDebugSession extends LoggingDebugSession {
 			args.cwd = `${getWSLPath(args.cwd)}`;
 			args.program = `${getWSLPath(args.program)}`;
 		}
+
+		this.workingDirectory = args.cwd;
 
 		{
 			const errorMessage = validatePath(
@@ -207,7 +211,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			this.currentBreakpointIds[args.source.path] = [];
 		}
 
-		const sourcePath = (process.platform === "win32") ? this.getLinuxPathFromWindows(args.source.path) : args.source.path;
+		const sourcePath = (process.platform === "win32") ? getWSLPath(args.source.path) : args.source.path;
 
 		let setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nload ${sourcePath}\n`;
 		if (args.breakpoints) {
@@ -285,7 +289,8 @@ export class BashDebugSession extends LoggingDebugSession {
 				const frameLine = parseInt(lineContent.substr(lineContent.lastIndexOf(" ")));
 
 				if ((process.platform === "win32")) {
-					frameSourcePath = this.getWindowsPathFromLinux(frameSourcePath);
+
+					frameSourcePath = frameSourcePath.startsWith("/") ? reverseWSLPath(frameSourcePath) : reverseWSLPath(`${this.workingDirectory}/${frameSourcePath}`);
 				}
 
 				frames.push(new StackFrame(
@@ -556,14 +561,6 @@ export class BashDebugSession extends LoggingDebugSession {
 		if (!this.debuggerExecutableClosing) {
 			setTimeout(() => callback(), this.responsivityFactor);
 		}
-	}
-
-	private getWindowsPathFromLinux(linuxPath: string): string {
-		return linuxPath.substr("/mnt/".length, 1).toUpperCase() + ":" + linuxPath.substr("/mnt/".length + 1).split("/").join("\\");
-	}
-
-	private getLinuxPathFromWindows(windowsPath: string): string {
-		return "/mnt/" + windowsPath.substr(0, 1).toLowerCase() + windowsPath.substr("X:".length).split("\\").join("/");
 	}
 }
 

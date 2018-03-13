@@ -47,6 +47,12 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 			return undefined;
 		}
 
+		if (!folder)
+		{
+			let msg = "Unable to determine workspace folder.";
+			return vscode.window.showErrorMessage(msg).then(_ => { return undefined; });
+		}
+
 		// Else launch.json exists
 		if (!config.type || !config.name) {
 			let msg = "BUG in Bash Debug: reached to unreachable code.";
@@ -80,7 +86,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 
 		// Fill non-"required" attributes with default values to prevent bashdb (or other programs) from panic
 		if (!config.args) { config.args = [] }
-		if (!config.cwd) { config.cwd = "./" }
+		if (!config.cwd) { config.cwd = folder.uri.fsPath }
 		if (!config.pathBash) {
 			if (process.platform === "win32") {
 				config.pathBash = process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432') ?
