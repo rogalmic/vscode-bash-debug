@@ -28,7 +28,7 @@ Your `launch.json` may looks like:
             "program": "${workspaceFolder}/src/foo.sh",
             "showDebugOutput": true,
             "trace": true
-            }
+        }
     ]
 }
 ```
