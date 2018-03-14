@@ -42,7 +42,7 @@ Hopefully bash will land on 3 leading platforms making this extension very usefu
 
 ## Usage
 1. Select "Debug -> Start Debugging (F5)" to start debugging (if launch.json is not available, it will be created with default configuration)
-2. Select "Debug -> Add Configuration" to add custom debug configuration
+2. Select "Debug -> Add Configuration" to add custom debug configuration (drop-down, path-input, etc...)
 
 See https://code.visualstudio.com/docs/editor/debugging for general usage.
 
@@ -51,7 +51,7 @@ For Windows users:
 2. Install bashdb through bash console: "sudo apt-get install bashdb"
 3. In launch.json, set "pathBash" to either "C:/Windows/System32/bash.exe", or "C:/Windows/sysnative/bash.exe" in case of 32bit VSCode on 64bit OS
 
-![unfortunatly no animation for you](images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
+![unfortunatly no animation for you](https://github.com/rogalmic/vscode-bash-debug/blob/gif/images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
 
 ## Dependencies
 1. bashdb 4.3
@@ -59,6 +59,8 @@ For Windows users:
 
 ## Limitations and known problems
 * Watch variables should be specified with $ at the beginning (this expression is evaluated in bash - for example `${#PWD}` returns path length)
+* The debugger supports only non-interactive scripts (no stdin)
 * Currently debugger stops at first command.
-* Executing "set -e" causes debugging script to exit (bashdb limitation). Consider using "trap 'exit $?' ERR" instead.
+* Executing "set -e" causes debugging script to exit (`bashdb` fixes this in version `4.4-0.93`). Consider using "trap 'exit $?' ERR".
+* Executing source script.sh fails. Consider using full path "source "${PWD}/script.sh"" instead.
 * Windows Subsystem Linux in Windows 10 (>=15014) seems to be working with some hacks (https://github.com/Microsoft/BashOnWindows/issues/2#issuecomment-209118529, https://github.com/Microsoft/BashOnWindows/issues/1489);
