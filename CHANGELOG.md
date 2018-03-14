@@ -1,9 +1,16 @@
 0.1.1
 =====
 ## [Bugfix release v0.1.1](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.1.1)
-- fix default launch.json generation after breaking change in Microsoft's debug adapter interface
-- various fixes
-- dependency update to mirror vscode-mock-debug
+- update attributes in `launch.json`
+  - *BREAKING* change attribute names
+    - `bashDbPath` -> `pathBashdb`
+    - `bashPath` -> `pathBash`
+    - `scriptPath` -> `program`
+  - add `cwd` attribute to set working directory (#25, #32)
+  - add `trace` attribute to enable logging of the Debug Adapter Protocol
+  - fix default `launch.json` generation after breaking change in Microsoft's debug adapter interface (#39, #41, #45, #46)
+- dynamic default `pathBash` generation, allowing 32bit and 64bit VSCode usage on Windows
+- automated deployment (possibility to download pre-release extension's vsix directly from [github](https://github.com/rogalmic/vscode-bash-debug/releases))
 
 0.1.0
 =====
