@@ -26,9 +26,9 @@ Your `launch.json` may looks like:
             "request": "launch",
             "name": "Bash Debug",
             "program": "${workspaceFolder}/src/foo.sh",
-			"showDebugOutput": true,
+            "showDebugOutput": true,
             "trace": true
-		}
+            }
     ]
 }
 ```
