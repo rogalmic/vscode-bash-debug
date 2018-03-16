@@ -22,6 +22,8 @@ install:
 - sudo apt install bashdb
 
 script:
+- echo "GITHUB_TOKEN>${GITHUB_TOKEN:-OK not set}<"
+- echo "VSCE_TOKEN>${VSCE_TOKEN:-OK not set}<"
 - vsce package
 - npm test
 
