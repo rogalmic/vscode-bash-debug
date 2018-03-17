@@ -31,7 +31,8 @@
 	"dependencies": {
 		"vscode-debugadapter": "1.27.0",
 		"vscode-debugprotocol": "1.27.0",
-		"child-process": "1.0.2"
+		"child-process": "1.0.2",
+		"npm-which": "^3.0.1"
 	},
 	"devDependencies": {
 		"@types/node": "7.0.55",
@@ -116,7 +117,7 @@
 							},
 							"pathPkill": {
 								"type": "string",
-								"description": "Specify absolute path to pkill (on Windows, path in Linux Subsystem). On macOS, please use /usr/bin/pkill instead of /usr/local/bin/pkill, otherwise vscode crashes (#38).",
+								"description": "Specify absolute path to pkill (on Windows, path in Linux Subsystem). On macOS, please use /usr/bin/pkill instead of /usr/local/bin/pkill, otherwise vscode crashes. see https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill for details.",
 								"default": "/usr/local/bin/pkill"
 							},
 							"showDebugOutput": {
@@ -143,10 +144,7 @@
 						"type": "bashdb",
 						"request": "launch",
 						"name": "Bash-Debug (simplest configuration)",
-						"program": "${file}",
-						"osx": {
-							"pathPkill": "/usr/bin/pkill"
-						}
+						"program": "${file}"
 					}
 				],
 				"// Added when select 'Add configuration...' -> 'Bash Debug' in debug pane": null,
@@ -161,10 +159,7 @@
 							"name": "Bash-Debug (hardcoded script name)",
 							"cwd": "^\"\\${workspaceFolder}\"",
 							"program": "^\"\\${workspaceFolder}/path/to/script.sh\"",
-							"args": [],
-							"osx": {
-								"pathPkill": "/usr/bin/pkill"
-							}
+							"args": []
 						}
 					},
 					{
@@ -176,10 +171,7 @@
 							"name": "Bash-Debug (select script from list of sh files)",
 							"cwd": "^\"\\${workspaceFolder}\"",
 							"program": "^\"\\${command:SelectScriptName}\"",
-							"args": [],
-							"osx": {
-								"pathPkill": "/usr/bin/pkill"
-							}
+							"args": []
 						}
 					},
 					{
@@ -191,10 +183,7 @@
 							"name": "Bash-Debug (type in script name)",
  							"cwd": "^\"\\${workspaceFolder}\"",
 							"program": "^\"\\${workspaceFolder}/\\${command:AskForScriptName}\"",
-							"args": [],
-							"osx": {
-								"pathPkill": "/usr/bin/pkill"
-							}
+							"args": []
  						}
  					}
  				],

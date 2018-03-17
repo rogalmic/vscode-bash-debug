@@ -9,6 +9,7 @@ import {
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { ChildProcess, spawn } from 'child_process';
 import { basename } from 'path';
+import * as which from 'npm-which';
 import { validatePath } from './bashRuntime';
 import { getWSLPath, reverseWSLPath } from './handlePath';
 
@@ -101,6 +102,16 @@ export class BashDebugSession extends LoggingDebugSession {
 				response.message = errorMessage;
 				this.sendResponse(response);
 				return;
+			}
+		}
+
+		if (process.platform === "darwin" && args.pathPkill === "pkill") {
+			const pathPkill = which(__dirname).sync('pkill')
+			if (pathPkill === "/usr/local/bin/pkill") {
+				const url = "https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill"
+				const msg = `Using /usr/bin/pkill instead of /usr/local/bin/pkill (see ${url} for details)`
+				this.sendEvent(new OutputEvent(msg, 'stderr'));
+				args.pathPkill = "/usr/bin/pkill"
 			}
 		}
 
