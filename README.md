@@ -53,6 +53,9 @@ For Windows users:
 2. Install bashdb through bash console: `sudo apt-get install bashdb`
 3. [Optional] In launch.json, set `pathBash` to either `C:/Windows/System32/bash.exe`, or `C:/Windows/sysnative/bash.exe` in case of 32bit VSCode on 64bit OS
 
+For macOS users: <br>
+Read [here](https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill) if your mac has `/usr/local/bin/pkill`.
+
 ## Dependencies
 1. bashdb 4.3
 2. cat, mkfifo, rm, pkill
