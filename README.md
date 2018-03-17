@@ -46,12 +46,15 @@ Hopefully bash will land on 3 leading platforms making this extension very usefu
 
 See https://code.visualstudio.com/docs/editor/debugging for general usage.
 
+![Unfortunatly no animation for you :(](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
+
 For Windows users:
 1. Install [Windows Subsystem for Linux](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux)
 2. Install bashdb through bash console: `sudo apt-get install bashdb`
 3. [Optional] In launch.json, set `pathBash` to either `C:/Windows/System32/bash.exe`, or `C:/Windows/sysnative/bash.exe` in case of 32bit VSCode on 64bit OS
 
-![Unfortunatly no animation for you :(](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
+For macOS users: <br>
+Read [here](https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill) if your mac has `/usr/local/bin/pkill`.
 
 ## Dependencies
 1. bashdb 4.3
