@@ -177,16 +177,16 @@
 					{
 						"label": "Bash-Debug (type in script name)",
 						"description": "Debug a bash script (specify the script path before starting debug)",
- 						"body": {
- 							"type": "bashdb",
- 							"request": "launch",
+						"body": {
+							"type": "bashdb",
+							"request": "launch",
 							"name": "Bash-Debug (type in script name)",
- 							"cwd": "^\"\\${workspaceFolder}\"",
+							"cwd": "^\"\\${workspaceFolder}\"",
 							"program": "^\"\\${workspaceFolder}/\\${command:AskForScriptName}\"",
 							"args": []
- 						}
- 					}
- 				],
+						}
+					}
+				],
 				"variables": {
 					"AskForScriptName": "extension.bash-debug.getProgramName",
 					"SelectScriptName": "extension.bash-debug.selectProgramName"
