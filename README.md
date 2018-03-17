@@ -51,7 +51,7 @@ For Windows users:
 2. Install bashdb through bash console: `sudo apt-get install bashdb`
 3. [Optional] In launch.json, set `pathBash` to either `C:/Windows/System32/bash.exe`, or `C:/Windows/sysnative/bash.exe` in case of 32bit VSCode on 64bit OS
 
-![unfortunatly no animation for you](https://github.com/rogalmic/vscode-bash-debug/blob/gif/images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
+![Unfortunatly no animation for you :(](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")
 
 ## Dependencies
 1. bashdb 4.3
