@@ -10,7 +10,7 @@ dist: trusty
 branches:
   only:
   - master
-  - /v\d+\.\d+\.\d/
+  - /^v\d+\.\d+\.\d+$/
 
 env:
   global:
@@ -40,5 +40,4 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      branch: master
-      condition: "$TRAVIS_OS_NAME == linux && $TRAVIS_TAG =~ $RELEASE_TAG_EXPRESSION"
+      condition: "$TRAVIS_TAG =~ $RELEASE_TAG_EXPRESSION"
