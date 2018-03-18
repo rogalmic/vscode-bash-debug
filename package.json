@@ -182,7 +182,7 @@
 							"request": "launch",
 							"name": "Bash-Debug (type in script name)",
 							"cwd": "^\"\\${workspaceFolder}\"",
-							"program": "^\"\\${workspaceFolder}/\\${command:AskForScriptName}\"",
+							"program": "^\"\\${command:AskForScriptName}\"",
 							"args": []
 						}
 					}
