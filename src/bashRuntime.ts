@@ -50,11 +50,11 @@ enum validatePathResult {
  * // => validatePathResult.notFoundBash
  *
  * @example
- * _validatePath("./", "bash", "; sleep 2", "", "", "");
+ * _validatePath("./", "bash", "", "", "", "", 1);
  * // => validatePathResult.timeout
  */
 function _validatePath(cwd: string,
-	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, pathPkill: string): validatePathResult {
+	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, pathPkill: string, spawnTimeout: number = 1000): validatePathResult {
 
 	const vpr = validatePathResult;
 
@@ -66,7 +66,7 @@ function _validatePath(cwd: string,
 		`test -d "${cwd}" || exit ${vpr.notExistCwd};` +
 		""
 	]
-	const proc = spawnSync(pathBash, argv, { timeout: 1000 });
+	const proc = spawnSync(pathBash, argv, { timeout: spawnTimeout });
 
 	if (proc.error !== undefined) {
 		// @ts-ignore Property 'code' does not exist on type 'Error'.
