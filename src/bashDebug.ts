@@ -136,10 +136,10 @@ export class BashDebugSession extends LoggingDebugSession {
 			trap 'cleanup' ERR SIGINT SIGTERM EXIT
 
 			mkfifo "${fifo_path}"
-			${args.pathCat} "${fifo_path}" >&${this.debugPipeIndex} &
+			"${args.pathCat}" "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
-			cd ${args.cwd}
-			${args.pathCat} | ${args.pathBashdb} --quiet --tty "${fifo_path}" -- "${args.program}" ${args.args.join(" ")}
+			cd "${args.cwd}"
+			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" -- "${args.program}" ${args.args.join(" ")}
 			`
 		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
 

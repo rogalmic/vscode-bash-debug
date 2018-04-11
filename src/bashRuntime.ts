@@ -59,11 +59,11 @@ function _validatePath(cwd: string,
 	const vpr = validatePathResult;
 
 	const argv = ["-c",
-		`type ${pathBashdb} || exit ${vpr.notFoundBashdb};` +
-		`type ${pathCat} || exit ${vpr.notFoundCat};` +
-		`type ${pathMkfifo} || exit ${vpr.notFoundMkfifo};` +
-		`type ${pathPkill} || exit ${vpr.notFoundPkill};` +
-		`test -d ${cwd} || exit ${vpr.notExistCwd};` +
+		`type "${pathBashdb}" || exit ${vpr.notFoundBashdb};` +
+		`type "${pathCat}" || exit ${vpr.notFoundCat};` +
+		`type "${pathMkfifo}" || exit ${vpr.notFoundMkfifo};` +
+		`type "${pathPkill}" || exit ${vpr.notFoundPkill};` +
+		`test -d "${cwd}" || exit ${vpr.notExistCwd};` +
 		""
 	]
 	const proc = spawnSync(pathBash, argv, { timeout: 1000 });

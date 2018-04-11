@@ -54,8 +54,8 @@
     "test": "mocha -u tdd ./out/tests/; node_modules/.bin/mocha --require jsdoctest out/bashRuntime.js out/handlePath.js",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "package": "vsce package",
-	"publish": "vsce publish",
-	"release": "standard-version"
+    "publish": "vsce publish",
+    "release": "standard-version"
   },
   "main": "./out/extension",
   "activationEvents": [
