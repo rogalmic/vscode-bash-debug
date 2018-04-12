@@ -1,7 +1,7 @@
 {
   "name": "bash-debug",
   "displayName": "Bash Debug",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "rogalmic",
   "description": "A debugger extension for bash scripts (using bashdb).",
   "author": {

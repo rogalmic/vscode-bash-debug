@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.2.0"></a>
+# [0.2.0](https://github.com/rogalmic/vscode-bash-debug/compare/v0.1.1...v0.2.0) (2018-04-12)
+
+
+### Bug Fixes
+
+* fixed error when `cwd` contains space characters ([1a2a9b3](https://github.com/rogalmic/vscode-bash-debug/commit/1a2a9b3))
+
+
+### Features
+
+* **deploy:** automated changelog generation ([9ea28cb](https://github.com/rogalmic/vscode-bash-debug/commit/9ea28cb))
+
+
+
 <a name="0.1.1"></a>
 ## [0.1.1](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.1.1) (2018-03-17)
 
