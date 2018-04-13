@@ -34,7 +34,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 <a name="0.1.0"></a>
-## [0.1.0](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.1.0) (2017-06-13)
+# [0.1.0](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.1.0) (2017-06-13)
 
 - fix deprecated launch.json format
 
