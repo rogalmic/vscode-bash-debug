@@ -14,35 +14,35 @@ enum validatePathResult {
 
 /**
  * @example
- * _validatePath("./", "bash", "bashdb", "cat", "mkfifo", "pkill");
+ * _validatePath("./", "bash", "type", "type", "type", "type");
  * // => validatePathResult.success
  *
  * @example
- * _validatePath("non-exist-directory", "bash", "bashdb", "cat", "mkfifo", "pkill");
+ * _validatePath("non-exist-directory", "bash", "type", "type", "type", "type");
  * // => validatePathResult.notExistCwd
  *
  * @example
- * _validatePath("./", "invalid-bash-path", "bashdb", "cat", "mkfifo", "pkill");
+ * _validatePath("./", "invalid-bash-path", "type", "type", "type", "type");
  * // => validatePathResult.notFoundBash
  *
  * @example
- * _validatePath("./", "bash", "invalid-bashdb-path", "cat", "mkfifo", "pkill");
+ * _validatePath("./", "bash", "invalid-bashdb-path", "type", "type", "type");
  * // => validatePathResult.notFoundBashdb
  *
  * @example
- * _validatePath("./", "bash", "bashdb", "invalid-cat-path", "mkfifo", "pkill");
+ * _validatePath("./", "bash", "type", "invalid-cat-path", "type", "type");
  * // => validatePathResult.notFoundCat
  *
  * @example
- * _validatePath("./", "bash", "bashdb", "cat", "invalid-mkfifo-path", "pkill");
+ * _validatePath("./", "bash", "type", "type", "invalid-mkfifo-path", "type");
  * // => validatePathResult.notFoundMkfifo
  *
  * @example
- * _validatePath("./", "bash", "bashdb", "cat", "mkfifo", "invalid-pkill-path");
+ * _validatePath("./", "bash", "type", "type", "type", "invalid-pkill-path");
  * // => validatePathResult.notFoundPkill
  *
  * @example
- * _validatePath("./", "bash", "bashdb", "cat", "mkfifo", "invalid-pkill-path");
+ * _validatePath("./", "bash", "type", "type", "type", "invalid-pkill-path");
  * // => validatePathResult.notFoundPkill
  *
  * @example
@@ -90,10 +90,10 @@ function _validatePath(cwd: string,
 /**
  * @returns "" on success, non-empty error message on failure.
  * @example
- * validatePath("./", "bash", "bashdb", "cat", "mkfifo", "pkill");
+ * validatePath("./", "bash", "type", "type", "type", "type");
  * // => ""
  * @example
- * validatePath("non-exist-directory", "bash", "bashdb", "cat", "mkfifo", "pkill");
+ * validatePath("non-exist-directory", "bash", "type", "type", "type", "type");
  * // => "Error: cwd (non-exist-directory) does not exist."
  */
 export function validatePath(cwd: string,
