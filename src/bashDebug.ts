@@ -139,7 +139,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			"${args.pathCat}" "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
 			cd "${args.cwd}"
-			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" -- "${args.program}" ${args.args.join(" ")}
+			"${args.pathCat}" | "${args.pathBashdb}" -q -t "${fifo_path}" -- "${args.program}" ${args.args.join(" ")}
 			`
 		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
 
