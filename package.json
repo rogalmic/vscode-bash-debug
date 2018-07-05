@@ -35,14 +35,14 @@
     "npm-which": "^3.0.1"
   },
   "devDependencies": {
-    "@types/mocha": "5.2.1",
-    "@types/node": "10.3.2",
+    "@types/mocha": "5.2.4",
+    "@types/node": "10.5.1",
     "jsdoctest": "1.7.1",
-    "mocha": "5.2.0",
-    "standard-version": "^4.4.0",
+    "mocha": "5.0.1",
+    "standard-version": "^4.3.0",
     "tslint": "5.10.0",
-    "typescript": "2.9.1",
-    "vsce": "1.42.0",
+    "typescript": "2.9.2",
+    "vsce": "1.43.0",
     "vscode": "1.1.18",
     "vscode-debugadapter-testsupport": "1.29.0"
   },

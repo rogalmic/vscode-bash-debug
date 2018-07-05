@@ -79,7 +79,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			this.sendResponse(response)
 		});
 
-		spawn("bash", ["-c", `${this.launchArgs.pathPkill} -KILL -P ${this.debuggerProcessParentId}`]);
+		spawn(this.launchArgs.pathBash, ["-c", `${this.launchArgs.pathPkill} -KILL -P ${this.debuggerProcessParentId}`]);
 	}
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
