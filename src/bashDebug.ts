@@ -139,7 +139,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			"${args.pathCat}" "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
 			cd "${args.cwd}"
-			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" -- "${args.program}" ${args.args.join(" ")}
+			"${args.pathCat}" | "${args.pathBashdb}" --tty "${fifo_path}" -- "${args.program}" ${args.args.join(" ")}
 			`
 		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
 
@@ -220,7 +220,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		const sourcePath = (process.platform === "win32") ? getWSLPath(args.source.path) : args.source.path;
 
-		let setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nload ${sourcePath}\n`;
+		let setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nyes\nload ${sourcePath}\n`;
 		if (args.breakpoints) {
 			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print ' <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
 		}
