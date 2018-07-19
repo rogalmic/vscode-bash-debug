@@ -220,7 +220,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		const sourcePath = (process.platform === "win32") ? getWSLPath(args.source.path) : args.source.path;
 
-		let setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nload ${sourcePath}\n`;
+		let setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nyes\nload ${sourcePath}\n`;
 		if (args.breakpoints) {
 			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print ' <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
 		}
