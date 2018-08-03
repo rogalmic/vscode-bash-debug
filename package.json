@@ -29,22 +29,22 @@
     "url": "https://github.com/rogalmic/vscode-bash-debug/issues"
   },
   "dependencies": {
-    "vscode-debugadapter": "1.29.0",
-    "vscode-debugprotocol": "1.29.0",
+    "vscode-debugadapter": "1.31.0",
+    "vscode-debugprotocol": "1.31.0",
     "child-process": "^1.0.2",
     "npm-which": "^3.0.1"
   },
   "devDependencies": {
-    "@types/mocha": "5.2.4",
-    "@types/node": "10.5.2",
+    "@types/mocha": "5.2.5",
+    "@types/node": "10.5.5",
     "jsdoctest": "1.7.1",
     "mocha": "5.2.0",
     "standard-version": "^4.4.0",
-    "tslint": "5.10.0",
-    "typescript": "2.9.2",
-    "vsce": "1.44.0",
+    "tslint": "5.11.0",
+    "typescript": "3.0.1",
+    "vsce": "1.45.1",
     "vscode": "1.1.18",
-    "vscode-debugadapter-testsupport": "1.29.0"
+    "vscode-debugadapter-testsupport": "1.31.0"
   },
   "scripts": {
     "prepublish": "tsc -p ./src",
