@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.2.1"></a>
+## [0.2.1](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.0...v0.2.1) (2018-08-09)
+
+
+### Bug Fixes
+
+* Fix breakpoint setting for newest bashdb ([5390d7f](https://github.com/rogalmic/vscode-bash-debug/commit/5390d7f))
+* Use defined bash path when stopping debug process ([313bcd6](https://github.com/rogalmic/vscode-bash-debug/commit/313bcd6))
+
+
+
 <a name="0.2.0"></a>
 # [0.2.0](https://github.com/rogalmic/vscode-bash-debug/compare/v0.1.1...v0.2.0) (2018-04-12)
 
