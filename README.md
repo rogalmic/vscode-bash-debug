@@ -50,19 +50,19 @@ See https://code.visualstudio.com/docs/editor/debugging for general usage.
 
 For Windows users:
 1. Install [Windows Subsystem for Linux](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux)
-2. Install bashdb through bash console: `sudo apt-get install bashdb`
+2. Install bashdb through bash console (see above)
 3. [Optional] In launch.json, set `pathBash` to either `C:/Windows/System32/bash.exe`, or `C:/Windows/sysnative/bash.exe` in case of 32bit VSCode on 64bit OS
 
 For macOS users: <br>
 Read [here](https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill) if your mac has `/usr/local/bin/pkill`.
 
 ## Dependencies
-1. bashdb 4.3
+1. bashdb 4.4
 2. cat, mkfifo, rm, pkill
 
 ## Limitations and known problems
+* For now, the debugger supports **only non-interactive scripts** (no stdin)
 * Watch variables should be specified with $ at the beginning (this expression is evaluated in bash - for example `${#PWD}` returns path length)
-* The debugger supports only non-interactive scripts (no stdin)
 * Currently debugger stops at first command.
 * Executing `set -e` causes debugging script to exit (`bashdb` fixes this in version `4.4-0.93`). Consider using `trap 'exit $?' ERR`.
 * Windows Subsystem Linux in Windows 10 (>=15014) seems to be working with some hacks (https://github.com/Microsoft/BashOnWindows/issues/2#issuecomment-209118529, https://github.com/Microsoft/BashOnWindows/issues/1489);
