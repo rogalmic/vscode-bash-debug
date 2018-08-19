@@ -9,6 +9,7 @@ import {
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { ChildProcess, spawn } from 'child_process';
 import { basename } from 'path';
+import * as fs from 'fs';
 import * as which from 'npm-which';
 import { validatePath } from './bashRuntime';
 import { getWSLPath, reverseWSLPath } from './handlePath';
@@ -303,7 +304,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				frames.push(new StackFrame(
 					frameIndex,
 					frameText,
-					new Source(basename(frameSourcePath), this.convertDebuggerPathToClient(frameSourcePath), undefined, undefined, 'bash-adapter-data'),
+					fs.existsSync(frameSourcePath) ? new Source(basename(frameSourcePath), this.convertDebuggerPathToClient(frameSourcePath), undefined, undefined, 'bash-adapter-data') : undefined,
 					this.convertDebuggerLineToClient(frameLine)
 				));
 			}
