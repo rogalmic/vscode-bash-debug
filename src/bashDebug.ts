@@ -12,7 +12,7 @@ import { basename } from 'path';
 import * as fs from 'fs';
 import * as which from 'npm-which';
 import { validatePath } from './bashRuntime';
-import { getWSLPath, reverseWSLPath, escapeCharactersInLinuxPath } from './handlePath';
+import { getWSLPath, reverseWSLPath, escapeCharactersInLinuxPath, normalizePathFromLinux } from './handlePath';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -305,10 +305,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				let frameSourcePath = lineContent.substr(lineContent.lastIndexOf("`") + 1, lineContent.lastIndexOf("'") - lineContent.lastIndexOf("`") - 1);
 				const frameLine = parseInt(lineContent.substr(lineContent.lastIndexOf(" ")));
 
-				if (frameSourcePath.startsWith("./"))
-				{
-					frameSourcePath = frameSourcePath.replace("./", "");
-				}
+				frameSourcePath = normalizePathFromLinux(frameSourcePath);
 
 				if ((process.platform === "win32")) {
 
