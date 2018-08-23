@@ -12,7 +12,7 @@ import { basename } from 'path';
 import * as fs from 'fs';
 import * as which from 'npm-which';
 import { validatePath } from './bashRuntime';
-import { getWSLPath, reverseWSLPath } from './handlePath';
+import { getWSLPath, reverseWSLPath, escapeCharactersInLinuxPath } from './handlePath';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -219,11 +219,20 @@ export class BashDebugSession extends LoggingDebugSession {
 			this.currentBreakpointIds[args.source.path] = [];
 		}
 
-		const sourcePath = (process.platform === "win32") ? getWSLPath(args.source.path) : args.source.path;
+		let sourcePath = (process.platform === "win32") ? getWSLPath(args.source.path) : args.source.path;
+
+		if (sourcePath !== undefined)
+		{
+			sourcePath = escapeCharactersInLinuxPath(sourcePath);
+		}
 
 		let setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nyes\nload ${sourcePath}\n`;
 		if (args.breakpoints) {
-			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print ' <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
+			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print 'break <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
+		}
+
+		if (this.launchArgs.showDebugOutput) {
+			setBreakpointsCommand += `info files\ninfo breakpoints\n`;
 		}
 
 		this.debuggerExecutableBusy = true;
@@ -295,6 +304,11 @@ export class BashDebugSession extends LoggingDebugSession {
 				const frameText = lineContent;
 				let frameSourcePath = lineContent.substr(lineContent.lastIndexOf("`") + 1, lineContent.lastIndexOf("'") - lineContent.lastIndexOf("`") - 1);
 				const frameLine = parseInt(lineContent.substr(lineContent.lastIndexOf(" ")));
+
+				if (frameSourcePath.startsWith("./"))
+				{
+					frameSourcePath = frameSourcePath.replace("./", "");
+				}
 
 				if ((process.platform === "win32")) {
 
