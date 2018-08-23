@@ -58,3 +58,12 @@ export function getWSLPath(path?: string): string | undefined {
 export function reverseWSLPath(wslPath: string): string {
 	return wslPath.substr("/mnt/".length, 1).toUpperCase() + ":" + wslPath.substr("/mnt/".length + 1).split("/").join("\\");
 }
+
+/**
+ * @example <caption>Escape whitespace for setting source path in bashdb</caption>
+ * escapeCharactersInLinuxPath("/pa th/to/script.sh");
+ * // => "/pa\\\\040th/to/script.sh"
+ */
+export function escapeCharactersInLinuxPath(path: string): string {
+	return path.replace(/\s/g, (m) => "\\\\" + ("000" + m.charCodeAt(0).toString(8)).slice(-3));
+}
