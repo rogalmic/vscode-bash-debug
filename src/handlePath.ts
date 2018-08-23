@@ -67,3 +67,13 @@ export function reverseWSLPath(wslPath: string): string {
 export function escapeCharactersInLinuxPath(path: string): string {
 	return path.replace(/\s/g, (m) => "\\\\" + ("000" + m.charCodeAt(0).toString(8)).slice(-3));
 }
+
+/**
+ * @example <caption>Remove unnecessary dot in path</caption>
+ * normalizePathFromLinux("./script.sh");
+ * // => "script.sh"
+ */
+export function normalizePathFromLinux(path: string): string {
+
+	return (path.startsWith("./")) ? path.substring("./".length) : path;
+}
