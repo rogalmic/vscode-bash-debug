@@ -56,7 +56,12 @@ export function getWSLPath(path?: string): string | undefined {
  * // => "C:\\Users\\wsh\\proj0\\path\\to\\script.sh"
  */
 export function reverseWSLPath(wslPath: string): string {
-	return wslPath.substr("/mnt/".length, 1).toUpperCase() + ":" + wslPath.substr("/mnt/".length + 1).split("/").join("\\");
+
+	if (wslPath.startsWith("/mnt/")) {
+		return wslPath.substr("/mnt/".length, 1).toUpperCase() + ":" + wslPath.substr("/mnt/".length + 1).split("/").join("\\");
+	}
+
+	return wslPath.split("/").join("\\");
 }
 
 /**
@@ -68,12 +73,3 @@ export function escapeCharactersInLinuxPath(path: string): string {
 	return path.replace(/\s/g, (m) => "\\\\" + ("000" + m.charCodeAt(0).toString(8)).slice(-3));
 }
 
-/**
- * @example <caption>Remove unnecessary dot in path</caption>
- * normalizePathFromLinux("./script.sh");
- * // => "script.sh"
- */
-export function normalizePathFromLinux(path: string): string {
-
-	return (path.startsWith("./")) ? path.substring("./".length) : path;
-}
