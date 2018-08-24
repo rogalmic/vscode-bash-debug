@@ -8,18 +8,20 @@ import {
 } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { ChildProcess, spawn } from 'child_process';
-import { basename } from 'path';
+import { basename, normalize, join, isAbsolute } from 'path';
 import * as fs from 'fs';
 import * as which from 'npm-which';
 import { validatePath } from './bashRuntime';
-import { getWSLPath, reverseWSLPath, escapeCharactersInLinuxPath, normalizePathFromLinux } from './handlePath';
+import { getWSLPath, reverseWSLPath, escapeCharactersInLinuxPath } from './handlePath';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
 	// Non-optional arguments are guaranteed to be defined in extension.ts: resolveDebugConfiguration().
 	args: string[];
 	cwd: string;
+	cwdEffective: string;
 	program: string;
+	programEffective: string;
 	pathBash: string;
 	pathBashdb: string;
 	pathCat: string;
@@ -90,13 +92,17 @@ export class BashDebugSession extends LoggingDebugSession {
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
 		if (process.platform === "win32") {
-			args.cwd = `${getWSLPath(args.cwd)}`;
-			args.program = `${getWSLPath(args.program)}`;
+			args.cwdEffective = `${getWSLPath(args.cwd)}`;
+			args.programEffective = `${getWSLPath(args.program)}`;
+		}
+		else {
+			args.cwdEffective = args.cwd;
+			args.programEffective = args.program;
 		}
 
 		{
 			const errorMessage = validatePath(
-				args.cwd, args.pathBash, args.pathBashdb, args.pathCat, args.pathMkfifo, args.pathPkill);
+				args.cwdEffective, args.pathBash, args.pathBashdb, args.pathCat, args.pathMkfifo, args.pathPkill);
 
 			if (errorMessage !== "") {
 				response.success = false;
@@ -139,8 +145,8 @@ export class BashDebugSession extends LoggingDebugSession {
 			mkfifo "${fifo_path}"
 			"${args.pathCat}" "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
-			cd "${args.cwd}"
-			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" -- "${args.program}" ${args.args.join(" ")}
+			cd "${args.cwdEffective}"
+			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" -- "${args.programEffective}" ${args.args.join(" ")}
 			`
 		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
 
@@ -305,12 +311,12 @@ export class BashDebugSession extends LoggingDebugSession {
 				let frameSourcePath = lineContent.substr(lineContent.lastIndexOf("`") + 1, lineContent.lastIndexOf("'") - lineContent.lastIndexOf("`") - 1);
 				const frameLine = parseInt(lineContent.substr(lineContent.lastIndexOf(" ")));
 
-				frameSourcePath = normalizePathFromLinux(frameSourcePath);
-
 				if ((process.platform === "win32")) {
 
-					frameSourcePath = frameSourcePath.startsWith("/") ? reverseWSLPath(frameSourcePath) : reverseWSLPath(`${this.launchArgs.cwd}/${frameSourcePath}`);
+					frameSourcePath = reverseWSLPath(frameSourcePath);
 				}
+
+				frameSourcePath = isAbsolute(frameSourcePath) ? frameSourcePath : normalize(join(this.launchArgs.cwd, frameSourcePath));
 
 				frames.push(new StackFrame(
 					frameIndex,
@@ -318,6 +324,10 @@ export class BashDebugSession extends LoggingDebugSession {
 					fs.existsSync(frameSourcePath) ? new Source(basename(frameSourcePath), this.convertDebuggerPathToClient(frameSourcePath), undefined, undefined, 'bash-adapter-data') : undefined,
 					this.convertDebuggerLineToClient(frameLine)
 				));
+			}
+
+			if (frames.length > 0) {
+				this.sendEvent(new OutputEvent(`Execution breaks at '${frames[0].name}'\n`, 'telemetry'));
 			}
 
 			const totalFrames = this.fullDebugOutput.length - currentOutputLength - 1;
