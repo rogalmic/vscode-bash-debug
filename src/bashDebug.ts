@@ -124,8 +124,6 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
 
-		// TODO: treat whitespace in args.args:
-		//       i.e. at this moment, ["arg0", "arg1 with space"] will be expanded to "arg0 arg1 with space"
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
 		this.debuggerProcess = spawn(args.pathBash, ["-c", `
@@ -146,7 +144,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			"${args.pathCat}" "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
 			cd "${args.cwdEffective}"
-			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" -- "${args.programEffective}" ${args.args.join(" ")}
+			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}
 			`
 		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
 
