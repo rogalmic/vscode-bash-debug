@@ -61,7 +61,7 @@ Read [here](https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-
 2. cat, mkfifo, rm, pkill
 
 ## Limitations and known problems
-* For now, the debugger supports **only non-interactive scripts** (no stdin)
+* For now, the debugger supports **only non-interactive scripts** (no stdin, limited [workaround](https://github.com/rogalmic/vscode-bash-debug/wiki/workaround-for-stdin) for this exists)
 * Watch variables should be specified with $ at the beginning (this expression is evaluated in bash - for example `${#PWD}` returns path length)
 * Currently debugger stops at first command.
 * Executing `set -e` causes debugging script to exit (`bashdb` fixes this in version `4.4-0.93`). Consider using `trap 'exit $?' ERR`.
