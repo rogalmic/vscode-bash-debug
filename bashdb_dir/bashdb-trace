@@ -1,0 +1,186 @@
+# -*- shell-script -*-
+# This program needs to be SOURCE'd and is not called as an executable
+# Note: bashdb-trace is created from bashdb-trace.in
+#
+#   Copyright (C) 2006, 2007, 2008, 2010, 2012
+#   Rocky Bernstein <rocky@gnu.org>
+#
+#   This program is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU General Public License as
+#   published by the Free Software Foundation; either version 2, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   General Public License for more details.
+#   
+#   You should have received a copy of the GNU General Public License
+#   along with this program; see the file COPYING.  If not, write to
+#   the Free Software Foundation, 59 Temple Place, Suite 330, Boston,
+#   MA 02111 USA.
+#
+
+# The alternate way to invoke debugger, "bash --debugger", has some
+# advantages: it sets $0 correctly and doesn't show this script in
+# the call trace. However the bash has been a bit inflexible and
+# quirky so sadly this script seems to be needed more than it would
+# normally.
+typeset _Dbg_trace_old_set_opts
+_Dbg_trace_old_set_opts=$-
+set +u
+if [[ ! $BASH_VERSION =~ ^4. ]] ; then 
+    echo "This debugger needs bash version 4 or greater. You have ${BASH_VERSION} " >&2
+    exit 1
+fi
+    
+
+# Name we refer to ourselves by
+typeset _Dbg_debugger_name='bashdb'
+
+# The shell we are configured to run under.
+typeset _Dbg_shell='/bin/bash'
+
+# The short shell name. Helps keep code common in bash, zsh, and ksh debuggers.
+typeset _Dbg_shell_name=${_Dbg_shell##*/}
+
+# Original $0. Note we can't set this in an include.
+typeset _Dbg_orig_0=$0
+
+# Equivalent to basename $0; the short program name
+typeset _Dbg_pname=${0##*/}  
+
+# Show basename only in location listing. This is needed in regression tests
+typeset -i _Dbg_set_basename=${BASHDB_BASENAME_ONLY:-0}
+
+typeset _Dbg_main=dbg-main.sh
+typeset prefix=/usr  # cygwin gets PKGDATADIR wrong
+typeset _Dbg_libdir=${prefix}/share/bashdb
+typeset _Dbg_bindir=$(dirname $0)
+typeset _Dbg_tmpdir=/tmp
+
+# What to set for location of helper routines? 
+if [[ ! -e $_Dbg_libdir/$_Dbg_main ]] ; then
+    # Use bindir/../share as fallback
+    _Dbg_libdir=
+    if [[ -d $_Dbg_bindir/../share/bashdb ]] ; then
+      _Dbg_libdir=$_Dbg_bindir/../share/bashdb
+    fi
+fi
+
+# Parse just the library option
+typeset -ax _Dbg_script_args=("$@")
+typeset -i i
+for ((i=0; $i<${#_Dbg_script_args[@]}-1; i++)) ; do 
+    typeset arg=${_Dbg_script_args[$i]}
+    if [[ $arg == '-L' || $arg == '--library' ]] ; then
+	((i++))
+	_Dbg_libdir="${_Dbg_script_args[$i]}"
+	break
+    fi
+done
+if [[ ! -d $_Dbg_libdir ]] || [[ ! -r $_Dbg_libdir ]] ; then 
+  if [[ ! -d $_Dbg_libdir ]] ; then
+      echo "${_Dbg_pname}: '${_Dbg_libdir}' is not a directory." 1>&2
+  elif [[ ! -r $_Dbg_libdir ]] ; then
+      echo "${_Dbg_pname}: Can't read debugger library directory '${_Dbg_libdir}'."
+  fi
+  echo "${_Dbg_pname}: Perhaps bashdb is installed wrong (if its installed)." >&2
+  echo "${_Dbg_pname}: Try running bashdb using -L (with a different directory)." >&2
+  echo "${_Dbg_pname}: Run bashdb --help for a list and explanation of options." >&2
+  exit 1
+fi
+
+[[ -r $_Dbg_libdir/dbg-main.sh ]] || {
+  echo "${_Dbg_pname}: cannot read debugger file $_Dbg_libdir/dbg-main.sh" >&2
+  echo "${_Dbg_pname}: Perhaps bashdb is installed incorrectly." >&2
+  exit 1
+}
+
+. $_Dbg_libdir/dbg-main.sh
+
+if [[ ! -d $_Dbg_tmpdir ]] && [[ ! -w $_Dbg_tmpdir ]] ; then
+  echo "${_Dbg_pname}: cannot write to temp directory $_Dbg_tmpdir." >&2
+  echo "${_Dbg_pname}: Use -T try directory location." >&2
+  exit 1
+fi
+
+# Note that this is called via bashdb rather than "bash --debugger"
+_Dbg_script=1
+
+_Dbg_set_trace_init=1
+
+# Older alias for _Dbg_debugger()
+_Dbg_set_trace() {
+  set -o functrace
+  while (( $# > 0 )) ; do
+    eval $1
+    shift
+  done
+
+  if [[ -z $_Dbg_set_trace_init ]] ; then
+      _Dbg_set_trace_init=1
+      _Dbg_step_ignore=${step_ignore:-0}
+      _Dbg_write_journal "_Dbg_step_ignore=0"
+  else
+      _Dbg_step_ignore=${1:-2}
+  fi
+  trap '_Dbg_debug_trap_handler 0 "$BASH_COMMAND" "$@"' DEBUG
+}
+
+# Turn on line tracing. Sort of a nicer replacement for
+# set -x
+# 
+# Example:
+#   source /usr/local/share/bashdb/bashdb-trace -q 
+#   ...
+#   _Dbg_linetrace_on
+#   for i in `seq 10` ; do
+#     echo $i
+#   done
+#   _Dbg_linetrace_off
+#   _Dbg_QUIT_ON_QUIT=1   # Set this to make sure not to stay in debugger
+#                         # after program terminates. Might also do earlier.
+
+_Dbg_linetrace_on() {
+  set -o functrace
+  _Dbg_set_linetrace=1
+  _Dbg_step_ignore=-1
+  trap '_Dbg_debug_trap_handler 0 "$BASH_COMMAND" "$@"' DEBUG
+}
+
+# Turn off line tracing. Sort of a nicer replacement for
+# set +x.
+#
+# See _Dbg_linetrace_on() for an example.
+_Dbg_linetrace_off() {
+  _Dbg_set_linetrace=0
+}
+
+# Use the debugger signal handler when getting the signal specified.
+# additional arguments can be the values for "print" "stack" and "stop"
+# Examples:
+#    _Dbg_handler INT print stack nostop      # this is the default
+#    _Dbg_handler INT                         # same thing
+#    _Dbg_hander                              # same thing
+#    _Dbg_handler HUP print stop              # stop in debugger when getting
+#                                             # a HUP signal                  
+_Dbg_handler() {
+   local signame=${1:INT}
+   shift
+   local -a rest=$*
+   if [[ -z $rest ]]; then
+       rest=("print" "stack" "stop")
+   fi
+  _Dbg_init_trap $signame
+  for attr in ${rest[@]}; do 
+      _Dbg_do_handle $signame $attr
+  done
+  _Dbg_set_linetrace=0
+  _Dbg_step_ignore=-1
+}
+
+_Dbg_init_default_traps
+set -${_Dbg_trace_old_set_opts}
+unset _Dbg_trace_old_set_opts
+# end of bashdb-trace

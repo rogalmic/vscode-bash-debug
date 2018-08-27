@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
-import { expandPath } from './handlePath';
+import { expandPath, getWSLPath } from './handlePath';
+import { normalize, join } from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -95,7 +96,22 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 				config.pathBash = "bash"
 			}
 		}
-		if (!config.pathBashdb) { config.pathBashdb = "bashdb" }
+		if (!config.pathBashdb) {
+			if (process.platform === "win32") {
+				config.pathBashdb = getWSLPath(normalize(join(__dirname, "..\\bashdb")));
+			}
+			else {
+				config.pathBashdb = normalize(join(__dirname, "..\\bashdb"));
+			}
+		}
+		if (!config.pathBashdbLib) {
+			if (process.platform === "win32") {
+				config.pathBashdbLib = getWSLPath(normalize(join(__dirname, "..\\bashdb_dir")));
+			}
+			else {
+				config.pathBashdbLib = normalize(join(__dirname, "..\\bashdb_dir"));
+			}
+		}
 		if (!config.pathCat) { config.pathCat = "cat" }
 		if (!config.pathMkfifo) { config.pathMkfifo = "mkfifo" }
 		if (!config.pathPkill) { config.pathPkill = "pkill" }

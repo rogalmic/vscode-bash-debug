@@ -24,6 +24,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	programEffective: string;
 	pathBash: string;
 	pathBashdb: string;
+	pathBashdbLib: string;
 	pathCat: string;
 	pathMkfifo: string;
 	pathPkill: string;
@@ -89,6 +90,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.launchArgs = args;
 
+		this.sendEvent(new OutputEvent(`${args.pathBashdb} ${args.pathBashdbLib}`, 'stderr'));
+
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
 		if (process.platform === "win32") {
@@ -124,6 +127,10 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
 
+
+		//const bashdb_lib_dir = getWSLPath(normalize(join(__dirname, "..\\bashdb_dir")));
+		//const bashdb_bin = getWSLPath(normalize(join(__dirname, "..\\bashdb")));
+
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
 		this.debuggerProcess = spawn(args.pathBash, ["-c", `
@@ -138,13 +145,14 @@ export class BashDebugSession extends LoggingDebugSession {
 				rm "${fifo_path}";
 				exit $exit_code;
 			}
+			chmod +x "${args.pathBashdb}" 2>/dev/null
 			trap 'cleanup' ERR SIGINT SIGTERM EXIT
-
 			mkfifo "${fifo_path}"
 			"${args.pathCat}" "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
 			cd "${args.cwdEffective}"
-			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}
+
+			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}
 			`
 		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
 
