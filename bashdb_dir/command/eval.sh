@@ -135,7 +135,7 @@ eval $cmd  # runs an ls command
 _Dbg_do_print() {
   typeset _Dbg_expr=${@:-"$_Dbg_last_print_args"}
   typeset dq_expr; dq_expr=$(_Dbg_esc_dq "$_Dbg_expr")
-  . ${_Dbg_libdir}/dbg-set-d-vars.inc
+  . "${_Dbg_libdir}/dbg-set-d-vars.inc"
   eval "_Dbg_msg $_Dbg_expr"
   typeset -i rc=$?
   _Dbg_last_print_args="$dq_expr"

@@ -19,8 +19,8 @@
 #   MA 02111 USA.
 
 # Load set0 if possible.
-if [[ -f $_Dbg_libdir/builtin/set0 ]] ; then
-    enable -f $_Dbg_libdir/builtin/set0 set0
+if [[ -f "$_Dbg_libdir/builtin/set0" ]] ; then
+    enable -f "$_Dbg_libdir/builtin/set0" set0
 fi
 
 # If it was set0 loaded, then we can add a debugger command "set dollar0"
@@ -29,7 +29,7 @@ if enable -a set0 2>/dev/null ; then
 	'set dollar0 PROGRAM_NAME
 
 Set $0 to PROGRAM_NAME.' 1
-    
+
     _Dbg_do_set_dollar0() {
 	# We use the loop below rather than _Dbg_set_args="(@)" because
 	# we want to preserve embedded blanks in the arguments.

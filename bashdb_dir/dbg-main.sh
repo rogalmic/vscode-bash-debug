@@ -13,25 +13,25 @@
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 #   General Public License for more details.
-#   
+#
 #   You should have received a copy of the GNU General Public License
 #   along with this program; see the file COPYING.  If not, write to
 #   the Free Software Foundation, 59 Temple Place, Suite 330, Boston,
 #   MA 02111 USA.
 
 # Are we using a debugger-enabled bash? If not let's stop right here.
-if [[ -z "${BASH_SOURCE[0]}" ]] ; then 
+if [[ -z "${BASH_SOURCE[0]}" ]] ; then
     echo "Sorry, you need to use a debugger-enabled version of bash." 2>&1
     exit 2
 fi
 
 # Code that specifically has to come first.
 # Note: "init" comes first and "cmds" has to come after "io".
-for _Dbg_file in require pre vars io ; do 
-    source ${_Dbg_libdir}/init/${_Dbg_file}.sh
+for _Dbg_file in require pre vars io ; do
+    source "${_Dbg_libdir}/init/${_Dbg_file}.sh"
 done
 
-for _Dbg_file in ${_Dbg_libdir}/lib/*.sh ${_Dbg_libdir}/command/*.sh ; do 
+for _Dbg_file in "${_Dbg_libdir}/lib/"*.sh "${_Dbg_libdir}/command/"*.sh ; do
     source $_Dbg_file
 done
 
@@ -44,11 +44,11 @@ fi
 # List of command files to process
 typeset -a _Dbg_input
 
-# Have we already specified where to read debugger input from?  
+# Have we already specified where to read debugger input from?
 #
 # Note: index 0 is only set by the debugger. It is not used otherwise for
 # I/O like those indices >= _Dbg_INPUT_START_DESC are.
-if [[ -n "$DBG_INPUT" ]] ; then 
+if [[ -n "$DBG_INPUT" ]] ; then
     _Dbg_input=("$DBG_INPUT")
     _Dbg_do_source "${_Dbg_input[0]}"
     _Dbg_no_nx=1
@@ -65,13 +65,13 @@ if [[ -z "${_Dbg_DEBUGGER_LEVEL}" ]] ; then
     typeset -xi _Dbg_DEBUGGER_LEVEL=1
 fi
 
-# This is put at the so we have something at the end to stop at 
+# This is put at the so we have something at the end to stop at
 # when we debug this. By stopping at the end all of the above functions
 # and variables can be tested.
 
 if [[ ${_Dbg_libdir:0:1} == '.' ]] ; then
     # Relative file name
-    _Dbg_libdir=$(_Dbg_expand_filename ${_Dbg_init_cwd}/${_Dbg_libdir})
+    _Dbg_libdir="$(_Dbg_expand_filename "${_Dbg_init_cwd}/${_Dbg_libdir}")"
 fi
 
 for source_file in ${_Dbg_o_init_files[@]} "$DBG_RESTART_FILE";  do

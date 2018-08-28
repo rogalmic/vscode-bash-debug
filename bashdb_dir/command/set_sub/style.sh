@@ -29,7 +29,7 @@ fi
 typeset -x _Dbg_pygments_styles=''
 
 if (( _Dbg_working_term_highlight )) ; then
-   _Dbg_pygments_styles=$(${_Dbg_libdir}/lib/term-highlight.py -L)
+   _Dbg_pygments_styles=("${_Dbg_libdir}/lib/term-highlight.py" -L)
 fi
 
 _Dbg_complete_style() {

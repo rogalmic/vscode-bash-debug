@@ -23,7 +23,7 @@ typeset -A _Dbg_debugger_show_commands
 
 typeset -A _Dbg_command_help_show
 
-# subcommands whose current values are not shown in a "show" list . 
+# subcommands whose current values are not shown in a "show" list .
 # These are things like alias, warranty, or copying.
 # They are available if asked for explicitly, e.g. "show copying"
 typeset -A _Dbg_show_nolist
@@ -32,7 +32,7 @@ typeset -A _Dbg_show_nolist
 _Dbg_help_add show '' 1 _Dbg_complete_show
 
 # Load in "show" subcommands
-for _Dbg_file in ${_Dbg_libdir}/command/show_sub/*.sh ; do
+for _Dbg_file in "${_Dbg_libdir}/command/show_sub/"*.sh ; do
     source $_Dbg_file
 done
 
@@ -47,7 +47,7 @@ _Dbg_do_show() {
     typeset label=$1
     (($# >= 1)) && shift
 
-    if [[ -z $subcmd ]] ; then 
+    if [[ -z $subcmd ]] ; then
         typeset thing
         typeset list; list=("${!_Dbg_debugger_show_commands[@]}")
         sort_list 0 ${#list[@]}-1
@@ -60,7 +60,7 @@ _Dbg_do_show() {
         return 0
     fi
 
-    case $subcmd in 
+    case $subcmd in
         lin | line | linet | linetr | linetra | linetrac | linetrace )
             [[ -n $label ]] && label=$(_Dbg_printf_nocr "%-12s: " 'line tracing')
             [[ -n $label ]] && label='line tracing: '
@@ -101,7 +101,7 @@ _Dbg_do_show() {
             typeset -a columnized; columnize $width
             typeset -i i
             _Dbg_errmsg "Show subcommands are:"
-            for ((i=0; i<${#columnized[@]}; i++)) ; do 
+            for ((i=0; i<${#columnized[@]}; i++)) ; do
                 _Dbg_errmsg "  ${columnized[i]}"
             done
             return 1

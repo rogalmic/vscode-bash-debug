@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 # set.sh - debugger settings
 #
-#   Copyright (C) 2002,2003,2006,2007,2008,2010,2011 Rocky Bernstein 
+#   Copyright (C) 2002,2003,2006,2007,2008,2010,2011 Rocky Bernstein
 #   <rocky@gnu.org>
 #
 #   This program is free software; you can redistribute it and/or
@@ -13,7 +13,7 @@
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 #   General Public License for more details.
-#   
+#
 #   You should have received a copy of the GNU General Public License
 #   along with this program; see the file COPYING.  If not, write to
 #   the Free Software Foundation, 59 Temple Place, Suite 330, Boston,
@@ -29,10 +29,10 @@ typeset -A _Dbg_command_help_set
 typeset -i _Dbg_set_autoeval=0     # Evaluate unrecognized commands?
 
 # Help routine is elsewhere which is why we have '' below.
-_Dbg_help_add set '' 1 _Dbg_complete_set 
+_Dbg_help_add set '' 1 _Dbg_complete_set
 
 # Load in "set" subcommands
-for _Dbg_file in ${_Dbg_libdir}/command/set_sub/*.sh ; do 
+for _Dbg_file in "${_Dbg_libdir}/command/set_sub/"*.sh ; do
     source $_Dbg_file
 done
 
@@ -50,13 +50,13 @@ _Dbg_do_set() {
     typeset subcmd=$1
     typeset rc
     shift
-    
+
     if [[ -n ${_Dbg_debugger_set_commands[$subcmd]} ]] ; then
 	${_Dbg_debugger_set_commands[$subcmd]} $label "$@"
 	return $?
     fi
-  
-    case $subcmd in 
+
+    case $subcmd in
 	force )
 	    _Dbg_set_onoff "$1" 'different'
 	    return $?

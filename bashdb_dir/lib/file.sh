@@ -32,7 +32,7 @@ _Dbg_dir=('\$cdir' '\$cwd' )
 _Dbg_adjust_filename() {
   typeset -r filename="$1"
   if (( _Dbg_set_annotate == 1 )) ; then
-    echo $(_Dbg_resolve_expand_filename $filename)
+    echo $(_Dbg_resolve_expand_filename "$filename")
   elif ((_Dbg_set_basename)) ; then
     echo "${filename##*/}"
   else
@@ -107,9 +107,9 @@ function _Dbg_resolve_expand_filename {
     typeset -i i
     for (( i=0 ; i < n; i++ )) ; do
       typeset basename="${_Dbg_dir[i]}"
-      if [[  $basename == '\$cdir' ]] ; then
+      if [[  "$basename" == '\$cdir' ]] ; then
 	basename=$_Dbg_cdir
-      elif [[ $basename == '\$cwd' ]] ; then
+      elif [[ "$basename" == '\$cwd' ]] ; then
 	basename=$(pwd)
       fi
       if [[ -f "$basename/$find_file" ]] ; then

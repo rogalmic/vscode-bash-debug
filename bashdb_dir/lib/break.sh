@@ -403,10 +403,10 @@ _Dbg_get_watch_exp_eval() {
   if [[ $(eval echo \"${_Dbg_watch_exp[$i]}\") == "" ]]; then
     new_val=''
   elif (( _Dbg_watch_arith[$i] == 1 )) ; then
-    . ${_Dbg_libdir}/dbg-set-d-vars.inc
+    . "${_Dbg_libdir}/dbg-set-d-vars.inc"
     eval let new_val=\"${_Dbg_watch_exp[$i]}\"
   else
-    . ${_Dbg_libdir}/dbg-set-d-vars.inc
+    . "${_Dbg_libdir}/dbg-set-d-vars.inc"
     eval new_val="${_Dbg_watch_exp[$i]}"
   fi
   echo $new_val

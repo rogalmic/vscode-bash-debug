@@ -34,7 +34,7 @@ typeset _Dbg_debugger_name='bashdb'
 typeset _Dbg_shell='/bin/bash'
 
 # The release name we are configured to run under.
-typeset _Dbg_release='4.4-0.94'
+typeset _Dbg_release='4.4-0.94-mod'
 
 # Wrapper for debugger called from within bash via bash --debugger
 typeset _Dbg_bashdb_main='@BASHDB_MAIN@'
@@ -50,13 +50,13 @@ typeset _Dbg_pname=${0##*/}
 
 ## Stuff set by autoconf/configure ###
 typeset  prefix=/usr  # ${prefix}/share/bashdb often uses $prefix
-typeset _Dbg_libdir=${prefix}/share/bashdb
+typeset _Dbg_libdir="${prefix}/share/bashdbaaaa"
 ###
 
 # We agonize a bit over _Dbg_libdir: the root directory for where
 # debugger code is stored.
-[[ -d $_Dbg_libdir ]] || _Dbg_libdir=${_Dbg_bashdb_main%/*}  # dirname(_Dbg_bashdb_main)
-[[ -d $_Dbg_libdir ]] || _Dbg_libdir='.'
+[[ -d "$_Dbg_libdir" ]] || _Dbg_libdir="${_Dbg_bashdb_main%/*}"  # dirname(_Dbg_bashdb_main)
+[[ -d "$_Dbg_libdir" ]] || _Dbg_libdir='.'
 
 # More _Dbg_libdir finding: respect any library option the user has
 # supplied over any of the above guesses. Go over options and parse
@@ -93,7 +93,7 @@ if [[ ! -r $_Dbg_main ]] ; then
   exit 1
 fi
 
-. ${_Dbg_libdir}/bashdb-part2.sh
+. "${_Dbg_libdir}/bashdb-part2.sh"
 trap '_Dbg_debug_trap_handler 0 "$BASH_COMMAND" "$@"' DEBUG
 set -o functrace
 

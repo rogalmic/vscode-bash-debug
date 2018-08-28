@@ -13,7 +13,7 @@
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 #   General Public License for more details.
-#   
+#
 #   You should have received a copy of the GNU General Public License
 #   along with this program; see the file COPYING.  If not, write to
 #   the Free Software Foundation, 59 Temple Place, Suite 330, Boston,
@@ -36,7 +36,7 @@ _Dbg_msg()
 # This function is overwritten by when lib/fns.sh gets loaded
 _Dbg_errmsg()
 {
-  echo >&2 "${_Dbg_pname}: $@" 
+  echo >&2 "${_Dbg_pname}: $@"
 }
 
 # Used by "show version" as well as --version
@@ -49,9 +49,9 @@ _Dbg_do_show_version()
 # Expand filename given as $1.
 # we echo the expanded name or return $1 unchanged if a bad filename.
 # Return is 0 if good or 1 if bad.
-# File globbing is handled. 
-# Note we don't check that the file exists, just that the format is 
-# valid; we do check that we can "search" the directory implied in the 
+# File globbing is handled.
+# Note we don't check that the file exists, just that the format is
+# valid; we do check that we can "search" the directory implied in the
 # filename.
 
 function _Dbg_expand_filename {
@@ -93,7 +93,7 @@ _Dbg_tempname() {
 }
 
 # Process command-line options
-. ${_Dbg_libdir}/init/opts.sh
+. "${_Dbg_libdir}/init/opts.sh"
 OPTLIND=1
 _Dbg_parse_options "$@"
 
@@ -108,14 +108,14 @@ typeset -x _Dbg_init_cwd=$PWD
 
 typeset -i _Dbg_running=1      # True we are not finished running the program
 
-typeset -i _Dbg_brkpt_num=0    # If nonzero, the breakpoint number that we 
+typeset -i _Dbg_brkpt_num=0    # If nonzero, the breakpoint number that we
                                # are currently stopped at.
 
 # Sets whether or not to display command before executing it.
 typeset _Dbg_set_trace_commands='off'
 
 # Known normal IFS consisting of a space, tab and newline
-typeset -x _Dbg_space_IFS='     
+typeset -x _Dbg_space_IFS='
 '
 
 # Number of statements to run before entering the debugger.  Is used

@@ -94,7 +94,7 @@ fi
 
 typeset -ix _Dbg_working_term_highlight
 
-if ${_Dbg_libdir}/lib/term-highlight.py -V 2>/dev/null  1>/dev/null ; then
+if "${_Dbg_libdir}/lib/term-highlight.py" -V 2>/dev/null  1>/dev/null ; then
     _Dbg_working_term_highlight=1
 else
     _Dbg_working_term_highlight=0
@@ -124,7 +124,7 @@ _Dbg_check_tty() {
 
 _Dbg_parse_options() {
 
-    . ${_Dbg_libdir}/getopts_long.sh
+    . "${_Dbg_libdir}/getopts_long.sh"
 
     typeset -i _Dbg_o_quiet=0
     typeset -i _Dbg_o_version=0
@@ -248,7 +248,7 @@ welcome to change it and/or distribute copies of it under certain conditions.
 if (( _Dbg_have_working_pygmentize )) && [[ -z "$_Dbg_set_highlight" ]] ; then
     # Honor DARK_BG if already set. If not set, set it.
     if [[ -z "$DARK_BG" ]] ; then
-	. ${_Dbg_libdir}/init/term-background.sh >/dev/null
+	. "${_Dbg_libdir}/init/term-background.sh" >/dev/null
     fi
 
     # DARK_BG is now either 0 or 1.

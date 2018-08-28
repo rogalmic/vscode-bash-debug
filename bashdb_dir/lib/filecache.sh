@@ -230,7 +230,7 @@ function _Dbg_readin {
 			-C "_Dbg_progess_show \"${progress_prefix}\" ${line_count}" \
 			$_Dbg_highlight_array_var < "$tempfile"
 		fi
-		[[ -r $tempfile ]] && rm $tempfile
+		[[ -r "$tempfile" ]] && rm "$tempfile"
 	    fi
 	    (( line_count > BIGFILE)) && _Dbg_progess_done
 	else

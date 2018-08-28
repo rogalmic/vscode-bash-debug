@@ -57,7 +57,7 @@ _Dbg_subcmd_complete() {
     # return _Dbg_matches
 }
 
-if enable -f ${_Dbg_libdir}/builtin/readc readc 2>/dev/null ; then
+if enable -f "${_Dbg_libdir}/builtin/readc" readc 2>/dev/null ; then
     # Turn on programmable completion
     shopt -s progcomp
     set -o emacs
