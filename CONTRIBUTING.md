@@ -9,7 +9,7 @@ Works at least on Kubuntu.
 1. clone project
 1. open VS Code, select project's folder, open terminal and type `npm install` (this will download dependencies)
 1. Run by clicking **Ctrl+F5**, new VS window will open
-1. Create some folder with one script file, then try debugging it by **F5**
+1. Create some folder with one script file, then try debugging it by **F5** (to debug bashDebug.ts, read [this](https://code.visualstudio.com/docs/extensions/example-debuggers#_development-setup-for-mock-debug) -> basically set `Extension + Server` in debug pane, then set `"debugServer": 4711` configuration in launch.json of bash project)
 
 ## On Windows 10
 All the pieces seem to be there, but for some reason bash support needs some kick off (https://github.com/Microsoft/BashOnWindows/issues/2#issuecomment-209118529).
