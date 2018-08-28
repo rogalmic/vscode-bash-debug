@@ -90,8 +90,6 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.launchArgs = args;
 
-		this.sendEvent(new OutputEvent(`${args.pathBashdb} ${args.pathBashdbLib}`, 'stderr'));
-
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
 		if (process.platform === "win32") {
@@ -145,7 +143,6 @@ export class BashDebugSession extends LoggingDebugSession {
 				rm "${fifo_path}";
 				exit $exit_code;
 			}
-			chmod +x "${args.pathBashdb}" 2>/dev/null
 			trap 'cleanup' ERR SIGINT SIGTERM EXIT
 			mkfifo "${fifo_path}"
 			"${args.pathCat}" "${fifo_path}" >&${this.debugPipeIndex} &

@@ -96,4 +96,5 @@ fi
 . ${_Dbg_libdir}/bashdb-part2.sh
 trap '_Dbg_debug_trap_handler 0 "$BASH_COMMAND" "$@"' DEBUG
 set -o functrace
+
 . "$_Dbg_script_file"

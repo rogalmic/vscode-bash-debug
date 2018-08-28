@@ -90,7 +90,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		if (!config.pathBash) {
 			if (process.platform === "win32") {
 				config.pathBash = process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432') ?
-					"C:\\Windows\\sysnative\\bash.exe" : "C:\\Windows\\System32\\bash.exe";
+				join("C:", "Windows", "sysnative", "bash.exe") : join("C:", "Windows", "System32", "bash.exe");
 			}
 			else {
 				config.pathBash = "bash"
@@ -98,18 +98,18 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		}
 		if (!config.pathBashdb) {
 			if (process.platform === "win32") {
-				config.pathBashdb = getWSLPath(normalize(join(__dirname, "..\\bashdb")));
+				config.pathBashdb = getWSLPath(normalize(join(__dirname, "..", "bashdb_script")));
 			}
 			else {
-				config.pathBashdb = normalize(join(__dirname, "..\\bashdb"));
+				config.pathBashdb = normalize(join(__dirname, "..", "bashdb_script"));
 			}
 		}
 		if (!config.pathBashdbLib) {
 			if (process.platform === "win32") {
-				config.pathBashdbLib = getWSLPath(normalize(join(__dirname, "..\\bashdb_dir")));
+				config.pathBashdbLib = getWSLPath(normalize(join(__dirname, "..", "bashdb_dir")));
 			}
 			else {
-				config.pathBashdbLib = normalize(join(__dirname, "..\\bashdb_dir"));
+				config.pathBashdbLib = normalize(join(__dirname, "..", "bashdb_dir"));
 			}
 		}
 		if (!config.pathCat) { config.pathCat = "cat" }

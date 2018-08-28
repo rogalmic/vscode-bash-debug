@@ -59,6 +59,7 @@ function _validatePath(cwd: string,
 	const vpr = validatePathResult;
 
 	const argv = ["-c",
+		pathBashdb.endsWith("_script") ? `chmod +x "${pathBashdb}" 2>/dev/null;` : `` +
 		`type "${pathBashdb}" || exit ${vpr.notFoundBashdb};` +
 		`type "${pathCat}" || exit ${vpr.notFoundCat};` +
 		`type "${pathMkfifo}" || exit ${vpr.notFoundMkfifo};` +
