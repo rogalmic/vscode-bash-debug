@@ -81,7 +81,7 @@ _Dbg_do_step() {
       _Dbg_step_ignore=-1
       return 2
   fi
-  _Dbg_old_set_opts="$_Dbg_old_set_opts -o functrace"
+  _Dbg_old_set_opts="${_Dbg_old_set_opts%% *} -o functrace"
 
   _Dbg_write_journal "_Dbg_step_ignore=$_Dbg_step_ignore"
   _Dbg_write_journal "_Dbg_step_force=$_Dbg_step_force"

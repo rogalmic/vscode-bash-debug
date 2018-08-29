@@ -12,7 +12,7 @@
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 #   General Public License for more details.
-#   
+#
 #   You should have received a copy of the GNU General Public License
 #   along with this program; see the file COPYING.  If not, write to
 #   the Free Software Foundation, 59 Temple Place, Suite 330, Boston,
@@ -26,7 +26,7 @@ _Dbg_next_skip_common() {
     _Dbg_not_running && return 3
 
     typeset count=${2:-1}
-    
+
     if [[ $count == [0-9]* ]] ; then
 	let _Dbg_step_ignore=${count:-1}
     else
@@ -35,10 +35,10 @@ _Dbg_next_skip_common() {
 	return 1
     fi
     # Do we step debug into functions called or not?
-    if (( _Dbg_inside_skip == 0 )) ; then
-	_Dbg_old_set_opts="$_Dbg_old_set_opts +o functrace"
+    if (( $_Dbg_inside_skip == 0 )) ; then
+	_Dbg_old_set_opts="${_Dbg_old_set_opts%% *} +o functrace"
     else
-	_Dbg_old_set_opts="$_Dbg_old_set_opts -o functrace"
+	_Dbg_old_set_opts="${_Dbg_old_set_opts%% *} -o functrace"
     fi
     _Dbg_write_journal_eval "_Dbg_old_set_opts='$_Dbg_old_set_opts'"
 

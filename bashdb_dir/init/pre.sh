@@ -115,8 +115,7 @@ typeset -i _Dbg_brkpt_num=0    # If nonzero, the breakpoint number that we
 typeset _Dbg_set_trace_commands='off'
 
 # Known normal IFS consisting of a space, tab and newline
-typeset -x _Dbg_space_IFS='
-'
+typeset -x _Dbg_space_IFS=$' \t\r\n'
 
 # Number of statements to run before entering the debugger.  Is used
 # intially to get out of sourced dbg-main.inc script and in top-level

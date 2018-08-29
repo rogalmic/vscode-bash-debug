@@ -221,7 +221,7 @@ _Dbg_set_brkpt() {
     typeset dq_condition=$(_Dbg_esc_dq "$condition")
 
     # Make sure we are not skipping over functions.
-    _Dbg_old_set_opts="$_Dbg_old_set_opts -o functrace"
+    _Dbg_old_set_opts="${_Dbg_old_set_opts%% *} -o functrace"
     _Dbg_write_journal_eval "_Dbg_old_set_opts='$_Dbg_old_set_opts'"
 
     _Dbg_write_journal_eval "_Dbg_brkpt_line[$_Dbg_brkpt_max]=$lineno"
