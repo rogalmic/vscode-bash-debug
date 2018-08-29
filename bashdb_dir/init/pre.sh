@@ -30,7 +30,7 @@
 # This function is overwritten by when lib/fns.sh gets loaded
 _Dbg_msg()
 {
-  echo >&2 $@
+  echo >&2 "$@"
 }
 
 # This function is overwritten by when lib/fns.sh gets loaded
@@ -81,7 +81,7 @@ function _Dbg_expand_filename {
     fi
     return 0
   else
-    echo $filename
+    echo "$filename"
     return 1
   fi
 }
@@ -97,7 +97,7 @@ _Dbg_tempname() {
 OPTLIND=1
 _Dbg_parse_options "$@"
 
-if [[ ! -d $_Dbg_tmpdir ]] && [[ ! -w $_Dbg_tmpdir ]] ; then
+if [[ ! -d "$_Dbg_tmpdir" ]] && [[ ! -w "$_Dbg_tmpdir" ]] ; then
   echo "${_Dbg_pname}: cannot write to temp directory $_Dbg_tmpdir." >&2
   echo "${_Dbg_pname}: Use -T try directory location." >&2
   exit 1

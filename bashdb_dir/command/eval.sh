@@ -99,10 +99,10 @@ _Dbg_do_eval() {
    else
        builtin echo "$@" >> $_Dbg_evalfile
    fi
-  if [[ -n $_Dbg_tty  ]] ; then
-    . $_Dbg_evalfile >>$_Dbg_tty
+  if [[ -n "$_Dbg_tty"  ]] ; then
+    . "$_Dbg_evalfile" >>"$_Dbg_tty"
   else
-    . $_Dbg_evalfile
+    . "$_Dbg_evalfile"
   fi
   _Dbg_rc=$?
   (( _Dbg_show_eval_rc )) && _Dbg_msg "\$? is $_Dbg_rc"

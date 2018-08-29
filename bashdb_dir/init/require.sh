@@ -23,13 +23,13 @@ if [[ -z $_Dbg_requires ]] ; then
 	typeset -x dirname="${filename%/*}"
 
 	# No slash given in filename? Then use . for dirname
-	[[ $dirname == $basename ]] && [[ $filename != '/' ]] && dirname='.'
+	[[ "$dirname" == "$basename" ]] && [[ "$filename" != '/' ]] && dirname='.'
 
 	# Dirname is ''? Then use / for dirname
-	dirname=${dirname:-/}
+	dirname="${dirname:-/}"
 
 	# Handle tilde expansion in dirname
-	dirname=$(echo $dirname)
+	dirname="$(echo "$dirname")"
 
 	typeset long_path
 
@@ -41,7 +41,7 @@ if [[ -z $_Dbg_requires ]] ; then
 	    fi
 	    return 0
 	else
-	    echo $filename
+	    echo "$filename"
 	    return 1
 	fi
     }
@@ -52,20 +52,20 @@ if [[ -z $_Dbg_requires ]] ; then
 	typeset expanded_file
 	typeset source_dir
 	typeset orig_dir
-	orig_dir=$(pwd)
-	source_dir=${BASH_SOURCE[1]%/*}
-	if [[ $source_dir != ${BASH_SOURCE[1]} ]] ; then
-	    builtin cd $source_dir
+	orig_dir="$(pwd)"
+	source_dir="${BASH_SOURCE[1]%/*}"
+	if [[ "$source_dir" != "${BASH_SOURCE[1]}" ]] ; then
+	    builtin cd "$source_dir"
 	fi
 	for file in "$@" ; do
 	    expanded_file=$(_Dbg_expand_filename "$file")
-	    if [[ -z ${_Dbg_requires[$file]} \
-		&& -z ${_Dbg_requires[$expanded_file]} ]] ; then
-		source $expanded_file
-		_Dbg_requires[$file]=$expanded_file
-		_Dbg_requires[$expanded_file]=$expanded_file
+	    if [[ -z "${_Dbg_requires[$file]}" \
+		&& -z "${_Dbg_requires[$expanded_file]}" ]] ; then
+		source "$expanded_file"
+		_Dbg_requires["$file"]="$expanded_file"
+		_Dbg_requires["$expanded_file"]="$expanded_file"
 	    fi
 	done
-	[[ -n $orig_dir ]] && builtin cd $orig_dir
+	[[ -n "$orig_dir" ]] && builtin cd "$orig_dir"
     }
 fi

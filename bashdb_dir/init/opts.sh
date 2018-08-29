@@ -108,11 +108,11 @@ _Dbg_check_tty() {
     (( $# < 1 )) && return 1
     typeset tty=$1
     if [[ $tty != '&1' ]] ; then
-        if ! $(touch $tty >/dev/null 2>/dev/null); then
+        if ! $(touch "$tty" >/dev/null 2>/dev/null); then
             _Dbg_errmsg "Can't access $tty for writing."
             return 1
         fi
-        if [[ ! -w $tty ]] ; then
+        if [[ ! -w "$tty" ]] ; then
             _Dbg_errmsg "tty $tty needs to be writable"
             return 1
         fi
@@ -171,7 +171,7 @@ _Dbg_parse_options() {
 		    exit 2
 		esac
 
-		if (( ! _Dbg_have_working pygmentize )) ; then
+		if (( ! $($_Dbg_have_working pygmentize) )) ; then
                     print "Can't run pygmentize. --highight forced off" >&2
 		    _Dbg_set_highlight=''
                 fi
@@ -193,8 +193,8 @@ _Dbg_parse_options() {
             tempdir)
                 _Dbg_tmpdir=$OPTLARG    ;;
             terminal | tty )
-                if _Dbg_check_tty $OPTLARG ; then
-                    _Dbg_tty=$OPTLARG
+                if _Dbg_check_tty "$OPTLARG" ; then
+                    _Dbg_tty="$OPTLARG"
                 else
                     _Dbg_errmsg '--tty option ignored'
                 fi

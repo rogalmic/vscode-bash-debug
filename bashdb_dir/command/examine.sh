@@ -67,17 +67,17 @@ function _Dbg_do_examine {
     typeset isblank=$_Dbg_expr
     if [[ -z $isblank ]] ; then
 	_Dbg_msg "$_Dbg_expr"
-    elif _Dbg_defined $_Dbg_expr ; then
-	_Dbg_result=$(typeset -p $_Dbg_expr)
+    elif _Dbg_defined "$_Dbg_expr" ; then
+	_Dbg_result=$(typeset -p "$_Dbg_expr")
 	_Dbg_msg "$_Dbg_result"
     elif _Dbg_is_function "$_Dbg_expr" $_Dbg_set_debug; then
-	_Dbg_result=$(typeset -f $_Dbg_expr)
+	_Dbg_result=$(typeset -f "$_Dbg_expr")
 	_Dbg_msg "$_Dbg_result"
     else
 	typeset -i _Dbg_rc
-	eval let _Dbg_result=$_Dbg_expr 2>/dev/null; _Dbg_rc=$?
+	eval let "_Dbg_result=$_Dbg_expr" 2>/dev/null; _Dbg_rc=$?
 	if (( _Dbg_rc != 0 )) ; then
-	    _Dbg_do_print "$_Dbg_expr"
+	    _Dbg_do_print "\"$_Dbg_expr\""
 	else
 	    _Dbg_msg "$_Dbg_result"
 	fi
@@ -89,11 +89,11 @@ function _Dbg_do_examine {
 _Dbg_alias_add 'x' 'examine'
 
 # Demo it.
-if [[ $0 == ${BASH_SOURCE[0]} ]] ; then
+if [[ "$0" == "${BASH_SOURCE[0]}" ]] ; then
     for _Dbg_file in fns msg ; do
-	source $top_dir/lib/${_Dbg_file}.sh
+	source "$top_dir/lib/${_Dbg_file}.sh"
     done
-    source $top_dir/command/help.sh
+    source "$top_dir/command/help.sh"
     _Dbg_args='examine'
     _Dbg_do_help x
     _Dbg_do_examine top_dir

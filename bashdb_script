@@ -50,7 +50,7 @@ typeset _Dbg_pname=${0##*/}
 
 ## Stuff set by autoconf/configure ###
 typeset  prefix=/usr  # ${prefix}/share/bashdb often uses $prefix
-typeset _Dbg_libdir="${prefix}/share/bashdbaaaa"
+typeset _Dbg_libdir="${prefix}/share/bashdb"
 ###
 
 # We agonize a bit over _Dbg_libdir: the root directory for where
@@ -76,7 +76,7 @@ for ((_Dbg_i=0; _Dbg_i<${#_Dbg_script_args[@]}-1; _Dbg_i++)) ; do
 done
 
 # All _Dbg_libdir setting done above. Have we succeeded?
-if [[ ! -d $_Dbg_libdir ]] ; then
+if [[ ! -d "$_Dbg_libdir" ]] ; then
   echo "${_Dbg_pname}: Can't read debugger library directory '${_Dbg_libdir}'." >&2
   echo "${_Dbg_pname}: Perhaps bashdb is installed wrong (if its installed)." >&2
   echo "${_Dbg_pname}: Try running bashdb using -L (with a different directory)." >&2
@@ -85,7 +85,7 @@ if [[ ! -d $_Dbg_libdir ]] ; then
 fi
 
 typeset _Dbg_main="$_Dbg_libdir/dbg-main.sh"
-if [[ ! -r $_Dbg_main ]] ; then
+if [[ ! -r "$_Dbg_main" ]] ; then
   print "${_Dbg_pname}: Can't read debugger library file '${_Dbg_main}'." >&2
   print "${_Dbg_pname}: Perhaps bashdb is installed wrong (if its installed)." >&2
   print "${_Dbg_pname}: Try running bashdb using -L (with a different directory)." >&2

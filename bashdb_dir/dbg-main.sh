@@ -32,13 +32,13 @@ for _Dbg_file in require pre vars io ; do
 done
 
 for _Dbg_file in "${_Dbg_libdir}/lib/"*.sh "${_Dbg_libdir}/command/"*.sh ; do
-    source $_Dbg_file
+    source "$_Dbg_file"
 done
 
 if [[ -r /dev/stdin ]] ; then
     _Dbg_do_source /dev/stdin
 elif [[ $(tty) != 'not a tty' ]] ; then
-    _Dbg_do_source $(tty)
+    _Dbg_do_source "$(tty)"
 fi
 
 # List of command files to process
@@ -55,7 +55,7 @@ if [[ -n "$DBG_INPUT" ]] ; then
 fi
 
 typeset _Dbg_startup_cmdfile=${HOME:-~}/.${_Dbg_debugger_name}rc
-if (( 0 == _Dbg_o_nx)) && [[ -r "$_Dbg_startup_cmdfile" ]] ; then
+if (( 0 == $_Dbg_o_nx )) && [[ -r "$_Dbg_startup_cmdfile" ]] ; then
     _Dbg_do_source "$_Dbg_startup_cmdfile"
 fi
 
@@ -74,10 +74,10 @@ if [[ ${_Dbg_libdir:0:1} == '.' ]] ; then
     _Dbg_libdir="$(_Dbg_expand_filename "${_Dbg_init_cwd}/${_Dbg_libdir}")"
 fi
 
-for source_file in ${_Dbg_o_init_files[@]} "$DBG_RESTART_FILE";  do
+for source_file in "${_Dbg_o_init_files[@]}" "$DBG_RESTART_FILE";  do
     if [[ -n "$source_file" ]] ; then
 	if [[ -r "$source_file" ]] && [[ -f "$source_file" ]] ; then
-	    source $source_file
+	    source "$source_file"
 	else
 	    _Dbg_errmsg "Unable to read shell script: ${source_file}"
 	fi

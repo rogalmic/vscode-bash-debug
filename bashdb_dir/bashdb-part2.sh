@@ -25,7 +25,7 @@
 # FIXME: should implement "set hidelevel"?
 
 # Pull in the rest of the debugger code.
-. $_Dbg_main
+. "$_Dbg_main"
 
 # I don't know why when this is done in dbg-opts.sh it doesn't have
 # an effect.
@@ -60,7 +60,7 @@ if [[ ! -r "$_Dbg_script_file" ]] ; then
     exit 1
 fi
 
-typeset -r _Dbg_Dbg_script_file=$(_Dbg_expand_filename $_Dbg_script_file)
+typeset -r _Dbg_Dbg_script_file="$(_Dbg_expand_filename "$_Dbg_script_file")"
 
 if ((_Dbg_set_linetrace)) ; then
   # No stepping.
