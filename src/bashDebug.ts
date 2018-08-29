@@ -235,7 +235,12 @@ export class BashDebugSession extends LoggingDebugSession {
 			sourcePath = escapeCharactersInLinuxPath(sourcePath);
 		}
 
-		let setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nyes\nload ${sourcePath}\n`;
+		let setBreakpointsCommand = (this.currentBreakpointIds[args.source.path].length > 0)
+			? `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nyes\n`
+			: ``;
+
+		setBreakpointsCommand += `load ${sourcePath}\n`;
+
 		if (args.breakpoints) {
 			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print 'break <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
 		}
@@ -366,10 +371,10 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		const count = typeof args.count === 'number' ? args.count : 100;
 		const start = typeof args.start === 'number' ? args.start : 0;
-		let variableDefinitions = ["PWD", "EUID", "#", "0", "-"];
+		let variableDefinitions = ["$PWD", "$EUID", "$0 $* ($#)", "$-", "$?"];
 		variableDefinitions = variableDefinitions.slice(start, Math.min(start + count, variableDefinitions.length));
 
-		variableDefinitions.forEach((v) => { getVariablesCommand += `print ' <$${v}> '\nexamine $${v}\n` });
+		variableDefinitions.forEach((v) => { getVariablesCommand += `print ' <${v}> '\nexamine ${v}\n` });
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
@@ -534,7 +539,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		this.debuggerProcess.stdin.write(`print 'examine <${args.expression}>'\nexamine ${args.expression.replace("\"", "").replace("'", "")}\nprint '${BashDebugSession.END_MARKER}'\n`);
+		const expression = `${args.expression.replace(/['"]+/g, "",)}`;
+		this.debuggerProcess.stdin.write(`print 'examine <${expression}>'\nexamine ${expression}\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.evaluateRequestFinalize(response, args, currentLine));
 	}
 

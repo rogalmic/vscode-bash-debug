@@ -28,7 +28,7 @@ function _Dbg_set_debugger_internal {
 
 function _Dbg_restore_user_vars {
   IFS="$_Dbg_space_IFS";
-  (( $_Dbg_old_set_nullglob == 0 )) && shopt -s nullglob
+  (( _Dbg_old_set_nullglob == 0 )) && shopt -s nullglob
   set -$_Dbg_old_set_opts
   IFS="$_Dbg_old_IFS";
   PS4="$_Dbg_old_PS4"
