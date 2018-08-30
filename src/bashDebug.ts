@@ -125,10 +125,6 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
 
-
-		//const bashdb_lib_dir = getWSLPath(normalize(join(__dirname, "..\\bashdb_dir")));
-		//const bashdb_bin = getWSLPath(normalize(join(__dirname, "..\\bashdb")));
-
 		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
 		// when this is fixed in bashdb, use &1
 		this.debuggerProcess = spawn(args.pathBash, ["-c", `
@@ -159,7 +155,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.processDebugTerminalOutput();
 
-		this.debuggerProcess.stdin.write(`print "$PPID"\nhandle INT stop\nprint "${BashDebugSession.END_MARKER}"\n`);
+		this.debuggerProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint "${BashDebugSession.END_MARKER}"\n`);
 
 		this.debuggerProcess.stdio[1].on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
@@ -371,7 +367,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		const count = typeof args.count === 'number' ? args.count : 100;
 		const start = typeof args.start === 'number' ? args.start : 0;
-		let variableDefinitions = ["$PWD", "$EUID", "$0 $* ($#)", "$-", "$?"];
+		let variableDefinitions = ["$PWD", "$? \\\# $_Dbg_last_bash_command"];
 		variableDefinitions = variableDefinitions.slice(start, Math.min(start + count, variableDefinitions.length));
 
 		variableDefinitions.forEach((v) => { getVariablesCommand += `print ' <${v}> '\nexamine ${v}\n` });

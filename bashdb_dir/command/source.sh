@@ -36,7 +36,7 @@ _Dbg_do_source() {
 
     typeset filename
     _Dbg_tilde_expand_filename "$1"
-    if [[ -r $filename ]] || [[ "$filename" == '/dev/stdin' ]] ; then
+    if [[ -r "$filename" ]] || [[ "$filename" == '/dev/stdin' ]] ; then
 	# Open new input file descriptor and save number in _Dbg_fd.
 	exec {_Dbg_fdi}<"$filename"
 	_Dbg_fd[++_Dbg_fd_last]=$_Dbg_fdi
