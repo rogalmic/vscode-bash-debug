@@ -36,12 +36,12 @@
   },
   "devDependencies": {
     "@types/mocha": "5.2.5",
-    "@types/node": "10.9.1",
+    "@types/node": "10.9.3",
     "jsdoctest": "1.7.1",
     "mocha": "5.2.0",
     "standard-version": "^4.4.0",
     "tslint": "5.11.0",
-    "typescript": "3.0.1",
+    "typescript": "3.0.3",
     "vsce": "1.46.0",
     "vscode": "1.1.21",
     "vscode-debugadapter-testsupport": "1.31.0"

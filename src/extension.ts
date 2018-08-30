@@ -98,10 +98,10 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		}
 		if (!config.pathBashdb) {
 			if (process.platform === "win32") {
-				config.pathBashdb = getWSLPath(normalize(join(__dirname, "..", "bashdb_script")));
+				config.pathBashdb = getWSLPath(normalize(join(__dirname, "..", "bashdb_dir", "bashdb")));
 			}
 			else {
-				config.pathBashdb = normalize(join(__dirname, "..", "bashdb_script"));
+				config.pathBashdb = normalize(join(__dirname, "..", "bashdb_dir", "bashdb"));
 			}
 		}
 		if (!config.pathBashdbLib) {
