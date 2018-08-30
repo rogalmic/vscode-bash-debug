@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 # gdb-like "backtrace" debugger command
 #
-#   Copyright (C) 2002, 2003, 2004, 2005, 2006, 2008, 2010, 2011
+#   Copyright (C) 2002-2006, 2008, 2010, 2011, 2018
 #   Rocky Bernstein <rocky@gnu.org>
 #
 #   This program is free software; you can redistribute it and/or
@@ -30,18 +30,35 @@
 # not a variable.
 
 _Dbg_help_add backtrace \
-"**backtrace** [*n*]
+'**backtrace** [*opts*] [*count*]
 
-Print a backtrace of calling functions and sourced files.
+Print backtrace of all stack frames, or innermost *count* frames.
 
-files. If *n* is given, list only *n* calls.
+With a negative argument, print outermost -*count* frames.
+
+An arrow indicates the "current frame". The current frame determines
+the context used for many debugger commands such as expression
+evaluation or source-line listing.
+
+*opts* are:
+
+   -s | --source  - show source code line
+   -h | --help    - give this help
 
 Examples:
 ---------
 
-   backtrace    # Print a full stack trace
-   backtrace 2  # Print only the top two entries
-" 1 _Dbg_complete_backtrace
+   backtrace      # Print a full stack trace
+   backtrace 2    # Print only the top two entries
+   backtrace -1   # Print a stack trace except the initial (least recent) call.
+   backtrace -s   # show source lines in listing
+   backtrace --source   # same as above
+
+See also:
+---------
+
+**frame** and  **list**
+' 1 _Dbg_complete_backtrace
 
 # Command completion for a frame command
 _Dbg_complete_backtrace() {
@@ -56,6 +73,25 @@ function _Dbg_do_backtrace {
 
     _Dbg_not_running && return 3
 
+    typeset -i show_source=0
+    OPTLIND=''
+    while getopts_long sh opt  \
+        source no_argument     \
+        help no_argument       \
+	'' $@
+    do
+	case "$opt" in
+	    s | source )
+		show_source=1
+		shift
+		;;
+	    h | help)
+		_Dbg_do_help backtrace
+		return
+		;;
+	esac
+    done
+
     typeset -i count=${1:-$_Dbg_stack_size}
     $(_Dbg_is_int $count) || {
 	_Dbg_errmsg "Bad integer COUNT parameter: $count"
@@ -63,6 +99,11 @@ function _Dbg_do_backtrace {
     }
 
     typeset -i frame_start=${2:-0}
+
+    if (( count < 0 )) ; then
+	(( frame_start = _Dbg_stack_size + count ))
+	(( count = _Dbg_stack_size ))
+    fi
 
     $(_Dbg_is_int $frame_start) || {
 	_Dbg_errmsg "Bad integer parameter: $ignore_count"
@@ -129,7 +170,10 @@ function _Dbg_do_backtrace {
 	fi
 	filename=$(_Dbg_file_canonic "${BASH_SOURCE[$adjusted_pos]}")
 	_Dbg_msg "($_Dbg_parm_str) called from file \`$filename'" "at line $lineno"
-
+	if (( show_source )) ; then
+	    _Dbg_get_source_line $lineno "${BASH_SOURCE[$adjusted_pos]}"
+	    _Dbg_printf "%s" "$_Dbg_source_line"
+	fi
 	((count--))
     done
     return 0

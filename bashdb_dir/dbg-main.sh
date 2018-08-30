@@ -55,7 +55,7 @@ if [[ -n "$DBG_INPUT" ]] ; then
 fi
 
 typeset _Dbg_startup_cmdfile=${HOME:-~}/.${_Dbg_debugger_name}rc
-if (( 0 == $_Dbg_o_nx )) && [[ -r "$_Dbg_startup_cmdfile" ]] ; then
+if (( 0 == _Dbg_o_nx)) && [[ -r "$_Dbg_startup_cmdfile" ]] ; then
     _Dbg_do_source "$_Dbg_startup_cmdfile"
 fi
 

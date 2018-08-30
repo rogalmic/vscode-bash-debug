@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 # Call Stack routines
 #
-#   Copyright (C) 2002, 2003, 2004, 2005, 2006, 2008, 2009, 2010, 2014
+#   Copyright (C) 2002-2006, 2008-2010, 2014, 2017
 #   Rocky Bernstein <rocky@gnu.org>
 #
 #   This program is free software; you can redistribute it and/or
@@ -83,6 +83,7 @@ function _Dbg_frame_adjust {
   ## typeset -p BASH_SOURCE
 
   _Dbg_listline="${BASH_LINENO[adjusted_pos-1]}"
+  # _Dbg_frame_last_lineno="$_Dbg_listline"
   _Dbg_frame_last_filename="${BASH_SOURCE[adjusted_pos]}"
   typeset filename; filename="$(_Dbg_file_canonic "$_Dbg_frame_last_filename")"
   _Dbg_frame_print '->' $_Dbg_stack_pos '' "$filename" $_Dbg_listline ''
@@ -102,6 +103,17 @@ _Dbg_frame_file() {
     typeset -i basename_only=${2:-$_Dbg_set_basename}
     _Dbg_frame_filename=${BASH_SOURCE[pos]}
     (( basename_only )) && _Dbg_frame_filename=${_Dbg_frame_filename##*/}
+    return 0
+}
+
+# Set $_Dbg_frame_filename to be frame line for the call stack at
+# given position $1 or _Dbg_stack_pos if $1 is omitted. 0 is returned
+# if no error, nonzero means some sort of error.
+_Dbg_frame_line() {
+    (($# > 1)) && return 2
+    # FIXME check to see that $1 doesn't run off the end.
+    typeset -i pos=${1:-$_Dbg_stack_pos}
+    _Dbg_frame_last_lineno="${BASH_LINENO[pos]}"
     return 0
 }
 

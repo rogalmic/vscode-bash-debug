@@ -72,7 +72,7 @@ function _Dbg_expand_filename {
 
   typeset long_path
 
-  [[ $basename == '.' ]] && basename=''
+  [[ "$basename" == '.' ]] && basename=''
   if long_path=$( (cd "$dirname" ; pwd) 2>/dev/null ) ; then
     if [[ "$long_path" == '/' ]] ; then
       echo "/$basename"

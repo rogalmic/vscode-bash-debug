@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 # filecache.sh - cache file information
 #
-#   Copyright (C) 2008-2011, 2013-2015 Rocky Bernstein
+#   Copyright (C) 2008-2011, 2013-2015, 2018 Rocky Bernstein
 #   <rocky@gnu.org>
 #
 #   This program is free software; you can redistribute it and/or
@@ -126,6 +126,8 @@ function _Dbg_is_file {
     echo ''
     return 1
   fi
+  # first character might be encoded as \057 == '/',
+  # find_file:0:1 == "\" , true story
   typeset find_file="$(printf "$1")"
   typeset try_find_file
 
@@ -244,7 +246,7 @@ function _Dbg_readin {
     (( line_count >= NOT_SMALLFILE )) && _Dbg_msg "done."
 
     # Add $filename to list of all filenames
-    _Dbg_filenames[$fullname]=$_Dbg_source_array_var;
+    _Dbg_filenames["$fullname"]=$_Dbg_source_array_var;
     return 0
 }
 
@@ -259,7 +261,7 @@ _Dbg_readin_if_new() {
 	typeset rc=$?
 	set +xv
 	(( $? != 0 )) && return $rc
-	[[ -z $fullname ]] && return 1
+	[[ -z "$fullname" ]] && return 1
 	_Dbg_set_source_array_var "$filename" || return $?
     fi
     return 0
@@ -271,17 +273,17 @@ _Dbg_readin_if_new() {
 _Dbg_set_source_array_var() {
     (( $# != 1 )) && return 1
     typeset filename="$1"
-    [[ -z $filename ]] && return 2
-    fullname=${_Dbg_file2canonic[$filename]}
-    [[ -z $fullname ]] && [[ -n ${_Dbg_filenames[$filename]} ]] && {
+    [[ -z "$filename" ]] && return 2
+    fullname="${_Dbg_file2canonic["$filename"]}"
+    [[ -z "$fullname" ]] && [[ -n "${_Dbg_filenames["$filename"]}" ]] && {
 	fullname="$filename"
     }
-    [[ -z $fullname ]] && return 2
-    _Dbg_source_array_var=${_Dbg_filenames[$fullname]}
+    [[ -z "$fullname" ]] && return 2
+    _Dbg_source_array_var=${_Dbg_filenames["$fullname"]}
     if [[ -n $_Dbg_set_highlight ]] ; then
 	_Dbg_highlight_array_var="${_Dbg_source_array_var/_Dbg_source_/_Dbg_highlight_}"
     fi
-    _Dbg_source_array_var=${_Dbg_filenames[$fullname]}
+    _Dbg_source_array_var=${_Dbg_filenames["$fullname"]}
     [[ -z $_Dbg_source_array_var ]] && return 2
     return 0
 }

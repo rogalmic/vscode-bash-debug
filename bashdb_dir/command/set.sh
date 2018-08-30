@@ -33,7 +33,7 @@ _Dbg_help_add set '' 1 _Dbg_complete_set
 
 # Load in "set" subcommands
 for _Dbg_file in "${_Dbg_libdir}/command/set_sub/"*.sh ; do
-    source $_Dbg_file
+    source "$_Dbg_file"
 done
 
 # Command completion for a condition command
@@ -51,8 +51,8 @@ _Dbg_do_set() {
     typeset rc
     shift
 
-    if [[ -n ${_Dbg_debugger_set_commands[$subcmd]} ]] ; then
-	${_Dbg_debugger_set_commands[$subcmd]} $label "$@"
+    if [[ -n "${_Dbg_debugger_set_commands[$subcmd]}" ]] ; then
+	"${_Dbg_debugger_set_commands[$subcmd]}" "$label" "$@"
 	return $?
     fi
 

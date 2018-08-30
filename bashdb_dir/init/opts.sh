@@ -102,7 +102,7 @@ fi
 
 typeset -x _Dbg_set_style=''
 # $_Dbg_tmpdir could have been set by the top-level debugger script.
-[[ -z $_Dbg_tmpdir ]] && typeset _Dbg_tmpdir=/tmp
+[[ -z "$_Dbg_tmpdir" ]] && typeset _Dbg_tmpdir=/tmp
 
 _Dbg_check_tty() {
     (( $# < 1 )) && return 1
@@ -116,8 +116,8 @@ _Dbg_check_tty() {
             _Dbg_errmsg "tty $tty needs to be writable"
             return 1
         fi
-        _Dbg_tty=$tty
-        _Dbg_prompt_output=$_Dbg_tty
+        _Dbg_tty="$tty"
+        _Dbg_prompt_output="$_Dbg_tty"
     fi
     return 0
 }
@@ -171,7 +171,7 @@ _Dbg_parse_options() {
 		    exit 2
 		esac
 
-		if (( ! $($_Dbg_have_working pygmentize) )) ; then
+		if (( ! _Dbg_have_working_pygmentize )) ; then
                     print "Can't run pygmentize. --highight forced off" >&2
 		    _Dbg_set_highlight=''
                 fi

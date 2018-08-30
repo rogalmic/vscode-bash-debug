@@ -29,7 +29,7 @@ fi
 typeset -x _Dbg_pygments_styles=''
 
 if (( _Dbg_working_term_highlight )) ; then
-   _Dbg_pygments_styles=("${_Dbg_libdir}/lib/term-highlight.py" -L)
+   _Dbg_pygments_styles=$("${_Dbg_libdir}/lib/term-highlight.py" -L)
 fi
 
 _Dbg_complete_style() {
@@ -37,11 +37,18 @@ _Dbg_complete_style() {
 }
 
 _Dbg_help_add_sub set style \
-'set style [pygments-style | off]
+'**set** **style** [*pygments-style* | **off**]
 
-Set the pygments style use in listings.
+Set the pygments style use in souce-code listings to *pygments-style* or
+remove any pygments formatting if *pygments-style* is **off**.
 
-See also: set highlight, show style, show highlight.
+If style is omitted and **off** not given, list all of the available
+pygments styles.
+
+See also:
+---------
+
+`set highlight`, show style, and show highlight.
 ' 1
 
 _Dbg_list_styles() {

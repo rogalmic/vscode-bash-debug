@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 # gdb-like "enable" debugger command
 #
-#   Copyright (C) 2002-2006, 2008, 2011, 2016 Rocky Bernstein
+#   Copyright (C) 2002-2006, 2008, 2011, 2016-2017 Rocky Bernstein
 #   <rocky@gnu.org>
 #
 #   This program is free software; you can redistribute it and/or
@@ -29,8 +29,11 @@ fi
 _Dbg_help_add enable \
 '**enable** *bpnum1* [*bpnum2* ...]
 
-Enables breakpoints *bpnum1*, *bpnum2*... Breakpoints numbers are given as a space-
-separated list numbers.
+Enables breakpoints *bpnum1*, *bpnum2*... Breakpoints numbers are
+given as a space-separated list of numbers.
+With no subcommand, breakpoints are enabled until you command otherwise.
+This is used to cancel the effect of the "disable" command.
+
 
 See also:
 ---------
@@ -39,11 +42,7 @@ See also:
 
 # Enable breakpoint(s)/watchpoint(s) by entry number(s).
 _Dbg_do_enable() {
-    if (($# == 0)) ; then
-	_Dbg_errmsg 'Expecting breakpoint/watchpoint numbers. Got none.'
-	return 1
-    fi
-    _Dbg_enable_disable 1 'enabled' $@
+    _Dbg_enable_disable 1 'enabled' "$@"
     return $?
 }
 

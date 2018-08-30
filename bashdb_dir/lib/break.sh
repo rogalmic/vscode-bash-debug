@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 # break.sh - Debugger Break and Watch routines
 #
-#   Copyright (C) 2002-2003, 2006-2011, 2014-2016 Rocky Bernstein
+#   Copyright (C) 2002-2003, 2006-2011, 2014-2017 Rocky Bernstein
 #   <rocky@gnu.org>
 #
 #   This program is free software; you can redistribute it and/or
@@ -105,17 +105,18 @@ _Dbg_save_watchpoints() {
 
 # Enable/disable breakpoint or watchpoint by entry numbers.
 _Dbg_enable_disable() {
-    if (($# <= 2)) ; then
-	_Dbg_errmsg "_Dbg_enable_disable error - need at least 2 args, got $#"
+    if (($# <= 1)) ; then
+	_Dbg_errmsg "_Dbg_enable_disable error - need at least 1 arg, got $#"
 	return 1
     fi
     typeset -i on=$1
     typeset en_dis=$2
     shift; shift
 
+  typeset to_go
   if [[ $1 == 'display' ]] ; then
     shift
-    typeset to_go="$@"
+    to_go="$@"
     typeset i
     eval "$_seteglob"
     for i in $to_go ; do
@@ -131,7 +132,7 @@ _Dbg_enable_disable() {
     return 0
   elif [[ $1 == 'action' ]] ; then
     shift
-    typeset to_go="$@"
+    to_go="$@"
     typeset i
     eval "$_seteglob"
     for i in $to_go ; do
@@ -145,9 +146,19 @@ _Dbg_enable_disable() {
     done
     eval "$_resteglob"
     return 0
+  elif [[ $1 == 'breakpoints' ]] ; then
+    shift
+    to_go="$@"
+    if (( 0 == $# )) ; then
+	to_go=${!_Dbg_brkpt_enable[@]}
+    fi
+  else
+    to_go="$@"
+    if (( 0 == $# )) ; then
+	to_go=${!_Dbg_brkpt_enable[@]}
+    fi
   fi
 
-  typeset to_go; to_go="$@"
   typeset i
   eval "$_seteglob"
   for i in $to_go ; do
@@ -375,23 +386,28 @@ function _Dbg_enable_disable_action {
 
 # Enable/disable breakpoint(s) by entry numbers.
 function _Dbg_enable_disable_brkpt {
-    (($# != 3)) && return 1
+    (($# < 2)) && return 1
     typeset -i on=$1
     typeset en_dis=$2
-    typeset -i i=$3
-    if [[ -n "${_Dbg_brkpt_file[$i]}" ]] ; then
-	if [[ ${_Dbg_brkpt_enable[$i]} == $on ]] ; then
-	    _Dbg_errmsg "Breakpoint entry $i already ${en_dis}, so nothing done."
-	    return 1
+    typeset -a brkpts=($3)
+    typeset -i rc=0
+
+    for i in "${brkpts[@]}";  do
+	if [[ -n "${_Dbg_brkpt_file[$i]}" ]] ; then
+	    if [[ ${_Dbg_brkpt_enable[$i]} == $on ]] ; then
+		_Dbg_errmsg "Breakpoint entry $i already ${en_dis}, so nothing done."
+		rc=1
+	    else
+		_Dbg_write_journal_eval "_Dbg_brkpt_enable[$i]=$on"
+		_Dbg_msg "Breakpoint entry $i $en_dis."
+	    fi
 	else
-	    _Dbg_write_journal_eval "_Dbg_brkpt_enable[$i]=$on"
-	    _Dbg_msg "Breakpoint entry $i $en_dis."
-	    return 0
+	    _Dbg_errmsg "Breakpoint entry $i doesn't exist, so nothing done."
+	    rc=1
 	fi
-    else
-	_Dbg_errmsg "Breakpoint entry $i doesn't exist, so nothing done."
-	return 1
-    fi
+    done
+    return $rc
+
 }
 
 #======================== WATCHPOINTS  ============================#

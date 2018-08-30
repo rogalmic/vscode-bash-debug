@@ -35,7 +35,7 @@ _Dbg_next_skip_common() {
 	return 1
     fi
     # Do we step debug into functions called or not?
-    if (( $_Dbg_inside_skip == 0 )) ; then
+    if (( _Dbg_inside_skip == 0 )) ; then
 	_Dbg_old_set_opts="${_Dbg_old_set_opts%% *} +o functrace"
     else
 	_Dbg_old_set_opts="${_Dbg_old_set_opts%% *} -o functrace"

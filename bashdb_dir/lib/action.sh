@@ -74,7 +74,7 @@ _Dbg_list_action() {
 	source_file=$(_Dbg_adjust_filename "$source_file")
 	_Dbg_printf "%-3d %3d %-18s %s:%s" $i ${_Dbg_action_enable[$i]} \
 	  "${_Dbg_action_stmt[$i]}" \
-	  "$source_file" ${_Dbg_action_line[$i]}
+	  "$source_file" "${_Dbg_action_line[$i]}"
       fi
     done
   else
