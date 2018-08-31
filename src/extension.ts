@@ -88,13 +88,8 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		if (!config.args) { config.args = [] }
 		if (!config.cwd) { config.cwd = folder.uri.fsPath }
 		if (!config.pathBash) {
-			if (process.platform === "win32") {
-				config.pathBash = process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432') ?
-				join("C:", "Windows", "sysnative", "bash.exe") : join("C:", "Windows", "System32", "bash.exe");
-			}
-			else {
-				config.pathBash = "bash"
-			}
+			// Seems to work on newest W10
+			config.pathBash = "bash"
 		}
 		if (!config.pathBashdb) {
 			if (process.platform === "win32") {

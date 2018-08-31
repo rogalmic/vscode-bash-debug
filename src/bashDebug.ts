@@ -535,7 +535,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		const expression = `${args.expression.replace(/['"]+/g, "",)}`;
+		const expression = (args.context == "hover") ? `${args.expression.replace(/['"]+/g, "",)}` : `${args.expression}`;
 		this.debuggerProcess.stdin.write(`print 'examine <${expression}>'\nexamine ${expression}\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.evaluateRequestFinalize(response, args, currentLine));
 	}
