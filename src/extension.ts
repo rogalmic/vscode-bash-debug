@@ -5,7 +5,7 @@ import { normalize, join } from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
 
-	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.getProgramName', config => {
+	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.getProgramName', _config => {
 		// Invoked if any property in client's launch.json has ${command:AskForScriptName} (mapped to getProgramName
 		// in package.json) in its value.
 		return vscode.window.showInputBox({
@@ -14,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}).then(v => expandPath(v, vscode.workspace.rootPath));
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.selectProgramName', config => {
+	context.subscriptions.push(vscode.commands.registerCommand('extension.bash-debug.selectProgramName', _config => {
 		// Invoked if any property in client's launch.json has ${command:SelectScriptName} (mapped to selectProgramName
 		// in package.json) in its value.
 		return vscode.workspace.findFiles("**/*.sh", "").then((uris) => {
@@ -42,7 +42,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 	/**
 	 * Check configuration just before a debug session is being launched.
 	 */
-	resolveDebugConfiguration(folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
+	resolveDebugConfiguration(folder: WorkspaceFolder | undefined, config: DebugConfiguration, _token?: CancellationToken): ProviderResult<DebugConfiguration> {
 		if (!config.type && !config.request && !config.name) {
 			// If launch.json is missing or empty, abort launch and create launch.json with "initialConfigurations"
 			return undefined;
@@ -88,8 +88,13 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		if (!config.args) { config.args = [] }
 		if (!config.cwd) { config.cwd = folder.uri.fsPath }
 		if (!config.pathBash) {
-			// Seems to work on newest W10
-			config.pathBash = "bash"
+			if (process.platform === "win32") {
+				config.pathBash = process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432') ?
+				join("C:", "Windows", "sysnative", "bash.exe") : join("C:", "Windows", "System32", "bash.exe");
+			}
+			else {
+				config.pathBash = "bash"
+			}
 		}
 		if (!config.pathBashdb) {
 			if (process.platform === "win32") {

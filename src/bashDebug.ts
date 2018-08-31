@@ -63,7 +63,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		this.setDebuggerColumnsStartAt1(true);
 	}
 
-	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
+	protected initializeRequest(response: DebugProtocol.InitializeResponse, _args: DebugProtocol.InitializeRequestArguments): void {
 
 		response.body = response.body || {};
 
@@ -75,7 +75,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments): void {
+	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, _args: DebugProtocol.DisconnectArguments): void {
 		this.debuggerExecutableBusy = false;
 
 		this.debuggerProcess.on("exit", () => {
@@ -184,7 +184,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
 				this.sendEvent(new InitializedEvent());
 
-				const interval = setInterval((data) => {
+				const interval = setInterval(() => {
 					for (; this.fullDebugOutputIndex < this.fullDebugOutput.length - 1; this.fullDebugOutputIndex++) {
 						const line = this.fullDebugOutput[this.fullDebugOutputIndex];
 
@@ -349,7 +349,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		this.scheduleExecution(() => this.stackTraceRequestFinalize(response, args, currentOutputLength));
 	}
 
-	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
+	protected scopesRequest(response: DebugProtocol.ScopesResponse, _args: DebugProtocol.ScopesArguments): void {
 
 		const scopes = [new Scope("Local", this.fullDebugOutputIndex, false)];
 		response.body = { scopes: scopes };
@@ -367,7 +367,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		const count = typeof args.count === 'number' ? args.count : 100;
 		const start = typeof args.start === 'number' ? args.start : 0;
-		let variableDefinitions = ["$PWD", "$? \\\# $_Dbg_last_bash_command"];
+		let variableDefinitions = ["$PWD", "$? \\\# from '$_Dbg_last_bash_command'"];
 		variableDefinitions = variableDefinitions.slice(start, Math.min(start + count, variableDefinitions.length));
 
 		variableDefinitions.forEach((v) => { getVariablesCommand += `print ' <${v}> '\nexamine ${v}\n` });
@@ -388,7 +388,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				if (this.fullDebugOutput[i - 1].indexOf(" <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
 
 					variables.push({
-						name: `${this.fullDebugOutput[i - 1].replace(" <", "").replace("> ", "")}`,
+						name: `${this.fullDebugOutput[i - 1].replace(" <", "").replace("> ", "").split('#')[0]}`,
 						type: "string",
 						value: this.fullDebugOutput[i],
 						variablesReference: 0
@@ -535,7 +535,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		const expression = (args.context == "hover") ? `${args.expression.replace(/['"]+/g, "",)}` : `${args.expression}`;
+		const expression = (args.context === "hover") ? `${args.expression.replace(/['"]+/g, "",)}` : `${args.expression}`;
 		this.debuggerProcess.stdin.write(`print 'examine <${expression}>'\nexamine ${expression}\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.evaluateRequestFinalize(response, args, currentLine));
 	}

@@ -2,7 +2,7 @@ import { spawnSync } from 'child_process';
 
 enum validatePathResult {
 	success = 0,
-	notExistCwd=1024,
+	notExistCwd,
 	notFoundBash,
 	notFoundBashdb,
 	notFoundCat,

@@ -29,14 +29,14 @@ See https://code.visualstudio.com/docs/editor/debugging for general usage.
 For Windows users:
 1. Install [Windows Subsystem for Linux](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux)
 
-For macOS users: <br>
-Read [here](https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill) if your mac has `/usr/local/bin/pkill`.
+For macOS users:
+1. Read [here](https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill) if your mac has `/usr/local/bin/pkill`.
 
 ## Dependencies
-1. bash 4.4
-2. cat, mkfifo, rm, pkill
+1. `bash 4.3` or `bash 4.4`
+2. `cat`, `mkfifo`, `rm`, `pkill`
 
 ## Limitations and known problems
 * For now, the debugger supports **only non-interactive scripts** (no stdin, limited [workaround](https://github.com/rogalmic/vscode-bash-debug/wiki/workaround-for-stdin) for this exists)
 * Watch variables should be specified with $ at the beginning (this expression is evaluated in bash - for example `${#PWD}` returns path length)
-* Currently debugger stops at first command.
+* Currently debugger stops at first command, also `$0` variable shows path to bashdb.
