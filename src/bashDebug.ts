@@ -41,6 +41,7 @@ export class BashDebugSession extends LoggingDebugSession {
 	private launchArgs: LaunchRequestArguments;
 
 	private debuggerProcess: ChildProcess;
+	private proxyProcess: ChildProcess;
 
 	private currentBreakpointIds = new Map<string, Array<number>>();
 
@@ -53,9 +54,6 @@ export class BashDebugSession extends LoggingDebugSession {
 	private responsivityFactor = 5;
 
 	private debuggerProcessParentId = -1;
-
-	// https://github.com/Microsoft/BashOnWindows/issues/1489
-	private debugPipeIndex = (process.platform === "win32") ? 2 : 3;
 
 	public constructor() {
 		super("bash-debug.txt");
@@ -83,6 +81,8 @@ export class BashDebugSession extends LoggingDebugSession {
 			this.sendResponse(response)
 		});
 
+		this.proxyProcess.kill();
+		//this.debuggerProcess.kill();
 		spawn(this.launchArgs.pathBash, ["-c", `${this.launchArgs.pathPkill} -KILL -P ${this.debuggerProcessParentId}`]);
 	}
 
@@ -125,29 +125,36 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
 
-		// use fifo, because --tty '&1' does not work properly for subshell (when bashdb spawns - $() )
-		// when this is fixed in bashdb, use &1
+		this.proxyProcess = spawn(args.pathBash, ["-c", `
+		# http://tldp.org/LDP/abs/html/io-redirection.html
+		function cleanup()
+		{
+			exit_code=$?
+			trap '' ERR SIGINT SIGTERM EXIT
+			exec 4>&-
+			rm "${fifo_path}_in";
+			rm "${fifo_path}";
+			exit $exit_code;
+		}
+		trap 'cleanup' ERR SIGINT SIGTERM EXIT
+		mkfifo "${fifo_path}"
+		mkfifo "${fifo_path}_in"
+
+		"${args.pathCat}" "${fifo_path}" &
+		exec 4>"${fifo_path}"
+		"${args.pathCat}" >"${fifo_path}_in"
+		`
+		], { stdio: ["pipe", "pipe", "pipe"] });
+
 		this.debuggerProcess = spawn(args.pathBash, ["-c", `
-
-			# http://tldp.org/LDP/abs/html/io-redirection.html
-
-			function cleanup()
-			{
-				exit_code=$?
-				trap '' ERR SIGINT SIGTERM EXIT
-				exec 4>&-
-				rm "${fifo_path}";
-				exit $exit_code;
-			}
-			trap 'cleanup' ERR SIGINT SIGTERM EXIT
-			mkfifo "${fifo_path}"
-			"${args.pathCat}" "${fifo_path}" >&${this.debugPipeIndex} &
-			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
+			while [[ ! -p "${fifo_path}" ]]
+			do
+			sleep 1
+			done
 			cd "${args.cwdEffective}"
-
 			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}
 			`
-		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
+		], { stdio: ["pipe", "pipe", "pipe"] });
 
 		this.debuggerProcess.on("error", (error) => {
 			this.sendEvent(new OutputEvent(`${error}`, 'stderr'));
@@ -155,7 +162,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.processDebugTerminalOutput();
 
-		this.debuggerProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint "${BashDebugSession.END_MARKER}"\n`);
+		this.debuggerProcess.stdin.write(`source ${fifo_path}_in\n`);
+		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint "${BashDebugSession.END_MARKER}"\n`);
 
 		this.debuggerProcess.stdio[1].on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
@@ -165,10 +173,14 @@ export class BashDebugSession extends LoggingDebugSession {
 			this.sendEvent(new OutputEvent(`${data}`, 'stderr'));
 		});
 
-		this.debuggerProcess.stdio[3].on("data", (data) => {
+		this.proxyProcess.stdio[1].on("data", (data) => {
 			if (args.showDebugOutput) {
 				this.sendEvent(new OutputEvent(`${data}`, 'console'));
 			}
+		});
+
+		this.proxyProcess.stdio[2].on("data", (data) => {
+			this.sendEvent(new OutputEvent(`${data}`, 'stderr'));
 		});
 
 		this.scheduleExecution(() => this.launchRequestFinalize(response, args));
@@ -194,7 +206,7 @@ export class BashDebugSession extends LoggingDebugSession {
 						}
 						else if (line.indexOf("terminated") > 0) {
 							clearInterval(interval);
-							this.debuggerProcess.stdin.write(`\nq\n`);
+							this.proxyProcess.stdin.write(`\nq\n`);
 							this.sendEvent(new OutputEvent(`Sending TerminatedEvent`, 'telemetry'));
 							this.sendEvent(new TerminatedEvent());
 						}
@@ -247,7 +259,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		this.debuggerProcess.stdin.write(`${setBreakpointsCommand}print '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin.write(`${setBreakpointsCommand}print '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.setBreakPointsRequestFinalize(response, args, currentLine));
 	}
 
@@ -298,7 +310,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		this.debuggerProcess.stdin.write(`print backtrace\nbacktrace\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin.write(`print backtrace\nbacktrace\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.stackTraceRequestFinalize(response, args, currentLine));
 	}
 
@@ -374,7 +386,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		this.debuggerProcess.stdin.write(`${getVariablesCommand}print '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin.write(`${getVariablesCommand}print '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.variablesRequestFinalize(response, args, currentLine));
 	}
 
@@ -414,7 +426,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		this.debuggerProcess.stdin.write(`print continue\ncontinue\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin.write(`print continue\ncontinue\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(() => this.continueRequestFinalize(response, args, currentLine));
 
@@ -445,7 +457,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		this.debuggerProcess.stdin.write(`print next\nnext\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin.write(`print next\nnext\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(() => this.nextRequestFinalize(response, args, currentLine));
 
@@ -472,7 +484,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		this.debuggerProcess.stdin.write(`print step\nstep\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin.write(`print step\nstep\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(() => this.stepInRequestFinalize(response, args, currentLine));
 
@@ -498,7 +510,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		this.debuggerProcess.stdin.write(`print finish\nfinish\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin.write(`print finish\nfinish\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.scheduleExecution(() => this.stepOutRequestFinalize(response, args, currentLine));
 
@@ -536,7 +548,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		const expression = (args.context === "hover") ? `${args.expression.replace(/['"]+/g, "",)}` : `${args.expression}`;
-		this.debuggerProcess.stdin.write(`print 'examine <${expression}>'\nexamine ${expression}\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin.write(`print 'examine <${expression}>'\nexamine ${expression}\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.evaluateRequestFinalize(response, args, currentLine));
 	}
 
@@ -577,12 +589,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	private processDebugTerminalOutput(): void {
 
-		this.debuggerProcess.stdio[this.debugPipeIndex].on('data', (data) => {
-
-			if (this.fullDebugOutput.length === 1 && data.indexOf("Reading ") === 0) {
-				// Before debug run, there is no newline
-				return;
-			}
+		this.proxyProcess.stdio[1].on('data', (data) => {
 
 			const list = data.toString().split("\n", -1);
 			const fullLine = `${this.fullDebugOutput.pop()}${list.shift()}`;
