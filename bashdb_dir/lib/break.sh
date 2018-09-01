@@ -80,25 +80,25 @@ typeset     _Dbg_watch_pat="${int_pat}[wW]"
 
 _Dbg_save_breakpoints() {
   typeset file
-  typeset -p _Dbg_brkpt_line         >> $_Dbg_statefile
-  typeset -p _Dbg_brkpt_file         >> $_Dbg_statefile
-  typeset -p _Dbg_brkpt_cond         >> $_Dbg_statefile
-  typeset -p _Dbg_brkpt_count        >> $_Dbg_statefile
-  typeset -p _Dbg_brkpt_enable       >> $_Dbg_statefile
-  typeset -p _Dbg_brkpt_onetime      >> $_Dbg_statefile
-  typeset -p _Dbg_brkpt_max          >> $_Dbg_statefile
-  typeset -p _Dbg_brkpt_file2linenos >> $_Dbg_statefile
-  typeset -p _Dbg_brkpt_file2brkpt   >> $_Dbg_statefile
+  typeset -p _Dbg_brkpt_file         >> "$_Dbg_statefile"
+  typeset -p _Dbg_brkpt_cond         >> "$_Dbg_statefile"
+  typeset -p _Dbg_brkpt_line         >> "$_Dbg_statefile"
+  typeset -p _Dbg_brkpt_count        >> "$_Dbg_statefile"
+  typeset -p _Dbg_brkpt_enable       >> "$_Dbg_statefile"
+  typeset -p _Dbg_brkpt_onetime      >> "$_Dbg_statefile"
+  typeset -p _Dbg_brkpt_max          >> "$_Dbg_statefile"
+  typeset -p _Dbg_brkpt_file2linenos >> "$_Dbg_statefile"
+  typeset -p _Dbg_brkpt_file2brkpt   >> "$_Dbg_statefile"
 
 }
 
 _Dbg_save_watchpoints() {
-  typeset -p _Dbg_watch_exp >> $_Dbg_statefile
-  typeset -p _Dbg_watch_val >> $_Dbg_statefile
-  typeset -p _Dbg_watch_arith >> $_Dbg_statefile
-  typeset -p _Dbg_watch_count >> $_Dbg_statefile
-  typeset -p _Dbg_watch_enable >> $_Dbg_statefile
-  typeset -p _Dbg_watch_max >> $_Dbg_statefile
+  typeset -p _Dbg_watch_exp    >> "$_Dbg_statefile"
+  typeset -p _Dbg_watch_val    >> "$_Dbg_statefile"
+  typeset -p _Dbg_watch_arith  >> "$_Dbg_statefile"
+  typeset -p _Dbg_watch_count  >> "$_Dbg_statefile"
+  typeset -p _Dbg_watch_enable >> "$_Dbg_statefile"
+  typeset -p _Dbg_watch_max    >> "$_Dbg_statefile"
 }
 
 # Start out with general break/watchpoint functions first...
@@ -244,8 +244,8 @@ _Dbg_set_brkpt() {
 
     # Add line number with a leading and trailing space. Delimiting the
     # number with space helps do a string search for the line number.
-    _Dbg_write_journal_eval "_Dbg_brkpt_file2linenos[$source_file]+=\" $lineno \""
-    _Dbg_write_journal_eval "_Dbg_brkpt_file2brkpt[$source_file]+=\" $_Dbg_brkpt_max \""
+    _Dbg_write_journal_eval "_Dbg_brkpt_file2linenos[\"$source_file\"]+=\" $lineno \""
+    _Dbg_write_journal_eval "_Dbg_brkpt_file2brkpt[\"$source_file\"]+=\" $_Dbg_brkpt_max \""
 
     source_file=$(_Dbg_adjust_filename "$source_file")
     if (( is_temp == 0 )) ; then
@@ -286,9 +286,9 @@ function _Dbg_unset_brkpt {
 
     # FIXME: combine with _Dbg_hook_breakpoint_hit
     typeset -a linenos
-    eval "linenos=(${_Dbg_brkpt_file2linenos[$fullname]})"
+    eval "linenos=(${_Dbg_brkpt_file2linenos["$fullname"]})"
     typeset -a brkpt_nos
-    eval "brkpt_nos=(${_Dbg_brkpt_file2brkpt[$fullname]})"
+    eval "brkpt_nos=(${_Dbg_brkpt_file2brkpt["$fullname"]})"
 
     typeset -i i
     # Note: <= rather than < looks funny below, but that is correct.
@@ -299,11 +299,11 @@ function _Dbg_unset_brkpt {
 	    (( brkpt_num = brkpt_nos[i] ))
 	    _Dbg_unset_brkpt_arrays $brkpt_num
 	    unset linenos[i]
-	    _Dbg_brkpt_file2linenos[$fullname]=${linenos[@]}
+	    _Dbg_brkpt_file2linenos["$fullname"]=" ${linenos[@]} "
 	    typeset -a brkpt_nos
-	    eval "brkpt_nos=(${_Dbg_brkpt_file2brkpt[$filename]})"
+	    eval "brkpt_nos=(${_Dbg_brkpt_file2brkpt["$filename"]})"
 	    unset brkpt_nos[$i]
-	    _Dbg_brkpt_file2brkpt[$filename]=${brkpt_nos[@]}
+	    _Dbg_brkpt_file2brkpt["$filename"]="${brkpt_nos[@]}"
 	    (( found ++ ))
 	fi
     done
@@ -322,24 +322,24 @@ function _Dbg_delete_brkpt_entry {
     typeset -i  i
     typeset -i  found=0
 
-    if [[ -z ${_Dbg_brkpt_file[$del]} ]] ; then
+    if [[ -z "${_Dbg_brkpt_file[$del]}" ]] ; then
 	_Dbg_errmsg "No breakpoint number $del."
 	return 1
     fi
-    typeset    source_file=${_Dbg_brkpt_file[$del]}
+    typeset    source_file="$(_Dbg_expand_filename "${_Dbg_brkpt_file[$del]}")"
     typeset -i lineno=${_Dbg_brkpt_line[$del]}
     typeset -i try
     typeset    new_lineno_val=''
     typeset    new_brkpt_nos=''
     typeset -i i=-1
     typeset -a brkpt_nos
-    brkpt_nos=(${_Dbg_brkpt_file2brkpt[$source_file]})
-    for try in ${_Dbg_brkpt_file2linenos[$source_file]} ; do
+    brkpt_nos=(${_Dbg_brkpt_file2brkpt["$source_file"]})
+    for try in ${_Dbg_brkpt_file2linenos["$source_file"]} ; do
 	((i++))
 	if (( brkpt_nos[i] == del )) ; then
 	    if (( try != lineno )) ; then
-		_Dbg_errmsg 'internal brkpt structure inconsistency'
-		return 1
+		    _Dbg_errmsg 'internal brkpt structure inconsistency'
+		    return 1
 	    fi
 	    _Dbg_unset_brkpt_arrays $del
 	    ((found++))
@@ -351,12 +351,12 @@ function _Dbg_delete_brkpt_entry {
     if (( found > 0 )) ; then
 	if (( ${#new_lineno_val[@]} == 0 )) ; then
 	    # Remove array entirely
-	    _Dbg_write_journal_eval "unset '_Dbg_brkpt_file2linenos[$source_file]'"
-	    _Dbg_write_journal_eval "unset '_Dbg_brkpt_file2brkpt[$source_file]'"
+	    _Dbg_write_journal_eval "unset '_Dbg_brkpt_file2linenos[\"$source_file\"]'"
+	    _Dbg_write_journal_eval "unset '_Dbg_brkpt_file2brkpt[\"$source_file\"]'"
 	else
 	    # Replace array entries with reduced set.
-	    _Dbg_write_journal_eval "_Dbg_brkpt_file2linenos[$source_file]=\"${new_lineno_val}\""
-	    _Dbg_write_journal_eval "_Dbg_brkpt_file2brkpt[$source_file]=\"$new_brkpt_nos\""
+	    _Dbg_write_journal_eval "_Dbg_brkpt_file2linenos[\"$source_file\"]=\"${new_lineno_val}\""
+	    _Dbg_write_journal_eval "_Dbg_brkpt_file2brkpt[\"$source_file\"]=\"$new_brkpt_nos\""
 	fi
 	return 0
     fi

@@ -60,7 +60,7 @@ function _Dbg_do_condition {
   fi
   eval "$_resteglob"
 
-  if [[ -z ${_Dbg_brkpt_file[$n]} ]] ; then
+  if [[ -z "${_Dbg_brkpt_file[$n]}" ]] ; then
     _Dbg_msg "condition: Breakpoint entry $n is not set. Condition not changed."
     return 3
   fi

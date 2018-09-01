@@ -12,7 +12,7 @@
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 #   General Public License for more details.
-#   
+#
 #   You should have received a copy of the GNU General Public License
 #   along with this program; see the file COPYING.  If not, write to
 #   the Free Software Foundation, 59 Temple Place, Suite 330, Boston,
@@ -24,7 +24,7 @@ _Dbg_help_add commands \
 Set commands to be executed when a breakpoint is hit.
 
 Without BKPT-NUM, the targeted breakpoint is the last one set.  The
-commands themselves follow starting on the next line.  
+commands themselves follow starting on the next line.
 
 Type a line containing "end" to indicate the end of them.  Give
 "silent" as the first line to make the breakpoint silent; then no
@@ -36,7 +36,7 @@ _Dbg_do_commands() {
   typeset -i found=0
   case $num in
       $int_pat )
-	  if [[ -z ${_Dbg_brkpt_file[$num]} ]] ; then
+	  if [[ -z "${_Dbg_brkpt_file[$num]}" ]] ; then
 	      _Dbg_errmsg "No breakpoint number $num."
 	      return 1
 	  fi
@@ -46,7 +46,7 @@ _Dbg_do_commands() {
 	_Dbg_errmsg "Invalid entry number skipped: $num"
   esac
   eval "$_resteglob"
-  if (( found )) ; then 
+  if (( found )) ; then
       _Dbg_brkpt_commands_defining=1
       _Dbg_brkpt_commands_current=$num
       _Dbg_brkpt_commands_end[$num]=${#_Dbg_brkpt_commands[@]}
