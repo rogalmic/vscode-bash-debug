@@ -52,7 +52,7 @@ _Dbg_do_set() {
     shift
 
     if [[ -n "${_Dbg_debugger_set_commands[$subcmd]}" ]] ; then
-	"${_Dbg_debugger_set_commands[$subcmd]}" "$label" "$@"
+	"${_Dbg_debugger_set_commands[$subcmd]}" $label "$@"
 	return $?
     fi
 
