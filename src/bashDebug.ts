@@ -219,10 +219,6 @@ export class BashDebugSession extends LoggingDebugSession {
 			return;
 		}
 
-		if (!this.currentBreakpointIds[args.source.path]) {
-			this.currentBreakpointIds[args.source.path] = [];
-		}
-
 		let sourcePath = (process.platform === "win32") ? getWSLPath(args.source.path) : args.source.path;
 
 		if (sourcePath !== undefined)
@@ -230,13 +226,23 @@ export class BashDebugSession extends LoggingDebugSession {
 			sourcePath = escapeCharactersInLinuxPath(sourcePath);
 		}
 
-		let setBreakpointsCommand = `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nyes\nload ${sourcePath}\n`;
-		if (args.breakpoints) {
-			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print 'break <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
+		let setBreakpointsCommand = ``;
+
+		if (this.currentBreakpointIds[args.source.path] === undefined) {
+			this.currentBreakpointIds[args.source.path] = [];
+			setBreakpointsCommand += `load ${sourcePath}\n`;
 		}
+
+		setBreakpointsCommand += (this.currentBreakpointIds[args.source.path].length > 0)
+			? `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nyes\n`
+			: ``;
 
 		if (this.launchArgs.showDebugOutput) {
 			setBreakpointsCommand += `info files\ninfo breakpoints\n`;
+		}
+
+		if (args.breakpoints) {
+			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print 'break <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
 		}
 
 		this.debuggerExecutableBusy = true;
@@ -258,7 +264,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 			for (let i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++) {
 
-				if (this.fullDebugOutput[i - 1].indexOf(" <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
+				if (this.fullDebugOutput[i - 1].indexOf("break <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
 
 					const lineNodes = this.fullDebugOutput[i].split(" ");
 					const bp = <DebugProtocol.Breakpoint>new Breakpoint(true, this.convertDebuggerLineToClient(parseInt(lineNodes[lineNodes.length - 1].replace(".", ""))));
