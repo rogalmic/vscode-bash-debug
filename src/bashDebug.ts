@@ -12,7 +12,7 @@ import { basename, normalize, join, isAbsolute } from 'path';
 import * as fs from 'fs';
 import * as which from 'npm-which';
 import { validatePath } from './bashRuntime';
-import { getWSLPath, reverseWSLPath, escapeCharactersInLinuxPath } from './handlePath';
+import { getWSLPath, reverseWSLPath, escapeCharactersInBashdbArg } from './handlePath';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -155,7 +155,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.processDebugTerminalOutput();
 
-		this.debuggerProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint "${BashDebugSession.END_MARKER}"\n`);
+		this.debuggerProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.debuggerProcess.stdio[1].on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
@@ -224,7 +224,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		if (sourcePath !== undefined)
 		{
-			sourcePath = escapeCharactersInLinuxPath(sourcePath);
+			sourcePath = escapeCharactersInBashdbArg(sourcePath);
 		}
 
 		let setBreakpointsCommand = ``;
@@ -536,7 +536,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		const expression = (args.context === "hover") ? `${args.expression.replace(/['"]+/g, "",)}` : `${args.expression}`;
+		let expression = (args.context === "hover") ? `${args.expression.replace(/['"]+/g, "",)}` : `${args.expression}`;
+		expression = escapeCharactersInBashdbArg(expression);
 		this.debuggerProcess.stdin.write(`print 'examine <${expression}>'\nexamine ${expression}\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.evaluateRequestFinalize(response, args, currentLine));
 	}

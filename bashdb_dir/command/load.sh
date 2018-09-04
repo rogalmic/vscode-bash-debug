@@ -25,7 +25,7 @@ _Dbg_help_add load \
 Read in lines of a SCRIPT for use in listing.
 
 For paths with space characters please use octal escape, e.g.:
-load /some/path\\040with\\040spaces/script.sh'
+load /some/path\\0400with\\0400spaces/script.sh'
 
 _Dbg_do_load() {
 
@@ -34,7 +34,7 @@ _Dbg_do_load() {
     return 1
   fi
 
-  typeset filename="$1"
+  typeset filename="$(_Dbg_unescape_arg "$1")"
   local  full_filename=$(_Dbg_resolve_expand_filename "$filename")
   if [ -n "$full_filename" ] && [ -r "$full_filename" ] ; then
     # Have we already loaded in this file?

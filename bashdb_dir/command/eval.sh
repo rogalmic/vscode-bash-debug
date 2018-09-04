@@ -70,7 +70,7 @@ complete -F _Dbg_complete_eval 'eval?'
 
 _Dbg_do_eval() {
 
-  builtin echo ". ${_Dbg_libdir}/dbg-set-d-vars.inc" > $_Dbg_evalfile
+  builtin echo ". ${_Dbg_libdir}/dbg-set-d-vars.inc" > "$_Dbg_evalfile"
    if (( $# == 0 )) ; then
        # FIXME: add parameter to get unhighlighted line, or
        # always save a copy of that in _Dbg_get_source_line
@@ -92,12 +92,12 @@ _Dbg_do_eval() {
 	   source_line="$_Dbg_bash_command"
        fi
 
-       builtin echo "$source_line" >> $_Dbg_evalfile
+       builtin echo "$source_line" >> "$_Dbg_evalfile"
        _Dbg_msg "eval: ${source_line}"
        _Dbg_source_line="$source_line_save"
        _Dbg_set_highlight=$_Dbg_highlight_save
    else
-       builtin echo "$@" >> $_Dbg_evalfile
+       builtin echo -e "$@" >> "$_Dbg_evalfile"
    fi
   if [[ -n "$_Dbg_tty"  ]] ; then
     . "$_Dbg_evalfile" >>"$_Dbg_tty"
@@ -133,7 +133,7 @@ eval $cmd  # runs an ls command
 '
 
 _Dbg_do_print() {
-  typeset _Dbg_expr=${@:-"$_Dbg_last_print_args"}
+  typeset _Dbg_expr="$(_Dbg_unescape_arg "${@:-"$_Dbg_last_print_args"}")"
   typeset dq_expr; dq_expr=$(_Dbg_esc_dq "$_Dbg_expr")
   . "${_Dbg_libdir}/dbg-set-d-vars.inc"
   eval "_Dbg_msg $_Dbg_expr"
