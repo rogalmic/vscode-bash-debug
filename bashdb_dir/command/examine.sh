@@ -73,6 +73,9 @@ function _Dbg_do_examine {
     elif _Dbg_is_function "$_Dbg_expr" $_Dbg_set_debug; then
 	_Dbg_result=$(typeset -f "$_Dbg_expr")
 	_Dbg_msg "$_Dbg_result"
+    elif [[ "$_Dbg_expr" =~ [a-zA-Z0-9_] ]] && type -p "$_Dbg_expr"; then
+	_Dbg_result=$(type -p "$_Dbg_expr")
+	_Dbg_msg "$_Dbg_result"
     else
 	typeset -i _Dbg_rc
 	eval let "_Dbg_result=$_Dbg_expr" 2>/dev/null; _Dbg_rc=$?
