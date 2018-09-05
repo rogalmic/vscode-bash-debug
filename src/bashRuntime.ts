@@ -9,6 +9,7 @@ enum validatePathResult {
 	notFoundMkfifo,
 	notFoundPkill,
 	timeout,
+	cannotChmod,
 	unknown,
 }
 
@@ -59,6 +60,7 @@ function _validatePath(cwd: string,
 	const vpr = validatePathResult;
 
 	const argv = ["-c",
+		(pathBashdb.indexOf("bashdb_dir") > 0) ? `chmod +x "${pathBashdb}" || exit ${vpr.cannotChmod};` : `` +
 		`type "${pathBashdb}" || exit ${vpr.notFoundBashdb};` +
 		`type "${pathCat}" || exit ${vpr.notFoundCat};` +
 		`type "${pathMkfifo}" || exit ${vpr.notFoundMkfifo};` +
@@ -78,10 +80,6 @@ function _validatePath(cwd: string,
 			return vpr.timeout
 		}
 		return vpr.unknown;
-	}
-
-	if (proc.status === vpr.notExistCwd) {
-		return vpr.notExistCwd;
 	}
 
 	return <validatePathResult>proc.status;
@@ -129,6 +127,9 @@ export function validatePath(cwd: string,
 		case validatePathResult.timeout: {
 			return "Error: BUG: timeout " +
 				"while validating environment. " + askReport;
+		}
+		case validatePathResult.cannotChmod: {
+			return `Error: Cannot chmod +x internal bashdb copy.`;
 		}
 		case validatePathResult.unknown: {
 			return "Error: BUG: unknown error ocurred " +

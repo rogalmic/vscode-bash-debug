@@ -107,6 +107,11 @@
                 "description": "Specify absolute path to bashdb (on Windows, path in Linux Subsystem).",
                 "default": "/usr/local/bin/bashdb"
               },
+              "pathBashdbLib": {
+                "type": "string",
+                "description": "Specify absolute path to bashdb libs (on Windows, path in Linux Subsystem).",
+                "default": "/usr/share/bashdb"
+              },
               "pathCat": {
                 "type": "string",
                 "description": "Specify absolute path to cat (on Windows, path in Linux Subsystem).",

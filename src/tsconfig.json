@@ -1,10 +1,10 @@
 {
 	"compilerOptions": {
 		"module": "commonjs",
-		"target": "es6",
+		"target": "es2018",
 
 		"noImplicitAny": false,
-		"removeComments": false,
+		"removeComments": true,
 		"noUnusedLocals": true,
 		"noImplicitThis": true,
 		"inlineSourceMap": false,
@@ -12,6 +12,6 @@
 		"outDir": "../out",
 		"preserveConstEnums": true,
 		"strictNullChecks": true,
-		"noUnusedParameters": false
+		"noUnusedParameters": true
 	}
 }

@@ -1,0 +1,20 @@
+R. Bernstein (rocky@gnu.org)
+
+with ideas from (via a predecessor bashdb): 
+	
+Bill Rosenblatt,
+Michael Loukides,
+Cigy Cyriac, 
+Chet Ramey, 
+Gary V. Vaughan
+
+and other debuggers, e.g. ruby-debug, pdb, pydb, zshdb:
+
+Kent Sibilev 
+
+
+Kate Ward is the author of shunit2 used in unit testing
+
+Stéphane Chazelas is the author of getopts_long.sh for GNU long options 
+         processing 
+ 

@@ -1,28 +1,6 @@
 # VS Code Bash Debug
 A bash debugger GUI frontend based on awesome bashdb scripts.
 
-**Install bashdb** before usage:
-* [apt](https://en.wikipedia.org/wiki/Advanced_Packaging_Tool) package manager
-```{r, engine='bash'}
-sudo apt-get install bashdb
-```
-* [yum](https://en.wikipedia.org/wiki/Yellowdog_Updater,_Modified) package manager
-```{r, engine='bash'}
-sudo yum install bashdb
-```
-* installation from sources (advanced):
-```{r, engine='bash'}
-tar -xvf bashdb-*.tar.gz
-cd bashdb-*
-./configure
-make
-sudo make install
-```
-* verification
-```{r, engine='bash'}
-bashdb --version
-```
-
 Helpful links:
 
 [https://en.wikipedia.org/wiki/Bash_(Unix_shell)](https://en.wikipedia.org/wiki/Bash_%28Unix_shell%29)
@@ -38,7 +16,7 @@ Sources:
 # Overview
 This is a SIMPLE bashdb debugger frontend. Useful for learning bash shell usage and writing simple scripts.
 
-Hopefully bash will land on 3 leading platforms making this extension very useful. Useful hint: shellcheck extension does a great job with finding common script errors before debugging.
+Useful hint: shellcheck extension does a great job with finding common script errors before debugging.
 
 ## Usage
 1. Select **Debug -> Start Debugging (F5)** to start debugging (if launch.json is not available, it will be created with default configuration)
@@ -50,19 +28,15 @@ See https://code.visualstudio.com/docs/editor/debugging for general usage.
 
 For Windows users:
 1. Install [Windows Subsystem for Linux](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux)
-2. Install bashdb through bash console (see above)
-3. [Optional] In launch.json, set `pathBash` to either `C:/Windows/System32/bash.exe`, or `C:/Windows/sysnative/bash.exe` in case of 32bit VSCode on 64bit OS
 
-For macOS users: <br>
-Read [here](https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill) if your mac has `/usr/local/bin/pkill`.
+For macOS users:
+1. Read [here](https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill) if your mac has `/usr/local/bin/pkill`.
 
 ## Dependencies
-1. bashdb 4.4
-2. cat, mkfifo, rm, pkill
+1. `bash 4.3` or `bash 4.4`
+2. `cat`, `mkfifo`, `rm`, `pkill`
 
 ## Limitations and known problems
 * For now, the debugger supports **only non-interactive scripts** (no stdin, limited [workaround](https://github.com/rogalmic/vscode-bash-debug/wiki/workaround-for-stdin) for this exists)
 * Watch variables should be specified with $ at the beginning (this expression is evaluated in bash - for example `${#PWD}` returns path length)
-* Currently debugger stops at first command.
-* Executing `set -e` causes debugging script to exit (`bashdb` fixes this in version `4.4-0.93`). Consider using `trap 'exit $?' ERR`.
-* Windows Subsystem Linux in Windows 10 (>=15014) seems to be working with some hacks (https://github.com/Microsoft/BashOnWindows/issues/2#issuecomment-209118529, https://github.com/Microsoft/BashOnWindows/issues/1489);
+* Currently debugger stops at first command, also `$0` variable shows path to bashdb.
