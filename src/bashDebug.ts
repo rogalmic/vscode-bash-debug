@@ -12,7 +12,7 @@ import { basename, normalize, join, isAbsolute } from 'path';
 import * as fs from 'fs';
 import * as which from 'npm-which';
 import { validatePath } from './bashRuntime';
-import { getWSLPath, reverseWSLPath, escapeCharactersInLinuxPath } from './handlePath';
+import { getWSLPath, reverseWSLPath, escapeCharactersInBashdbArg } from './handlePath';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -24,6 +24,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	programEffective: string;
 	pathBash: string;
 	pathBashdb: string;
+	pathBashdbLib: string;
 	pathCat: string;
 	pathMkfifo: string;
 	pathPkill: string;
@@ -62,7 +63,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		this.setDebuggerColumnsStartAt1(true);
 	}
 
-	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
+	protected initializeRequest(response: DebugProtocol.InitializeResponse, _args: DebugProtocol.InitializeRequestArguments): void {
 
 		response.body = response.body || {};
 
@@ -74,7 +75,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments): void {
+	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, _args: DebugProtocol.DisconnectArguments): void {
 		this.debuggerExecutableBusy = false;
 
 		this.debuggerProcess.on("exit", () => {
@@ -139,12 +140,12 @@ export class BashDebugSession extends LoggingDebugSession {
 				exit $exit_code;
 			}
 			trap 'cleanup' ERR SIGINT SIGTERM EXIT
-
 			mkfifo "${fifo_path}"
 			"${args.pathCat}" "${fifo_path}" >&${this.debugPipeIndex} &
 			exec 4>"${fifo_path}" 		# Keep open for writing, bashdb seems close after every write.
 			cd "${args.cwdEffective}"
-			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}
+
+			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}
 			`
 		], { stdio: ["pipe", "pipe", "pipe", "pipe"] });
 
@@ -154,7 +155,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.processDebugTerminalOutput();
 
-		this.debuggerProcess.stdin.write(`print "$PPID"\nhandle INT stop\nprint "${BashDebugSession.END_MARKER}"\n`);
+		this.debuggerProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.debuggerProcess.stdio[1].on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
@@ -183,7 +184,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
 				this.sendEvent(new InitializedEvent());
 
-				const interval = setInterval((data) => {
+				const interval = setInterval(() => {
 					for (; this.fullDebugOutputIndex < this.fullDebugOutput.length - 1; this.fullDebugOutputIndex++) {
 						const line = this.fullDebugOutput[this.fullDebugOutputIndex];
 
@@ -223,7 +224,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		if (sourcePath !== undefined)
 		{
-			sourcePath = escapeCharactersInLinuxPath(sourcePath);
+			sourcePath = escapeCharactersInBashdbArg(sourcePath);
 		}
 
 		let setBreakpointsCommand = ``;
@@ -237,12 +238,12 @@ export class BashDebugSession extends LoggingDebugSession {
 			? `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nyes\n`
 			: ``;
 
-		if (this.launchArgs.showDebugOutput) {
-			setBreakpointsCommand += `info files\ninfo breakpoints\n`;
-		}
-
 		if (args.breakpoints) {
 			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print 'break <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
+		}
+
+		if (this.launchArgs.showDebugOutput) {
+			setBreakpointsCommand += `info files\ninfo breakpoints\n`;
 		}
 
 		this.debuggerExecutableBusy = true;
@@ -349,7 +350,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		this.scheduleExecution(() => this.stackTraceRequestFinalize(response, args, currentOutputLength));
 	}
 
-	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
+	protected scopesRequest(response: DebugProtocol.ScopesResponse, _args: DebugProtocol.ScopesArguments): void {
 
 		const scopes = [new Scope("Local", this.fullDebugOutputIndex, false)];
 		response.body = { scopes: scopes };
@@ -367,10 +368,10 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		const count = typeof args.count === 'number' ? args.count : 100;
 		const start = typeof args.start === 'number' ? args.start : 0;
-		let variableDefinitions = ["PWD", "EUID", "#", "0", "-"];
+		let variableDefinitions = ["$PWD", "$? \\\# from '$_Dbg_last_bash_command'"];
 		variableDefinitions = variableDefinitions.slice(start, Math.min(start + count, variableDefinitions.length));
 
-		variableDefinitions.forEach((v) => { getVariablesCommand += `print ' <$${v}> '\nexamine $${v}\n` });
+		variableDefinitions.forEach((v) => { getVariablesCommand += `print ' <${v}> '\nexamine ${v}\n` });
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
@@ -388,7 +389,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				if (this.fullDebugOutput[i - 1].indexOf(" <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
 
 					variables.push({
-						name: `${this.fullDebugOutput[i - 1].replace(" <", "").replace("> ", "")}`,
+						name: `${this.fullDebugOutput[i - 1].replace(" <", "").replace("> ", "").split('#')[0]}`,
 						type: "string",
 						value: this.fullDebugOutput[i],
 						variablesReference: 0
@@ -535,7 +536,9 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		this.debuggerProcess.stdin.write(`print 'examine <${args.expression}>'\nexamine ${args.expression.replace("\"", "")}\nprint '${BashDebugSession.END_MARKER}'\n`);
+		let expression = (args.context === "hover") ? `${args.expression.replace(/['"]+/g, "",)}` : `${args.expression}`;
+		expression = escapeCharactersInBashdbArg(expression);
+		this.debuggerProcess.stdin.write(`print 'examine <${expression}>'\nexamine ${expression}\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.evaluateRequestFinalize(response, args, currentLine));
 	}
 
