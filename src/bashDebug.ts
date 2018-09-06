@@ -12,7 +12,7 @@ import { basename, normalize, join, isAbsolute } from 'path';
 import * as fs from 'fs';
 import * as which from 'npm-which';
 import { validatePath } from './bashRuntime';
-import { getWSLPath, reverseWSLPath, escapeCharactersInLinuxPath } from './handlePath';
+import { getWSLPath, reverseWSLPath, escapeCharactersInBashdbArg } from './handlePath';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -163,7 +163,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		this.processDebugTerminalOutput();
 
 		this.debuggerProcess.stdin.write(`source ${fifo_path}_in\n`);
-		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint "${BashDebugSession.END_MARKER}"\n`);
+		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.debuggerProcess.stdio[1].on("data", (data) => {
 			this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
@@ -232,22 +232,23 @@ export class BashDebugSession extends LoggingDebugSession {
 			return;
 		}
 
-		if (!this.currentBreakpointIds[args.source.path]) {
-			this.currentBreakpointIds[args.source.path] = [];
-		}
-
 		let sourcePath = (process.platform === "win32") ? getWSLPath(args.source.path) : args.source.path;
 
 		if (sourcePath !== undefined)
 		{
-			sourcePath = escapeCharactersInLinuxPath(sourcePath);
+			sourcePath = escapeCharactersInBashdbArg(sourcePath);
 		}
 
-		let setBreakpointsCommand = (this.currentBreakpointIds[args.source.path].length > 0)
+		let setBreakpointsCommand = ``;
+
+		if (this.currentBreakpointIds[args.source.path] === undefined) {
+			this.currentBreakpointIds[args.source.path] = [];
+			setBreakpointsCommand += `load ${sourcePath}\n`;
+		}
+
+		setBreakpointsCommand += (this.currentBreakpointIds[args.source.path].length > 0)
 			? `print 'delete <${this.currentBreakpointIds[args.source.path].join(" ")}>'\ndelete ${this.currentBreakpointIds[args.source.path].join(" ")}\nyes\n`
 			: ``;
-
-		setBreakpointsCommand += `load ${sourcePath}\n`;
 
 		if (args.breakpoints) {
 			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print 'break <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
@@ -276,7 +277,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 			for (let i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++) {
 
-				if (this.fullDebugOutput[i - 1].indexOf(" <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
+				if (this.fullDebugOutput[i - 1].indexOf("break <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
 
 					const lineNodes = this.fullDebugOutput[i].split(" ");
 					const bp = <DebugProtocol.Breakpoint>new Breakpoint(true, this.convertDebuggerLineToClient(parseInt(lineNodes[lineNodes.length - 1].replace(".", ""))));
@@ -547,7 +548,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		const expression = (args.context === "hover") ? `${args.expression.replace(/['"]+/g, "",)}` : `${args.expression}`;
+		let expression = (args.context === "hover") ? `${args.expression.replace(/['"]+/g, "",)}` : `${args.expression}`;
+		expression = escapeCharactersInBashdbArg(expression);
 		this.proxyProcess.stdin.write(`print 'examine <${expression}>'\nexamine ${expression}\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.scheduleExecution(() => this.evaluateRequestFinalize(response, args, currentLine));
 	}

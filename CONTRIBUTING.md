@@ -7,6 +7,7 @@ Works at least on Kubuntu.
 
 1. install VS Code, `npm`, `nodejs`, optionally `bashdb` (some time ago `nodejs-legacy` was required) + build essentials
 1. clone project
+1. disable auto carriage return `git config core.autocrlf false; git reset --hard`
 1. open VS Code, select project's folder, open terminal and type `npm install` (this will download dependencies)
 1. Run by clicking **Ctrl+F5**, new VS window will open
 1. Create some folder with one script file, then try debugging it by **F5** (to debug bashDebug.ts, read [this](https://code.visualstudio.com/docs/extensions/example-debuggers#_development-setup-for-mock-debug) -> basically set `Extension + Server` in debug pane, then set `"debugServer": 4711` configuration in launch.json of bash project)

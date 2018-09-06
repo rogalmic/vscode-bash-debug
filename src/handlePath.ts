@@ -65,11 +65,11 @@ export function reverseWSLPath(wslPath: string): string {
 }
 
 /**
- * @example <caption>Escape whitespace for setting source path in bashdb</caption>
- * escapeCharactersInLinuxPath("/pa th/to/script.sh");
+ * @example <caption>Escape whitespace for setting bashdb arguments with spaces</caption>
+ * escapeCharactersInBashdbArg("/pa th/to/script.sh");
  * // => "/pa\\\\040th/to/script.sh"
  */
-export function escapeCharactersInLinuxPath(path: string): string {
-	return path.replace(/\s/g, (m) => "\\\\" + ("000" + m.charCodeAt(0).toString(8)).slice(-3));
+export function escapeCharactersInBashdbArg(path: string): string {
+	return path.replace(/\s/g, (m) => "\\\\" + ("0000" + m.charCodeAt(0).toString(8)).slice(-4));
 }
 

@@ -199,7 +199,7 @@ function _Dbg_linespec_setup {
   full_filename=$(_Dbg_is_file "$filename")
 
   if (( is_function )) ; then
-      if [[ -z $full_filename ]] ; then
+      if [[ -z "$full_filename" ]] ; then
 	  _Dbg_readin "$filename"
 	  full_filename=$(_Dbg_is_file "$filename")
       fi

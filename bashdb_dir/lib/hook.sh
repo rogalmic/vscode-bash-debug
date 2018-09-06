@@ -211,10 +211,10 @@ _Dbg_hook_action_hit() {
 
     # FIXME: combine with _Dbg_unset_action
     typeset -a linenos
-    [[ -z $full_filename ]] && return 1
-    eval "linenos=(${_Dbg_action_file2linenos[$full_filename]})"
+    [[ -z "$full_filename" ]] && return 1
+    eval "linenos=(${_Dbg_action_file2linenos[\"$full_filename\"]})"
     typeset -a action_nos
-    eval "action_nos=(${_Dbg_action_file2action[$full_filename]})"
+    eval "action_nos=(${_Dbg_action_file2action[\"$full_filename\"]})"
 
     typeset -i _Dbg_i
     # Check action within full_filename
@@ -241,11 +241,11 @@ _Dbg_hook_breakpoint_hit() {
 
     # FIXME: combine with _Dbg_unset_brkpt
     typeset -a linenos
-    [[ -z $full_filename ]] && return 1
-    [[ -z ${_Dbg_brkpt_file2linenos[$full_filename]} ]] && return 1
-    eval "linenos=(${_Dbg_brkpt_file2linenos[$full_filename]})"
+    [[ -z "$full_filename" ]] && return 1
+    [[ -z "${_Dbg_brkpt_file2linenos["$full_filename"]}" ]] && return 1
+    eval "linenos=(${_Dbg_brkpt_file2linenos["$full_filename"]})"
     typeset -a brkpt_nos
-    eval "brkpt_nos=(${_Dbg_brkpt_file2brkpt[$full_filename]})"
+    eval "brkpt_nos=(${_Dbg_brkpt_file2brkpt["$full_filename"]})"
     typeset -i i
     # Check breakpoints within full_filename
     for ((i=0; i < ${#linenos[@]}; i++)); do
@@ -271,10 +271,10 @@ _Dbg_hook_enter_debugger() {
 
 # Cleanup routine: erase temp files before exiting.
 _Dbg_cleanup() {
-    [[ -f $_Dbg_evalfile ]] && rm -f $_Dbg_evalfile 2>/dev/null
+    [[ -f "$_Dbg_evalfile" ]] && rm -f "$_Dbg_evalfile" 2>/dev/null
     set +u
-    if [[ -n $_Dbg_EXECUTION_STRING ]] && [[ -r $_Dbg_script_file ]] ; then
-	rm $_Dbg_script_file
+    if [[ -n $_Dbg_EXECUTION_STRING ]] && [[ -r "$_Dbg_script_file" ]] ; then
+	rm "$_Dbg_script_file"
     fi
     _Dbg_erase_journals
     _Dbg_restore_user_vars
@@ -283,7 +283,7 @@ _Dbg_cleanup() {
 # Somehow we can't put this in _Dbg_cleanup and have it work.
 # I am not sure why.
 _Dbg_cleanup2() {
-    [[ -f $_Dbg_evalfile ]] && rm -f $_Dbg_evalfile 2>/dev/null
+    [[ -f "$_Dbg_evalfile" ]] && rm -f "$_Dbg_evalfile" 2>/dev/null
     _Dbg_erase_journals
     trap - EXIT
 }

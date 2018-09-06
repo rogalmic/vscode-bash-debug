@@ -45,7 +45,7 @@ by using "delete" on the breakpoint number.
 If no location specification is given, the current line will be used.
 
 For *loc-spec* paths with space characters please use octal escape, e.g.:
-break /some/path\\040with\\040spaces/script.sh:3'
+break /some/path\\0400with\\0400spaces/script.sh:3'
 
 _Dbg_do_tbreak() {
     _Dbg_do_break_common 1 $@
@@ -73,7 +73,7 @@ _Dbg_do_break_common() {
     fi
     shift
 
-    typeset condition=${1:-''}
+    typeset condition="$(_Dbg_unescape_arg "${1:-''}")"
     if [[ "$linespec" == 'if' ]]; then
 	linespec=$_Dbg_frame_last_lineno
     elif [[ -z $condition ]] ; then
@@ -84,7 +84,7 @@ _Dbg_do_break_common() {
     if [[ -z $condition ]] ; then
 	condition=1
     else
-	condition="$*"
+	condition="$(_Dbg_unescape_arg "$*")"
     fi
 
     typeset filename
@@ -125,7 +125,7 @@ _Dbg_do_clear_brkpt() {
 
     _Dbg_linespec_setup $n
 
-    if [[ -n $full_filename ]] ; then
+    if [[ -n "$full_filename" ]] ; then
 	if (( line_number ==  0 )) ; then
 	    _Dbg_msg "There is no line 0 to clear."
 	    return 0
@@ -155,11 +155,11 @@ _Dbg_do_list_brkpt() {
 	typeset brkpt_num="$1"
 	if [[ $brkpt_num != $int_pat ]]; then
 	    _Dbg_errmsg "Bad breakpoint number $brkpt_num."
-	elif [[ -z ${_Dbg_brkpt_file[$brkpt_num]} ]] ; then
+	elif [[ -z "${_Dbg_brkpt_file[$brkpt_num]}" ]] ; then
 	    _Dbg_errmsg "Breakpoint entry $brkpt_num is not set."
 	else
 	    typeset -r -i i=$brkpt_num
-	    typeset source_file=${_Dbg_brkpt_file[$i]}
+	    typeset source_file="${_Dbg_brkpt_file[$i]}"
 	    source_file=$(_Dbg_adjust_filename "$source_file")
 	    _Dbg_section "Num Type       Disp Enb What"
 	    _Dbg_printf "%-3d breakpoint %-4s %-3s %s:%s" $i \
@@ -178,7 +178,7 @@ _Dbg_do_list_brkpt() {
 
 	_Dbg_section "Num Type       Disp Enb What"
 	for (( i=1; i <= _Dbg_brkpt_max; i++ )) ; do
-	    typeset source_file=${_Dbg_brkpt_file[$i]}
+	    typeset source_file="${_Dbg_brkpt_file[$i]}"
 	    if [[ -n ${_Dbg_brkpt_line[$i]} ]] ; then
 		source_file=$(_Dbg_adjust_filename "$source_file")
 		_Dbg_printf "%-3d breakpoint %-4s %-3s %s:%s" $i \
