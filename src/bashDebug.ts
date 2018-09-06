@@ -180,7 +180,9 @@ export class BashDebugSession extends LoggingDebugSession {
 		});
 
 		this.proxyProcess.stdio[2].on("data", (data) => {
-			this.sendEvent(new OutputEvent(`${data}`, 'stderr'));
+			if (args.showDebugOutput) {
+			    this.sendEvent(new OutputEvent(`${data}`, 'console'));
+			}
 		});
 
 		this.scheduleExecution(() => this.launchRequestFinalize(response, args));
