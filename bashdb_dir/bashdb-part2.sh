@@ -31,7 +31,7 @@
 # an effect.
 ((OPTLIND > 0)) && shift "$((OPTLIND - 1))"
 
-if (($# == 0)) && [[ -z $_Dbg_EXECUTION_STRING ]] ; then
+if (($# == 0)) && [[ -z "$_Dbg_EXECUTION_STRING" ]] ; then
     echo >&2 "${_Dbg_pname}: need to give a script to debug or use the -c option."
     exit 1
 fi
@@ -50,9 +50,9 @@ fi
 # Note that this is called via bashdb rather than "bash --debugger"
 _Dbg_script=1
 
-if [[ -n $_Dbg_EXECUTION_STRING ]] ; then
+if [[ -n "$_Dbg_EXECUTION_STRING" ]] ; then
     _Dbg_script_file=$(_Dbg_tempname cmd)
-    echo "$_Dbg_EXECUTION_STRING" >$_Dbg_script_file
+    echo "$_Dbg_EXECUTION_STRING" >"$_Dbg_script_file"
 fi
 
 if [[ ! -r "$_Dbg_script_file" ]] ; then

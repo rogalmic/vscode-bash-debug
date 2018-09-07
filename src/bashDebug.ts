@@ -40,10 +40,10 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	private launchArgs: LaunchRequestArguments;
 
-	private debuggerProcess: ChildProcess;
 	private proxyProcess: ChildProcess;
 
 	private currentBreakpointIds = new Map<string, Array<number>>();
+	private proxyData = new Map<string, string>();
 
 	private fullDebugOutput = [""];
 	private fullDebugOutputIndex = 0;
@@ -76,14 +76,24 @@ export class BashDebugSession extends LoggingDebugSession {
 	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, _args: DebugProtocol.DisconnectArguments): void {
 		this.debuggerExecutableBusy = false;
 
-		this.debuggerProcess.on("exit", () => {
+		let process = spawn(this.launchArgs.pathBash, [`-c`, `${this.launchArgs.pathPkill} -KILL -P "${this.debuggerProcessParentId}"; ${this.launchArgs.pathPkill} -TERM -P "${this.proxyData["PROXYID"]}"`]);
+
+		process.on("error", (error) => {
+			this.sendEvent(new OutputEvent(`${error}`, 'console'));
+		});
+
+		process.stderr.on("data", (data) => {
+			this.sendEvent(new OutputEvent(`${data}`, 'console'));
+		});
+
+		process.stdout.on("data", (data) => {
+			this.sendEvent(new OutputEvent(`${data}`, 'console'));
+		});
+
+		this.proxyProcess.on("exit", () => {
 			this.debuggerExecutableClosing = true;
 			this.sendResponse(response)
 		});
-
-		this.proxyProcess.kill();
-		//this.debuggerProcess.kill();
-		spawn(this.launchArgs.pathBash, ["-c", `${this.launchArgs.pathPkill} -KILL -P ${this.debuggerProcessParentId}`]);
 	}
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
@@ -118,70 +128,69 @@ export class BashDebugSession extends LoggingDebugSession {
 			if (pathPkill === "/usr/local/bin/pkill") {
 				const url = "https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill"
 				const msg = `Using /usr/bin/pkill instead of /usr/local/bin/pkill (see ${url} for details)`
-				this.sendEvent(new OutputEvent(msg, 'stderr'));
+				this.sendEvent(new OutputEvent(msg, 'console'));
 				args.pathPkill = "/usr/bin/pkill"
 			}
 		}
 
 		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
 
-		this.proxyProcess = spawn(args.pathBash, ["-c", `
-		# http://tldp.org/LDP/abs/html/io-redirection.html
-		function cleanup()
+		// http://tldp.org/LDP/abs/html/io-redirection.html
+		this.proxyProcess = spawn(args.pathBash, ["-c",
+		`function cleanup()
 		{
 			exit_code=$?
 			trap '' ERR SIGINT SIGTERM EXIT
 			exec 4>&-
-			rm "${fifo_path}_in";
-			rm "${fifo_path}";
-			exit $exit_code;
+			rm "${fifo_path}_in"
+			rm "${fifo_path}"
+			exit $exit_code
 		}
+		echo "::PROXYID::$$" >&2
 		trap 'cleanup' ERR SIGINT SIGTERM EXIT
 		mkfifo "${fifo_path}"
 		mkfifo "${fifo_path}_in"
 
 		"${args.pathCat}" "${fifo_path}" &
 		exec 4>"${fifo_path}"
-		"${args.pathCat}" >"${fifo_path}_in"
-		`
+		"${args.pathCat}" >"${fifo_path}_in"`
+		.replace("\r", "")
 		], { stdio: ["pipe", "pipe", "pipe"] });
 
-		this.debuggerProcess = spawn(args.pathBash, ["-c", `
-			while [[ ! -p "${fifo_path}" ]]
-			do
-			sleep 1
-			done
-			cd "${args.cwdEffective}"
-			"${args.pathCat}" | "${args.pathBashdb}" --quiet --tty "${fifo_path}" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}
-			`
-		], { stdio: ["pipe", "pipe", "pipe"] });
+		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
 
-		this.debuggerProcess.on("error", (error) => {
-			this.sendEvent(new OutputEvent(`${error}`, 'stderr'));
+		const termArgs: DebugProtocol.RunInTerminalRequestArguments = {
+			kind: "integrated",
+			title: "Bash Debug Console",
+			cwd: args.cwd,
+			args: [args.pathBash, `-c` ,
+			`while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
+			"${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}`
+			.replace("\r", "").replace("\n", "; ")
+			],
+		};
+
+		this.runInTerminalRequest(termArgs, 10000, (response) =>{
+			if (!response.success) {
+				this.sendEvent(new OutputEvent(`${JSON.stringify(response)}`, 'console'));
+			}
+		} );
+
+		this.proxyProcess.on("error", (error) => {
+			this.sendEvent(new OutputEvent(`${error}`, 'console'));
 		});
 
 		this.processDebugTerminalOutput();
 
-		this.debuggerProcess.stdin.write(`source ${fifo_path}_in\n`);
-		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
-
-		this.debuggerProcess.stdio[1].on("data", (data) => {
-			this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
-		});
-
-		this.debuggerProcess.stdio[2].on("data", (data) => {
-			this.sendEvent(new OutputEvent(`${data}`, 'stderr'));
-		});
-
 		this.proxyProcess.stdio[1].on("data", (data) => {
 			if (args.showDebugOutput) {
-				this.sendEvent(new OutputEvent(`${data}`, 'console'));
+				this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
 			}
 		});
 
 		this.proxyProcess.stdio[2].on("data", (data) => {
 			if (args.showDebugOutput) {
-			    this.sendEvent(new OutputEvent(`${data}`, 'console'));
+			    this.sendEvent(new OutputEvent(`${data}`, 'stderr'));
 			}
 		});
 
@@ -230,7 +239,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		}
 
 		if (!args.source.path) {
-			this.sendEvent(new OutputEvent("Error: setBreakPointsRequest(): args.source.path is undefined.", 'stderr'));
+			this.sendEvent(new OutputEvent("Error: setBreakPointsRequest(): args.source.path is undefined.", 'console'));
 			return;
 		}
 
@@ -269,7 +278,7 @@ export class BashDebugSession extends LoggingDebugSession {
 	private setBreakPointsRequestFinalize(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, currentOutputLength: number): void {
 
 		if (!args.source.path) {
-			this.sendEvent(new OutputEvent("Error: setBreakPointsRequestFinalize(): args.source.path is undefined.", 'stderr'));
+			this.sendEvent(new OutputEvent("Error: setBreakPointsRequestFinalize(): args.source.path is undefined.", 'console'));
 			return;
 		}
 
@@ -536,13 +545,6 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
 
-		if (this.debuggerProcess === null) {
-			response.body = { result: `${args.expression} = ''`, variablesReference: 0 };
-			this.debuggerExecutableBusy = false;
-			this.sendResponse(response);
-			return;
-		}
-
 		if (this.debuggerExecutableBusy) {
 			this.scheduleExecution(() => this.evaluateRequest(response, args));
 			return;
@@ -592,6 +594,16 @@ export class BashDebugSession extends LoggingDebugSession {
 	}
 
 	private processDebugTerminalOutput(): void {
+
+		this.proxyProcess.stdio[2].on('data', (data) => {
+			const list = data.toString().split("\n");
+			list.forEach(l => {
+				let nodes = l.split("::");
+				if (nodes.length === 3) {
+					this.proxyData[nodes[1]] = nodes[2];
+				}
+			});
+		})
 
 		this.proxyProcess.stdio[1].on('data', (data) => {
 

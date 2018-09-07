@@ -82,6 +82,13 @@ typeset _Dbg_prompt_output
 # in the debugger, we prefer to preface these with _Dbg_.
 function _Dbg_process_commands {
 
+  if [[ ! -z "$_Dbg_tty_in" ]] && [[  -r "$_Dbg_tty_in" ]]
+  then
+    exec {_Dbg_fdi}<$_Dbg_tty_in
+    _Dbg_fd[++_Dbg_fd_last]=$_Dbg_fdi
+    _Dbg_cmdfile+=("$_Dbg_tty_in")
+  fi
+
   # THIS SHOULD BE DONE IN dbg-sig.sh, but there's a bug in BASH in
   # trying to change "trap RETURN" inside a "trap RETURN" handler....
   # Turn off return trapping. Not strictly necessary, since it *should* be

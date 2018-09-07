@@ -48,6 +48,7 @@ options:
     -S | --style STYLE       Run use pygments STYLE for formatting source code
     --tty | --terminal DEV   Set to terminal in debugger output to DEV
                              DEV can also be &1 for STDOUT
+    --tty_in | --terminal_in DEV   Set to ...
     -T | --tempdir DIRECTORY
                              Use DIRECTORY to store temporary files
     -V | --version           Print the debugger version number.
@@ -129,7 +130,7 @@ _Dbg_parse_options() {
     typeset -i _Dbg_o_quiet=0
     typeset -i _Dbg_o_version=0
 
-    while getopts_long A:Bc:x:hL:nqTt:VX opt \
+    while getopts_long A:Bc:x:hL:nqTt:Yy:VX opt \
         annotate     required_argument       \
         basename     no_argument             \
         command      required_argument       \
@@ -146,6 +147,8 @@ _Dbg_parse_options() {
         tempdir      required_argument       \
         tty          required_argument       \
         terminal     required_argument       \
+        tty_in       required_argument       \
+        terminal_in  required_argument       \
         version      no_argument             \
         '' "$@"
     do
@@ -198,6 +201,9 @@ _Dbg_parse_options() {
                 else
                     _Dbg_errmsg '--tty option ignored'
                 fi
+                ;;
+            terminal_in | tty_in )
+                _Dbg_tty_in="$OPTLARG"
                 ;;
             x | eval-command )
                 DBG_INPUT=$OPTLARG      ;;
