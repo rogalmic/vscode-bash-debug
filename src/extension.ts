@@ -88,13 +88,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		if (!config.args) { config.args = [] }
 		if (!config.cwd) { config.cwd = folder.uri.fsPath }
 		if (!config.pathBash) {
-			if (process.platform === "win32") {
-				config.pathBash = process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432') ?
-				join("C:", "Windows", "sysnative", "bash.exe") : join("C:", "Windows", "System32", "bash.exe");
-			}
-			else {
-				config.pathBash = "bash"
-			}
+			config.pathBash = "bash"
 		}
 		if (!config.pathBashdb) {
 			if (process.platform === "win32") {
@@ -112,6 +106,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 				config.pathBashdbLib = normalize(join(__dirname, "..", "bashdb_dir"));
 			}
 		}
+
 		if (!config.pathCat) { config.pathCat = "cat" }
 		if (!config.pathMkfifo) { config.pathMkfifo = "mkfifo" }
 		if (!config.pathPkill) { config.pathPkill = "pkill" }
