@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 # vars.sh - Bourne Again Shell Debugger Global Variables
 #
-#   Copyright (C) 2002, 2003, 2004, 2006, 2007, 2008, 2009 Rocky Bernstein 
+#   Copyright (C) 2002, 2003, 2004, 2006, 2007, 2008, 2009 Rocky Bernstein
 #   2011 <rocky@gnu.org>
 #
 #   This program is free software; you can redistribute it and/or
@@ -13,14 +13,14 @@
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 #   General Public License for more details.
-#   
+#
 #   You should have received a copy of the GNU General Public License
 #   along with this program; see the file COPYING.  If not, write to
 #   the Free Software Foundation, 59 Temple Place, Suite 330, Boston,
 #   MA 02111 USA.
 
 # Note: the trend now is to move initializations which are generally
-# used in only one sub-part (e.g. variables for break/watch/actions) to 
+# used in only one sub-part (e.g. variables for break/watch/actions) to
 # the corresponding file.
 
 [[ -z $_Dbg_init_ver ]] || return
@@ -39,18 +39,18 @@ if [[ -r $_Dbg_libdir/builtin/set0 ]] ; then
 fi
 
 typeset _Dbg_orig_0=$0
-if [[ -n $_Dbg_script ]] ; then 
-  if ((_Dbg_have_set0)) && [[ -n $_Dbg_script_file ]] ; then
-      builtin set0 $_Dbg_script_file
+if [[ -n "$_Dbg_script" ]] ; then
+  if ((_Dbg_have_set0)) && [[ -n "$_Dbg_script_file" ]] ; then
+      builtin set0 "$_Dbg_script_file"
   fi
   _Dbg_step_ignore=3
-else 
+else
   typeset -i _Dbg_n=$#
   typeset -i _Dbg_i
 fi
 
 typeset -i _Dbg_need_input=1   # True if we need to reassign input.
-typeset -i _Dbg_brkpt_num=0    # If nonzero, the breakpoint number that we 
+typeset -i _Dbg_brkpt_num=0    # If nonzero, the breakpoint number that we
                                # are currently stopped at.
 typeset last_next_step_cmd='s' # Default is step.
 typeset _Dbg_last_print=''     # expression on last print command
@@ -64,8 +64,8 @@ typeset _resteglob='shopt $__eopt extglob'
 typeset int_pat='[0-9]*([0-9])'
 typeset _Dbg_signed_int_pat='?([-+])+([0-9])'
 
-# Set tty to use for output. 
-if [[ -z $_Dbg_tty ]] ; then 
+# Set tty to use for output.
+if [[ -z "$_Dbg_tty" ]] ; then
   typeset -x _Dbg_tty
   _Dbg_tty=$(tty)
   [[ $? != 0 ]] && _Dbg_tty=''
