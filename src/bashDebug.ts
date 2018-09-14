@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import * as which from 'npm-which';
 import { validatePath } from './bashRuntime';
 import { getWSLPath, reverseWSLPath, escapeCharactersInBashdbArg } from './handlePath';
+import { EventSource } from './eventSource';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -51,7 +52,7 @@ export class BashDebugSession extends LoggingDebugSession {
 	private debuggerExecutableBusy = false;
 	private debuggerExecutableClosing = false;
 
-	private responsivityFactor = 5;
+	private outputEventSource = new EventSource();
 
 	private debuggerProcessParentId = -1;
 
@@ -162,9 +163,9 @@ export class BashDebugSession extends LoggingDebugSession {
 		const termArgs: DebugProtocol.RunInTerminalRequestArguments = {
 			kind: "integrated",
 			title: "Bash Debug Console",
-			cwd: args.cwd,
-			args: [args.pathBash, `-c` ,
-			`while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
+			cwd: ".",
+			args: [`bash`, `-c` ,
+			`cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
 			"${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}`
 			.replace("\r", "").replace("\n", "; ")
 			],
@@ -194,6 +195,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			}
 		});
 
+		this.debuggerExecutableBusy = true;
 		this.scheduleExecution(() => this.launchRequestFinalize(response, args));
 	}
 
@@ -205,24 +207,9 @@ export class BashDebugSession extends LoggingDebugSession {
 				this.debuggerProcessParentId = parseInt(this.fullDebugOutput[i - 1]);
 				this.sendResponse(response);
 				this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
+				this.debuggerExecutableBusy = false;
 				this.sendEvent(new InitializedEvent());
 
-				const interval = setInterval(() => {
-					for (; this.fullDebugOutputIndex < this.fullDebugOutput.length - 1; this.fullDebugOutputIndex++) {
-						const line = this.fullDebugOutput[this.fullDebugOutputIndex];
-
-						if (line.indexOf("(/") === 0 && line.indexOf("):") === line.length - 2) {
-							this.sendEvent(new OutputEvent(`Sending StoppedEvent`, 'telemetry'));
-							this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
-						}
-						else if (line.indexOf("terminated") > 0) {
-							clearInterval(interval);
-							this.proxyProcess.stdin.write(`\nq\n`);
-							this.sendEvent(new OutputEvent(`Sending TerminatedEvent`, 'telemetry'));
-							this.sendEvent(new TerminatedEvent());
-						}
-					}
-				}, this.responsivityFactor);
 				return;
 			}
 		}
@@ -394,7 +381,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		let variableDefinitions = ["$PWD", "$? \\\# from '$_Dbg_last_bash_command'"];
 		variableDefinitions = variableDefinitions.slice(start, Math.min(start + count, variableDefinitions.length));
 
-		variableDefinitions.forEach((v) => { getVariablesCommand += `print ' <${v}> '\nexamine ${v}\n` });
+		variableDefinitions.forEach((v) => { getVariablesCommand += `print 'examine <${v}> '\nexamine ${v}\n` });
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
@@ -409,10 +396,10 @@ export class BashDebugSession extends LoggingDebugSession {
 
 			for (let i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++) {
 
-				if (this.fullDebugOutput[i - 1].indexOf(" <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
+				if (this.fullDebugOutput[i - 1].indexOf("examine <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
 
 					variables.push({
-						name: `${this.fullDebugOutput[i - 1].replace(" <", "").replace("> ", "").split('#')[0]}`,
+						name: `${this.fullDebugOutput[i - 1].replace("examine <", "").replace("> ", "").split('#')[0]}`,
 						type: "string",
 						value: this.fullDebugOutput[i],
 						variablesReference: 0
@@ -603,7 +590,23 @@ export class BashDebugSession extends LoggingDebugSession {
 					this.proxyData[nodes[1]] = nodes[2];
 				}
 			});
-		})
+		});
+
+		this.outputEventSource.schedule(() => {
+			for (; this.fullDebugOutputIndex < this.fullDebugOutput.length - 1; this.fullDebugOutputIndex++) {
+				const line = this.fullDebugOutput[this.fullDebugOutputIndex];
+
+				if (line.indexOf("(/") === 0 && line.indexOf("):") === line.length - 2) {
+					this.sendEvent(new OutputEvent(`Sending StoppedEvent`, 'telemetry'));
+					this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
+				}
+				else if (line.indexOf("terminated") > 0) {
+					this.proxyProcess.stdin.write(`\nq\n`);
+					this.sendEvent(new OutputEvent(`Sending TerminatedEvent`, 'telemetry'));
+					this.sendEvent(new TerminatedEvent());
+				}
+			}
+		});
 
 		this.proxyProcess.stdio[1].on('data', (data) => {
 
@@ -611,12 +614,13 @@ export class BashDebugSession extends LoggingDebugSession {
 			const fullLine = `${this.fullDebugOutput.pop()}${list.shift()}`;
 			this.fullDebugOutput.push(this.removePrompt(fullLine));
 			list.forEach(l => this.fullDebugOutput.push(this.removePrompt(l)));
+			this.outputEventSource.setEvent();
 		})
 	}
 
 	private scheduleExecution(callback: (...args: any[]) => void): void {
 		if (!this.debuggerExecutableClosing) {
-			setTimeout(() => callback(), this.responsivityFactor);
+			this.outputEventSource.scheduleOnce(callback);
 		}
 	}
 }
