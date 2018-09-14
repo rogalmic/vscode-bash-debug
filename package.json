@@ -136,6 +136,14 @@
                 "type": "boolean",
                 "description": "Enable logging of the Debug Adapter Protocol.",
                 "default": true
+              },
+              "terminalKind": {
+                "enum": [
+                  "integrated",
+                  "external"
+                ],
+                "description": "Can be set to 'integrated' or 'external'.",
+                "default": "integrated"
               }
             }
           }
