@@ -1,3 +1,5 @@
+import { join } from 'path';
+
 /**
  * @example <caption>Undefined path stays undefined.</caption>
  * // can't execute jsdoctest
@@ -62,6 +64,17 @@ export function reverseWSLPath(wslPath: string): string {
 	}
 
 	return wslPath.split("/").join("\\");
+}
+
+export function getWSLLauncherPath(useInShell: boolean): string {
+
+	if (useInShell) {
+		return "wsl.exe";
+	}
+
+	return process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432') ?
+		join("C:", "Windows", "sysnative", "wsl.exe") :
+		join("C:", "Windows", "System32", "wsl.exe");
 }
 
 /**
