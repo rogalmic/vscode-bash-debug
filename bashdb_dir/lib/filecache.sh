@@ -235,8 +235,6 @@ function _Dbg_readin {
 		[[ -r "$tempfile" ]] && rm "$tempfile"
 	    fi
 
-        _Dbg_msg "\n"
-
 	    (( line_count > BIGFILE)) && _Dbg_progess_done "\n"
 	else
 	    return 1

@@ -106,6 +106,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 				config.pathBashdbLib = normalize(join(__dirname, "..", "bashdb_dir"));
 			}
 		}
+
 		if (!config.pathCat) { config.pathCat = "cat" }
 		if (!config.pathMkfifo) { config.pathMkfifo = "mkfifo" }
 		if (!config.pathPkill) { config.pathPkill = "pkill" }

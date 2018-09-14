@@ -82,6 +82,7 @@ typeset _Dbg_prompt_output
 # in the debugger, we prefer to preface these with _Dbg_.
 function _Dbg_process_commands {
 
+  # initial debugger input source from bashdb arguments
   if [[ ! -z "$_Dbg_tty_in" ]] && [[  -r "$_Dbg_tty_in" ]]
   then
     exec {_Dbg_fdi}<$_Dbg_tty_in

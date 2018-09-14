@@ -39,7 +39,7 @@ if [[ -r $_Dbg_libdir/builtin/set0 ]] ; then
 fi
 
 typeset _Dbg_orig_0=$0
-if [[ -n $_Dbg_script ]] ; then
+if [[ -n "$_Dbg_script" ]] ; then
   if ((_Dbg_have_set0)) && [[ -n "$_Dbg_script_file" ]] ; then
       builtin set0 "$_Dbg_script_file"
   fi
@@ -65,7 +65,7 @@ typeset int_pat='[0-9]*([0-9])'
 typeset _Dbg_signed_int_pat='?([-+])+([0-9])'
 
 # Set tty to use for output.
-if [[ -z $_Dbg_tty ]] ; then
+if [[ -z "$_Dbg_tty" ]] ; then
   typeset -x _Dbg_tty
   _Dbg_tty=$(tty)
   [[ $? != 0 ]] && _Dbg_tty=''
