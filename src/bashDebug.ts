@@ -600,7 +600,7 @@ export class BashDebugSession extends LoggingDebugSession {
 					this.sendEvent(new OutputEvent(`Sending StoppedEvent`, 'telemetry'));
 					this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
 				}
-				else if (line.indexOf("Debugged program terminated normally") === 0) {
+				else if (line.indexOf("Debugged program terminated") === 0) {
 					this.proxyProcess.stdin.write(`\nq\n`);
 					this.sendEvent(new OutputEvent(`Sending TerminatedEvent`, 'telemetry'));
 					this.sendEvent(new TerminatedEvent());
