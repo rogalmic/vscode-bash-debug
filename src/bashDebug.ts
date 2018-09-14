@@ -29,6 +29,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	pathCat: string;
 	pathMkfifo: string;
 	pathPkill: string;
+	terminalKind?: 'integrated' | 'external';
 	showDebugOutput?: boolean;
 	/** enable logging the Debug Adapter Protocol */
 	trace?: boolean;
@@ -161,7 +162,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		const termArgs: DebugProtocol.RunInTerminalRequestArguments = {
-			kind: "integrated",
+			kind: this.launchArgs.terminalKind,
 			title: "Bash Debug Console",
 			cwd: ".",
 			args: [`bash`, `-c` ,
@@ -216,7 +217,6 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.scheduleExecution(() => this.launchRequestFinalize(response, args));
 	}
-
 
 	protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {
 

@@ -119,6 +119,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		// These variables can be undefined, as indicated in `?` (optional type) in bashDebug.ts:LaunchRequestArguments
 		// - config.showDebugOutput
 		// - config.trace
+		// - config.terminalKind
 
 		return config;
 	}
