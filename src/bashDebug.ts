@@ -7,13 +7,14 @@ import {
 	Thread, StackFrame, Scope, Source, Handles, Breakpoint
 } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
-import { ChildProcess, spawn } from 'child_process';
+import { ChildProcess } from 'child_process';
 import { basename, normalize, join, isAbsolute } from 'path';
 import * as fs from 'fs';
 import * as which from 'npm-which';
 import { validatePath } from './bashRuntime';
-import { getWSLPath, reverseWSLPath, escapeCharactersInBashdbArg } from './handlePath';
+import { getWSLPath, reverseWSLPath, escapeCharactersInBashdbArg, getWSLLauncherPath } from './handlePath';
 import { EventSource } from './eventSource';
+import { spawnBashScript } from './spawnBash';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -78,19 +79,9 @@ export class BashDebugSession extends LoggingDebugSession {
 	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, _args: DebugProtocol.DisconnectArguments): void {
 		this.debuggerExecutableBusy = false;
 
-		let process = spawn(this.launchArgs.pathBash, [`-c`, `${this.launchArgs.pathPkill} -KILL -P "${this.debuggerProcessParentId}"; ${this.launchArgs.pathPkill} -TERM -P "${this.proxyData["PROXYID"]}"`]);
-
-		process.on("error", (error) => {
-			this.sendEvent(new OutputEvent(`${error}`, 'console'));
-		});
-
-		process.stderr.on("data", (data) => {
-			this.sendEvent(new OutputEvent(`${data}`, 'console'));
-		});
-
-		process.stdout.on("data", (data) => {
-			this.sendEvent(new OutputEvent(`${data}`, 'console'));
-		});
+		spawnBashScript(`${this.launchArgs.pathPkill} -KILL -P "${this.debuggerProcessParentId}"; ${this.launchArgs.pathPkill} -TERM -P "${this.proxyData["PROXYID"]}"`,
+			this.launchArgs.pathBash,
+			data=> this.sendEvent(new OutputEvent(`${data}`, 'console')))
 
 		this.proxyProcess.on("exit", () => {
 			this.debuggerExecutableClosing = true;
@@ -138,7 +129,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
 
 		// http://tldp.org/LDP/abs/html/io-redirection.html
-		this.proxyProcess = spawn(args.pathBash, ["-c",
+		this.proxyProcess = spawnBashScript(
 		`function cleanup()
 		{
 			exit_code=$?
@@ -156,20 +147,22 @@ export class BashDebugSession extends LoggingDebugSession {
 		"${args.pathCat}" "${fifo_path}" &
 		exec 4>"${fifo_path}"
 		"${args.pathCat}" >"${fifo_path}_in"`
-		.replace("\r", "")
-		], { stdio: ["pipe", "pipe", "pipe"] });
+		.replace("\r", ""),
+		this.launchArgs.pathBash)
 
 		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
 
+		const currentShell  = (process.platform === "win32") ? getWSLLauncherPath(true) : args.pathBash;
+		const optionalBashPathArgument = (currentShell !== args.pathBash) ? args.pathBash : "";
 		const termArgs: DebugProtocol.RunInTerminalRequestArguments = {
 			kind: this.launchArgs.terminalKind,
 			title: "Bash Debug Console",
 			cwd: ".",
-			args: [`bash`, `-c` ,
+			args: [currentShell, optionalBashPathArgument, `-c`,
 			`cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
 			"${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}`
 			.replace("\r", "").replace("\n", "; ")
-			],
+			].filter(arg => arg !== ""),
 		};
 
 		this.runInTerminalRequest(termArgs, 10000, (response) =>{
@@ -560,7 +553,10 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	protected pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments): void {
 		if (args.threadId === BashDebugSession.THREAD_ID) {
-			spawn("bash", ["-c", `${this.launchArgs.pathPkill} -INT -P ${this.debuggerProcessParentId} -f bashdb`]).on("exit", () => this.sendResponse(response));
+			spawnBashScript(`${this.launchArgs.pathPkill} -INT -P ${this.debuggerProcessParentId} -f bashdb`,
+				this.launchArgs.pathBash,
+				data=> this.sendEvent(new OutputEvent(`${data}`, 'console')))
+			.on("exit", () => this.sendResponse(response));
 			return;
 		}
 
@@ -600,7 +596,11 @@ export class BashDebugSession extends LoggingDebugSession {
 					this.sendEvent(new OutputEvent(`Sending StoppedEvent`, 'telemetry'));
 					this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
 				}
-				else if (line.indexOf("terminated") > 0) {
+				else if (line.indexOf("Program received signal SIGINT") === 0) {
+					this.sendEvent(new OutputEvent(`Sending StoppedEvent`, 'telemetry'));
+					this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
+				}
+				else if (line.indexOf("Debugged program terminated") === 0) {
 					this.proxyProcess.stdin.write(`\nq\n`);
 					this.sendEvent(new OutputEvent(`Sending TerminatedEvent`, 'telemetry'));
 					this.sendEvent(new TerminatedEvent());

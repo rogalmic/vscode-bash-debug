@@ -1,4 +1,4 @@
-import { spawnSync } from 'child_process';
+import { spawnBashScriptSync } from './spawnBash';
 
 enum validatePathResult {
 	success = 0,
@@ -55,20 +55,18 @@ enum validatePathResult {
  * // => validatePathResult.timeout
  */
 function _validatePath(cwd: string,
-	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, pathPkill: string, spawnTimeout: number = 1000): validatePathResult {
+	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, pathPkill: string, spawnTimeout: number = 5000): validatePathResult {
 
 	const vpr = validatePathResult;
 
-	const argv = ["-c",
+	const proc = spawnBashScriptSync(
 		(pathBashdb.indexOf("bashdb_dir") > 0) ? `chmod +x "${pathBashdb}" || exit ${vpr.cannotChmod};` : `` +
 		`type "${pathBashdb}" || exit ${vpr.notFoundBashdb};` +
 		`type "${pathCat}" || exit ${vpr.notFoundCat};` +
 		`type "${pathMkfifo}" || exit ${vpr.notFoundMkfifo};` +
 		`type "${pathPkill}" || exit ${vpr.notFoundPkill};` +
 		`test -d "${cwd}" || exit ${vpr.notExistCwd};` +
-		""
-	]
-	const proc = spawnSync(pathBash, argv, { timeout: spawnTimeout });
+		"", pathBash, spawnTimeout);
 
 	if (proc.error !== undefined) {
 		// @ts-ignore Property 'code' does not exist on type 'Error'.
@@ -140,3 +138,4 @@ export function validatePath(cwd: string,
 	return "Error: BUG: reached to unreachable code " +
 		"while validating environment. " + askReport;
 }
+
