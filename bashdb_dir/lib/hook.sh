@@ -212,9 +212,9 @@ _Dbg_hook_action_hit() {
     # FIXME: combine with _Dbg_unset_action
     typeset -a linenos
     [[ -z "$full_filename" ]] && return 1
-    eval "linenos=(${_Dbg_action_file2linenos[\"$full_filename\"]})"
+    eval "linenos=(${_Dbg_action_file2linenos["$full_filename"]})"
     typeset -a action_nos
-    eval "action_nos=(${_Dbg_action_file2action[\"$full_filename\"]})"
+    eval "action_nos=(${_Dbg_action_file2action["$full_filename"]})"
 
     typeset -i _Dbg_i
     # Check action within full_filename

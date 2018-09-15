@@ -235,14 +235,11 @@ function _Dbg_readin {
 		[[ -r "$tempfile" ]] && rm "$tempfile"
 	    fi
 
-	    (( line_count > BIGFILE)) && _Dbg_progess_done "" || _Dbg_msg ""
+	    (( line_count > BIGFILE)) && _Dbg_progess_done
 	else
 	    return 1
 	fi
     fi
-
-    typeset -r line_count_cmd="line_count=\${#${_Dbg_source_array_var[@]}}"
-    eval $line_count_cmd
 
     (( line_count >= NOT_SMALLFILE )) && _Dbg_msg "done."
 

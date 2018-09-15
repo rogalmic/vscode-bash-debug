@@ -199,6 +199,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			if (this.fullDebugOutput[i] === BashDebugSession.END_MARKER) {
 
 				this.debuggerProcessParentId = parseInt(this.fullDebugOutput[i - 1]);
+				BashDebugSession.END_MARKER = `${this.debuggerProcessParentId}${BashDebugSession.END_MARKER}`;
 				this.sendResponse(response);
 				this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
 				this.debuggerExecutableBusy = false;

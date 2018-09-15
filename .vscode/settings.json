@@ -3,5 +3,9 @@
 	"javascript.validate.enable": false,
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"files.trimTrailingWhitespace": true,
-	"editor.insertSpaces": false
+	"editor.insertSpaces": false,
+	"shellcheck.exclude":["SC2148", "SC2154", "SC1090", "SC2034"],
+    "shellcheck.customArgs": [
+        "--external-sources"
+    ]
 }
