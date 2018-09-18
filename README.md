@@ -13,25 +13,25 @@ Useful hint: shellcheck extension does a great job with finding common script er
 See https://code.visualstudio.com/docs/editor/debugging for general usage.
 
 ## Sample features
-- Debugging auto configuration via `launch.json`
+- Debugging auto-configuration via `launch.json`
 
-[![Unfortunatly no animation for you :(](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-launch-autoconfig.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-launch-autoconfig.gif)
+[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-launch-autoconfig.gif" width="400" style="filter: blur(1px); " title="Click to show in browser" />](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-launch-autoconfig.gif)
 
 - Simple debugging in hello world application
 
-[![Unfortunatly no animation for you :(](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-hello-world.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-hello-world.gif)
+[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-hello-world.gif" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-hello-world.gif)
 
 - Standard input handling via terminal
 
-[![Unfortunatly no animation for you :(](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-stdin-usage.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-stdin-usage.gif)
+[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-stdin-usage.gif" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-stdin-usage.gif)
 
 - Pause support while script is running
 
-[![Unfortunatly no animation for you :(](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-pause-support.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-pause-support.gif)
+[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-pause-support.gif" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-pause-support.gif)
 
 - Advanced "Watch" and "Debug console" usage
 
-[![Unfortunatly no animation for you :(](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-watch-advanced.gif "Creating launch configuration, then launching debugger for one of scripts in workarea...")](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-watch-advanced.gif)
+[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-watch-advanced.gif" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-watch-advanced.gif)
 
 
 For Windows users:
