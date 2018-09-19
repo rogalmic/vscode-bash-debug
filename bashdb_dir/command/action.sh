@@ -30,12 +30,12 @@ effect.'
 # line number or _Dbg_frame_last_lineno if omitted.  $2 is a
 # condition to test for whether to stop.
 _Dbg_do_action() {
-  
-  if (( $# == 0 )) ; then 
+
+  if (( $# == 0 )) ; then
       _Dbg_list_action
       return 1
   fi
-  if (( $# == 1 )) ; then 
+  if (( $# == 1 )) ; then
       typeset n=$_Dbg_frame_last_lineno
   else
       typeset n=$1
@@ -50,7 +50,7 @@ _Dbg_do_action() {
 
   _Dbg_linespec_setup $n
 
-  if [[ -n $full_filename ]] ; then
+  if [[ -n "$full_filename" ]] ; then
       if (( line_number ==  0 )) ; then
           _Dbg_msg "There is no line 0 to set action at."
       else
@@ -59,7 +59,7 @@ _Dbg_do_action() {
               _Dbg_set_action "$full_filename" "$line_number" "$stmt"
       fi
   else
-      _Dbg_file_not_read_in $filename
+      _Dbg_file_not_read_in "$filename"
   fi
   return 0
 }
