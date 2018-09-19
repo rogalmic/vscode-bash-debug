@@ -250,9 +250,9 @@ _Dbg_hook_breakpoint_hit() {
     # Check breakpoints within full_filename
     for ((i=0; i < ${#linenos[@]}; i++)); do
 	if (( linenos[i] == lineno )) ; then
-	    # Got a match, but is the breakpoint enabled?
+	    # Got a match, but is the breakpoint enabled and condition met?
 	    (( _Dbg_brkpt_num = brkpt_nos[i] ))
-	    if ((_Dbg_brkpt_enable[_Dbg_brkpt_num] )) ; then
+        if ((_Dbg_brkpt_enable[_Dbg_brkpt_num] )) && ( ((${_Dbg_brkpt_cond[_Dbg_brkpt_num]})) || eval "${_Dbg_brkpt_cond[_Dbg_brkpt_num]}" ) ; then
 		return 0
 	    fi
 	fi

@@ -68,7 +68,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		response.body = response.body || {};
 
-		response.body.supportsConditionalBreakpoints = false;
+		response.body.supportsConditionalBreakpoints = true;
 		response.body.supportsConfigurationDoneRequest = false;
 		response.body.supportsEvaluateForHovers = true;
 		response.body.supportsStepBack = false;
@@ -243,7 +243,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			: ``;
 
 		if (args.breakpoints) {
-			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print 'break <${sourcePath}:${b.line}> '\nbreak ${sourcePath}:${b.line}\n` });
+			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print 'break <${sourcePath}:${b.line} ${b.condition ? b.condition : ""}> '\nbreak ${sourcePath}:${b.line} ${b.condition ? escapeCharactersInBashdbArg(b.condition) : ""}\n` });
 		}
 
 		if (this.launchArgs.showDebugOutput) {
