@@ -252,8 +252,14 @@ _Dbg_hook_breakpoint_hit() {
 	if (( linenos[i] == lineno )) ; then
 	    # Got a match, but is the breakpoint enabled and condition met?
 	    (( _Dbg_brkpt_num = brkpt_nos[i] ))
-        if ((_Dbg_brkpt_enable[_Dbg_brkpt_num] )) && ( ((${_Dbg_brkpt_cond[_Dbg_brkpt_num]})) || eval "${_Dbg_brkpt_cond[_Dbg_brkpt_num]}" ) ; then
-		return 0
+        if ((_Dbg_brkpt_enable[_Dbg_brkpt_num] )); then
+
+            if ( eval "((${_Dbg_brkpt_cond[_Dbg_brkpt_num]}))" || eval "${_Dbg_brkpt_cond[_Dbg_brkpt_num]}" ) 2>/dev/null; then
+                return 0
+            else
+                _Dbg_msg "Breakpoint: evaluation of '${_Dbg_brkpt_cond[_Dbg_brkpt_num]}' returned false."
+        fi
+
 	    fi
 	fi
     done
