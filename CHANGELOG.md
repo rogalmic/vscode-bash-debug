@@ -2,17 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-<a name="0.3.0"></a>
-# [0.3.0](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.4...v0.3.0) (2018-09-18)
+<a name="0.3.1"></a>
+## [0.3.1](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.4...v0.3.1) (2018-09-24)
+
+
+### Bug Fixes
+
+* Fix for unnecessary messages when checking breakpoint conditions ([620a264](https://github.com/rogalmic/vscode-bash-debug/commit/620a264))
 
 
 ### Features
 
+* **windows:** Utilize wsl.exe instead of deprecated bash.exe ([3bbc0e8](https://github.com/rogalmic/vscode-bash-debug/commit/3bbc0e8))
+* Allow for conditional breakpoints ([28586a8](https://github.com/rogalmic/vscode-bash-debug/commit/28586a8))
 * Include bashdb scripts to extension package ("out of the box" usage) ([e479308](https://github.com/rogalmic/vscode-bash-debug/commit/e479308))
 * Start debugged scripts in terminal to allow stdin input ([b1c5a19](https://github.com/rogalmic/vscode-bash-debug/commit/b1c5a19))
-* **windows:** Utilize wsl.exe instead of deprecated bash.exe ([3bbc0e8](https://github.com/rogalmic/vscode-bash-debug/commit/3bbc0e8))
-  - *BREAKING* change `bashPath` usage in WSL, now it is used exclusively for linux path
-* **performance:** Remove polling to speed up handling debugger console
 
 
 
