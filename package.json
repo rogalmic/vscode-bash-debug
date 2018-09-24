@@ -2,7 +2,6 @@
   "name": "bash-debug",
   "displayName": "Bash Debug",
   "version": "0.3.0",
-  "preview": true,
   "publisher": "rogalmic",
   "description": "A debugger extension for bash scripts (using bashdb).",
   "author": {
@@ -29,23 +28,40 @@
   "bugs": {
     "url": "https://github.com/rogalmic/vscode-bash-debug/issues"
   },
+  "badges": [
+    {
+      "url": "https://img.shields.io/github/downloads/rogalmic/vscode-bash-debug/latest/total.svg",
+      "href": "https://github.com/rogalmic/vscode-bash-debug/releases/latest",
+      "description": "Download latest beta release (master branch)"
+    },
+    {
+      "url": "https://img.shields.io/github/stars/rogalmic/vscode-bash-debug.svg?style=social&label=Stars",
+      "href": "https://github.com/rogalmic/vscode-bash-debug/stargazers",
+      "description": "Star the project in github"
+    },
+    {
+      "url": "https://img.shields.io/badge/paypal-donate-blue.svg",
+      "href": "https://paypal.me/rogalmic",
+      "description": "Donate some $ to keep project going"
+    }
+  ],
   "dependencies": {
-    "vscode-debugadapter": "1.31.0",
-    "vscode-debugprotocol": "1.31.0",
+    "vscode-debugadapter": "1.32.1",
+    "vscode-debugprotocol": "1.32.0",
     "child-process": "^1.0.2",
     "npm-which": "^3.0.1"
   },
   "devDependencies": {
     "@types/mocha": "5.2.5",
-    "@types/node": "10.10.0",
+    "@types/node": "10.10.3",
     "jsdoctest": "1.7.1",
     "mocha": "5.2.0",
     "standard-version": "^4.4.0",
     "tslint": "5.11.0",
     "typescript": "3.0.3",
-    "vsce": "1.49.1",
+    "vsce": "1.49.2",
     "vscode": "1.1.21",
-    "vscode-debugadapter-testsupport": "1.31.0"
+    "vscode-debugadapter-testsupport": "1.32.0"
   },
   "scripts": {
     "prepublish": "tsc -p ./src",
