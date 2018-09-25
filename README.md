@@ -43,6 +43,7 @@ For Windows users:
 
 For macOS users:
 - Read [here](https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill) if your mac has `/usr/local/bin/pkill`.
+- Install `bash` version `4.*` and set `pathBash` properly
 
 ## Dependencies
 1. `bash 4.3` or `bash 4.4`
@@ -51,4 +52,4 @@ For macOS users:
 ## Limitations and known problems
 * Currently debugger stops at first command
 * `$0` variable shows path to bashdb
-* Older `bash` versions ( `3.0` - `4.2` ) are not tested/supported, but might work™
+* Older `bash` versions ( `4.0` - `4.2` ) are not tested, but might work™
