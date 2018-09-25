@@ -160,7 +160,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			cwd: ".",
 			args: [currentShell, optionalBashPathArgument, `-c`,
 			`cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
-			"${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}`
+			"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}`
 			.replace("\r", "").replace("\n", "; ")
 			].filter(arg => arg !== ""),
 		};

@@ -10,6 +10,7 @@ enum validatePathResult {
 	notFoundPkill,
 	timeout,
 	cannotChmod,
+	unsupportedBashVersion,
 	unknown,
 }
 
@@ -55,32 +56,34 @@ enum validatePathResult {
  * // => validatePathResult.timeout
  */
 function _validatePath(cwd: string,
-	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, pathPkill: string, spawnTimeout: number = 5000): validatePathResult {
+	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, pathPkill: string, spawnTimeout: number = 5000): [validatePathResult, string] {
 
 	const vpr = validatePathResult;
 
 	const proc = spawnBashScriptSync(
-		(pathBashdb.indexOf("bashdb_dir") > 0) ? `chmod +x "${pathBashdb}" || exit ${vpr.cannotChmod};` : `` +
+		((pathBashdb.indexOf("bashdb_dir") > 0) ? `chmod +x "${pathBashdb}" || exit ${vpr.cannotChmod};` : ``) +
 		`type "${pathBashdb}" || exit ${vpr.notFoundBashdb};` +
 		`type "${pathCat}" || exit ${vpr.notFoundCat};` +
 		`type "${pathMkfifo}" || exit ${vpr.notFoundMkfifo};` +
 		`type "${pathPkill}" || exit ${vpr.notFoundPkill};` +
 		`test -d "${cwd}" || exit ${vpr.notExistCwd};` +
-		"", pathBash, spawnTimeout);
+		`[[ "$BASH_VERSION" == 4.* ]] || exit ${vpr.unsupportedBashVersion};`, pathBash, spawnTimeout);
 
 	if (proc.error !== undefined) {
 		// @ts-ignore Property 'code' does not exist on type 'Error'.
 		if (proc.error.code === "ENOENT") {
-			return vpr.notFoundBash
+			return [vpr.notFoundBash, ""]
 		}
 		// @ts-ignore Property 'code' does not exist on type 'Error'.
 		if (proc.error.code === "ETIMEDOUT") {
-			return vpr.timeout
+			return [vpr.timeout, ""]
 		}
-		return vpr.unknown;
+		return [vpr.unknown, ""];
 	}
 
-	return <validatePathResult>proc.status;
+	const errorString = proc.stderr.toString();
+
+	return [<validatePathResult>proc.status, errorString];
 }
 
 /**
@@ -95,47 +98,48 @@ function _validatePath(cwd: string,
 export function validatePath(cwd: string,
 	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, pathPkill: string): string {
 
-	const askReport = "If it is reproducible, please report it to " +
-		"https://github.com/rogalmic/vscode-bash-debug/issues";
-
 	const rc = _validatePath(cwd, pathBash, pathBashdb, pathCat, pathMkfifo, pathPkill);
 
-	switch (rc) {
+	const askReport = `If it is reproducible, please report it to https://github.com/rogalmic/vscode-bash-debug/issues.`;
+
+	const stderrContent = `\n\n${rc["1"]}`;
+
+	switch (rc["0"]) {
 		case validatePathResult.success: {
-			return "";
+			return ``;
 		}
 		case validatePathResult.notExistCwd: {
-			return `Error: cwd (${cwd}) does not exist.`;
+			return `Error: cwd (${cwd}) does not exist.` + stderrContent;
 		}
 		case validatePathResult.notFoundBash: {
-			return `Error: bash not found. (pathBash: ${pathBash})`;
+			return `Error: bash not found. (pathBash: ${pathBash})` + stderrContent;
 		}
 		case validatePathResult.notFoundBashdb: {
-			return `Error: bashdb not found. (pathBashdb: ${pathBashdb})`;
+			return `Error: bashdb not found. (pathBashdb: ${pathBashdb})` + stderrContent;
 		}
 		case validatePathResult.notFoundCat: {
-			return `Error: cat not found. (pathCat: ${pathCat})`;
+			return `Error: cat not found. (pathCat: ${pathCat})` + stderrContent;
 		}
 		case validatePathResult.notFoundMkfifo: {
-			return `Error: mkfifo not found. (pathMkfifo: ${pathMkfifo})`;
+			return `Error: mkfifo not found. (pathMkfifo: ${pathMkfifo})` + stderrContent;
 		}
 		case validatePathResult.notFoundPkill: {
-			return `Error: pkill not found. (pathPkill: ${pathPkill})`;
+			return `Error: pkill not found. (pathPkill: ${pathPkill})` + stderrContent;
 		}
 		case validatePathResult.timeout: {
-			return "Error: BUG: timeout " +
-				"while validating environment. " + askReport;
+			return `Error: BUG: timeout while validating environment. ` + askReport  + stderrContent;
 		}
 		case validatePathResult.cannotChmod: {
-			return `Error: Cannot chmod +x internal bashdb copy.`;
+			return `Error: Cannot chmod +x internal bashdb copy.` + stderrContent;
+		}
+		case validatePathResult.unsupportedBashVersion: {
+			return `Error: Only bash versions 4.* are supported.` + stderrContent;
 		}
 		case validatePathResult.unknown: {
-			return "Error: BUG: unknown error ocurred " +
-				"while validating environment. " + askReport;
+			return `Error: BUG: unknown error ocurred while validating environment. ` + askReport + stderrContent;
 		}
 	}
 
-	return "Error: BUG: reached to unreachable code " +
-		"while validating environment. " + askReport;
+	return `Error: BUG: reached to unreachable code while validating environment (code ${rc}). ` + askReport + stderrContent;
 }
 
