@@ -67,7 +67,7 @@ function _validatePath(cwd: string,
 		`type "${pathMkfifo}" || exit ${vpr.notFoundMkfifo};` +
 		`type "${pathPkill}" || exit ${vpr.notFoundPkill};` +
 		`test -d "${cwd}" || exit ${vpr.notExistCwd};` +
-		`[[ "$BASH_VERSION" == 4.* ]] || exit ${vpr.unsupportedBashVersion};`, pathBash, spawnTimeout);
+		`[[ "$BASH_VERSION" == 4.* ]] || [[ "$BASH_VERSION" == 5.* ]] || exit ${vpr.unsupportedBashVersion};`, pathBash, spawnTimeout);
 
 	if (proc.error !== undefined) {
 		// @ts-ignore Property 'code' does not exist on type 'Error'.

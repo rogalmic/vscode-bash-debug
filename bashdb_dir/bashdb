@@ -94,6 +94,8 @@ if [[ ! -r "$_Dbg_main" ]] ; then
 fi
 
 . "${_Dbg_libdir}/bashdb-part2.sh"
+
+typeset BASH_ARGV0="$_Dbg_script_file"
 trap '_Dbg_debug_trap_handler 0 "$BASH_COMMAND" "$@"' DEBUG
 set -o functrace
 
