@@ -597,7 +597,7 @@ export class BashDebugSession extends LoggingDebugSession {
 					this.sendEvent(new OutputEvent(`Sending StoppedEvent`, 'telemetry'));
 					this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
 				}
-				else if (line.indexOf("Program received signal SIGINT") === 0) {
+				else if (line.indexOf("Program received signal ") === 0) {
 					this.sendEvent(new OutputEvent(`Sending StoppedEvent`, 'telemetry'));
 					this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
 				}
