@@ -593,7 +593,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			for (; this.fullDebugOutputIndex < this.fullDebugOutput.length - 1; this.fullDebugOutputIndex++) {
 				const line = this.fullDebugOutput[this.fullDebugOutputIndex];
 
-				if (line.indexOf("(/") === 0 && line.indexOf("):") === line.length - 2) {
+				if (line.indexOf("(") === 0 && line.indexOf("):") === line.length - 2) {
 					this.sendEvent(new OutputEvent(`Sending StoppedEvent`, 'telemetry'));
 					this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
 				}
