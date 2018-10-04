@@ -157,9 +157,10 @@
               "terminalKind": {
                 "enum": [
                   "integrated",
-                  "external"
+                  "external",
+                  "debugConsole"
                 ],
-                "description": "Can be set to 'integrated' or 'external'.",
+                "description": "Can be set to 'integrated', 'external' or 'debugConsole'.",
                 "default": "integrated"
               }
             }

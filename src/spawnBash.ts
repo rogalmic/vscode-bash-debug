@@ -1,7 +1,7 @@
 import { ChildProcess, SpawnSyncReturns, spawnSync, spawn } from 'child_process';
 import { getWSLLauncherPath } from './handlePath';
 
-export function spawnBashScript(scriptCode: string, pathBash: string, outputHandler?: (output: string) => void): ChildProcess{
+export function spawnBashScript(scriptCode: string, pathBash: string, outputHandler?: (output: string, category?: string ) => void): ChildProcess{
 	const currentShell  = (process.platform === "win32") ? getWSLLauncherPath(false) : pathBash;
 	const optionalBashPathArgument = (currentShell !== pathBash) ? pathBash : "";
 
@@ -9,15 +9,15 @@ export function spawnBashScript(scriptCode: string, pathBash: string, outputHand
 
 	if (outputHandler) {
 		spawnedProcess.on("error", (error) => {
-			outputHandler(`${error}`);
+			outputHandler(`${error}`, `console`);
 		});
 
 		spawnedProcess.stderr.on("data", (data) => {
-			outputHandler(`${data}`);
+			outputHandler(`${data}`, `stderr`);
 		});
 
 		spawnedProcess.stdout.on("data", (data) => {
-			outputHandler(`${data}`);
+			outputHandler(`${data}`, `stdout`);
 		});
 	}
 
