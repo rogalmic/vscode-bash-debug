@@ -148,7 +148,12 @@ export class BashDebugSession extends LoggingDebugSession {
 		exec 4>"${fifo_path}"
 		"${args.pathCat}" >"${fifo_path}_in"`
 		.replace("\r", ""),
-		this.launchArgs.pathBash);
+		this.launchArgs.pathBash,
+		(data, category) => {
+			if (args.showDebugOutput || category === "console") {
+				this.sendEvent(new OutputEvent(`${data}`, category))
+			}
+		});
 
 		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
 
@@ -183,23 +188,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			} );
 		}
 
-		this.proxyProcess.on("error", (error) => {
-			this.sendEvent(new OutputEvent(`${error}`, 'console'));
-		});
-
 		this.processDebugTerminalOutput();
-
-		this.proxyProcess.stdio[1].on("data", (data) => {
-			if (args.showDebugOutput) {
-				this.sendEvent(new OutputEvent(`${data}`, 'stdout'));
-			}
-		});
-
-		this.proxyProcess.stdio[2].on("data", (data) => {
-			if (args.showDebugOutput) {
-			    this.sendEvent(new OutputEvent(`${data}`, 'stderr'));
-			}
-		});
 
 		this.debuggerExecutableBusy = true;
 		this.scheduleExecution(() => this.launchRequestFinalize(response, args));
