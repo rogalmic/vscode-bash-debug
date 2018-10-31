@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.3.3"></a>
+## [0.3.3](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.2...v0.3.3) (2018-10-31)
+
+
+### Bug Fixes
+
+* Handle relative path in debugger break output ([ea85063](https://github.com/rogalmic/vscode-bash-debug/commit/ea85063))
+
+
+### Features
+
+* Add `debugConsole` as new `terminalKind` ([8a589f0](https://github.com/rogalmic/vscode-bash-debug/commit/8a589f0))
+* Support for bash version 5.x ([2e2d7a8](https://github.com/rogalmic/vscode-bash-debug/commit/2e2d7a8))
+
+
+
 <a name="0.3.2"></a>
 ## [0.3.2](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.1...v0.3.2) (2018-09-25)
 
