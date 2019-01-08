@@ -10,7 +10,6 @@ import { DebugProtocol } from 'vscode-debugprotocol';
 import { ChildProcess } from 'child_process';
 import { basename, normalize, join, isAbsolute } from 'path';
 import * as fs from 'fs';
-import * as which from 'npm-which';
 import { validatePath } from './bashRuntime';
 import { getWSLPath, reverseWSLPath, escapeCharactersInBashdbArg, getWSLLauncherPath } from './handlePath';
 import { EventSource } from './eventSource';
@@ -81,15 +80,15 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		spawnBashScript(`${this.launchArgs.pathPkill} -KILL -P "${this.debuggerProcessParentId}"; ${this.launchArgs.pathPkill} -TERM -P "${this.proxyData["PROXYID"]}"`,
 			this.launchArgs.pathBash,
-			data=> this.sendEvent(new OutputEvent(`${data}`, 'console')))
+			data => this.sendEvent(new OutputEvent(`${data}`, 'console')));
 
 		this.proxyProcess.on("exit", () => {
 			this.debuggerExecutableClosing = true;
-			this.sendResponse(response)
+			this.sendResponse(response);
 		});
 	}
 
-	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
+	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): Promise<void> {
 
 		this.launchArgs = args;
 
@@ -116,21 +115,11 @@ export class BashDebugSession extends LoggingDebugSession {
 			}
 		}
 
-		if (process.platform === "darwin" && args.pathPkill === "pkill") {
-			const pathPkill = which(__dirname).sync('pkill')
-			if (pathPkill === "/usr/local/bin/pkill") {
-				const url = "https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill"
-				const msg = `Using /usr/bin/pkill instead of /usr/local/bin/pkill (see ${url} for details)`
-				this.sendEvent(new OutputEvent(msg, 'console'));
-				args.pathPkill = "/usr/bin/pkill"
-			}
-		}
-
 		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
 
 		// http://tldp.org/LDP/abs/html/io-redirection.html
 		this.proxyProcess = spawnBashScript(
-		`function cleanup()
+			`function cleanup()
 		{
 			exit_code=$?
 			trap '' ERR SIGINT SIGTERM EXIT
@@ -147,78 +136,75 @@ export class BashDebugSession extends LoggingDebugSession {
 		"${args.pathCat}" "${fifo_path}" &
 		exec 4>"${fifo_path}"
 		"${args.pathCat}" >"${fifo_path}_in"`
-		.replace("\r", ""),
-		this.launchArgs.pathBash,
-		(data, category) => {
-			if (args.showDebugOutput || category === "console") {
-				this.sendEvent(new OutputEvent(`${data}`, category))
-			}
-		});
+				.replace("\r", ""),
+			this.launchArgs.pathBash,
+			(data, category) => {
+				if (args.showDebugOutput || category === "console") {
+					this.sendEvent(new OutputEvent(`${data}`, category));
+				}
+			});
 
 		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
 
-		if (this.launchArgs.terminalKind === "debugConsole")
-		{
+		if (this.launchArgs.terminalKind === "debugConsole") {
 			spawnBashScript(
 				`cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
-				"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}`
-				.replace("\r", "").replace("\n", "; "),
+				"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `)}`
+					.replace("\r", "").replace("\n", "; "),
 				this.launchArgs.pathBash,
-				(data, category)=> this.sendEvent(new OutputEvent(`${data}`, category)));
+				(data, category) => this.sendEvent(new OutputEvent(`${data}`, category)));
 		}
-		else
-		{
-			const currentShell  = (process.platform === "win32") ? getWSLLauncherPath(true) : args.pathBash;
+		else {
+			const currentShell = (process.platform === "win32") ? getWSLLauncherPath(true) : args.pathBash;
 			const optionalBashPathArgument = (currentShell !== args.pathBash) ? args.pathBash : "";
 			const termArgs: DebugProtocol.RunInTerminalRequestArguments = {
 				kind: this.launchArgs.terminalKind,
 				title: "Bash Debug Console",
 				cwd: ".",
 				args: [currentShell, optionalBashPathArgument, `-c`,
-				`cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
-				"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`,`\\\"`) + `"`).join(` `)}`
-				.replace("\r", "").replace("\n", "; ")
+					`cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
+				"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `)}`
+						.replace("\r", "").replace("\n", "; ")
 				].filter(arg => arg !== ""),
 			};
 
-			this.runInTerminalRequest(termArgs, 10000, (response) =>{
+			this.runInTerminalRequest(termArgs, 10000, (response) => {
 				if (!response.success) {
 					this.sendEvent(new OutputEvent(`${JSON.stringify(response)}`, 'console'));
 				}
-			} );
+			});
 		}
 
 		this.processDebugTerminalOutput();
 
 		this.debuggerExecutableBusy = true;
-		this.scheduleExecution(() => this.launchRequestFinalize(response, args));
+		this.launchRequestFinalize(response, args);
 	}
 
-	private launchRequestFinalize(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
+	private async launchRequestFinalize(response: DebugProtocol.LaunchResponse, _args: LaunchRequestArguments): Promise<void> {
 
-		for (let i = 0; i < this.fullDebugOutput.length; i++) {
-			if (this.fullDebugOutput[i] === BashDebugSession.END_MARKER) {
+		while (!this.debuggerExecutableClosing) {
+			await this.outputEventSource.onEvent();
 
-				this.debuggerProcessParentId = parseInt(this.fullDebugOutput[i - 1]);
-				BashDebugSession.END_MARKER = `${this.debuggerProcessParentId}${BashDebugSession.END_MARKER}`;
-				this.sendResponse(response);
-				this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
-				this.debuggerExecutableBusy = false;
-				this.sendEvent(new InitializedEvent());
+			for (let i = 0; i < this.fullDebugOutput.length; i++) {
+				if (this.fullDebugOutput[i] === BashDebugSession.END_MARKER) {
 
-				return;
+					this.debuggerProcessParentId = parseInt(this.fullDebugOutput[i - 1]);
+					BashDebugSession.END_MARKER = `${this.debuggerProcessParentId}${BashDebugSession.END_MARKER}`;
+					this.sendResponse(response);
+					this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
+					this.debuggerExecutableBusy = false;
+					this.sendEvent(new InitializedEvent());
+
+					return;
+				}
 			}
 		}
-
-		this.scheduleExecution(() => this.launchRequestFinalize(response, args));
 	}
 
-	protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {
+	protected async setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): Promise<void> {
 
-		if (this.debuggerExecutableBusy) {
-			this.scheduleExecution(() => this.setBreakPointsRequest(response, args));
-			return;
-		}
+		await this.waitOnDebuggerBusy();
 
 		if (!args.source.path) {
 			this.sendEvent(new OutputEvent("Error: setBreakPointsRequest(): args.source.path is undefined.", 'console'));
@@ -227,8 +213,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		let sourcePath = (process.platform === "win32") ? getWSLPath(args.source.path) : args.source.path;
 
-		if (sourcePath !== undefined)
-		{
+		if (sourcePath !== undefined) {
 			sourcePath = escapeCharactersInBashdbArg(sourcePath);
 		}
 
@@ -244,7 +229,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			: ``;
 
 		if (args.breakpoints) {
-			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print 'break <${sourcePath}:${b.line} ${b.condition ? b.condition : ""}> '\nbreak ${sourcePath}:${b.line} ${b.condition ? escapeCharactersInBashdbArg(b.condition) : ""}\n` });
+			args.breakpoints.forEach((b) => { setBreakpointsCommand += `print 'break <${sourcePath}:${b.line} ${b.condition ? b.condition : ""}> '\nbreak ${sourcePath}:${b.line} ${b.condition ? escapeCharactersInBashdbArg(b.condition) : ""}\n`; });
 		}
 
 		if (this.launchArgs.showDebugOutput) {
@@ -254,120 +239,118 @@ export class BashDebugSession extends LoggingDebugSession {
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`${setBreakpointsCommand}print '${BashDebugSession.END_MARKER}'\n`);
-		this.scheduleExecution(() => this.setBreakPointsRequestFinalize(response, args, currentLine));
+		this.setBreakPointsRequestFinalize(response, args, currentLine);
 	}
 
-	private setBreakPointsRequestFinalize(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, currentOutputLength: number): void {
+	private async setBreakPointsRequestFinalize(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments, currentOutputLength: number): Promise<void> {
 
 		if (!args.source.path) {
 			this.sendEvent(new OutputEvent("Error: setBreakPointsRequestFinalize(): args.source.path is undefined.", 'console'));
 			return;
 		}
 
-		if (this.promptReached(currentOutputLength)) {
-			this.currentBreakpointIds[args.source.path] = [];
-			const breakpoints = new Array<Breakpoint>();
+		while (!this.debuggerExecutableClosing) {
+			await this.outputEventSource.onEvent();
 
-			for (let i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++) {
+			if (this.promptReached(currentOutputLength)) {
+				this.currentBreakpointIds[args.source.path] = [];
+				const breakpoints = new Array<Breakpoint>();
 
-				if (this.fullDebugOutput[i - 1].indexOf("break <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
+				for (let i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++) {
 
-					const lineNodes = this.fullDebugOutput[i].split(" ");
-					const bp = <DebugProtocol.Breakpoint>new Breakpoint(true, this.convertDebuggerLineToClient(parseInt(lineNodes[lineNodes.length - 1].replace(".", ""))));
-					bp.id = parseInt(lineNodes[1]);
-					breakpoints.push(bp);
-					this.currentBreakpointIds[args.source.path].push(bp.id);
+					if (this.fullDebugOutput[i - 1].indexOf("break <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
+
+						const lineNodes = this.fullDebugOutput[i].split(" ");
+						const bp = <DebugProtocol.Breakpoint>new Breakpoint(true, this.convertDebuggerLineToClient(parseInt(lineNodes[lineNodes.length - 1].replace(".", ""))));
+						bp.id = parseInt(lineNodes[1]);
+						breakpoints.push(bp);
+						this.currentBreakpointIds[args.source.path].push(bp.id);
+					}
 				}
+
+				response.body = { breakpoints: breakpoints };
+				this.debuggerExecutableBusy = false;
+				this.sendResponse(response);
+				return;
 			}
-
-			response.body = { breakpoints: breakpoints };
-			this.debuggerExecutableBusy = false;
-			this.sendResponse(response);
-			return;
 		}
-
-		this.scheduleExecution(() => this.setBreakPointsRequestFinalize(response, args, currentOutputLength));
 	}
 
-	protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
+	protected async threadsRequest(response: DebugProtocol.ThreadsResponse): Promise<void> {
 
 		response.body = { threads: [new Thread(BashDebugSession.THREAD_ID, "Bash thread")] };
 		this.sendResponse(response);
 	}
 
-	protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
+	protected async stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): Promise<void> {
 
-		if (this.debuggerExecutableBusy) {
-			this.scheduleExecution(() => this.stackTraceRequest(response, args));
-			return;
-		}
+		await this.waitOnDebuggerBusy();
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`print backtrace\nbacktrace\nprint '${BashDebugSession.END_MARKER}'\n`);
-		this.scheduleExecution(() => this.stackTraceRequestFinalize(response, args, currentLine));
+		this.stackTraceRequestFinalize(response, args, currentLine);
 	}
 
-	private stackTraceRequestFinalize(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments, currentOutputLength: number): void {
+	private async stackTraceRequestFinalize(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments, currentOutputLength: number): Promise<void> {
 
-		if (this.promptReached(currentOutputLength)) {
-			const lastStackLineIndex = this.fullDebugOutput.length - 3;
+		while (!this.debuggerExecutableClosing) {
+			await this.outputEventSource.onEvent();
+			if (this.promptReached(currentOutputLength)) {
+				const lastStackLineIndex = this.fullDebugOutput.length - 3;
 
-			let frames = new Array<StackFrame>();
-			for (let i = currentOutputLength; i <= lastStackLineIndex; i++) {
-				const lineContent = this.fullDebugOutput[i];
-				const frameIndex = parseInt(lineContent.substr(2, 2));
-				const frameText = lineContent;
-				let frameSourcePath = lineContent.substr(lineContent.lastIndexOf("`") + 1, lineContent.lastIndexOf("'") - lineContent.lastIndexOf("`") - 1);
-				const frameLine = parseInt(lineContent.substr(lineContent.lastIndexOf(" ")));
+				let frames = new Array<StackFrame>();
+				for (let i = currentOutputLength; i <= lastStackLineIndex; i++) {
+					const lineContent = this.fullDebugOutput[i];
+					const frameIndex = parseInt(lineContent.substr(2, 2));
+					const frameText = lineContent;
+					let frameSourcePath = lineContent.substr(lineContent.lastIndexOf("`") + 1, lineContent.lastIndexOf("'") - lineContent.lastIndexOf("`") - 1);
+					const frameLine = parseInt(lineContent.substr(lineContent.lastIndexOf(" ")));
 
-				if ((process.platform === "win32")) {
+					if ((process.platform === "win32")) {
 
-					frameSourcePath = reverseWSLPath(frameSourcePath);
+						frameSourcePath = reverseWSLPath(frameSourcePath);
+					}
+
+					frameSourcePath = isAbsolute(frameSourcePath) ? frameSourcePath : normalize(join(this.launchArgs.cwd, frameSourcePath));
+
+					frames.push(new StackFrame(
+						frameIndex,
+						frameText,
+						fs.existsSync(frameSourcePath) ? new Source(basename(frameSourcePath), this.convertDebuggerPathToClient(frameSourcePath), undefined, undefined, 'bash-adapter-data') : undefined,
+						this.convertDebuggerLineToClient(frameLine)
+					));
 				}
 
-				frameSourcePath = isAbsolute(frameSourcePath) ? frameSourcePath : normalize(join(this.launchArgs.cwd, frameSourcePath));
+				if (frames.length > 0) {
+					this.sendEvent(new OutputEvent(`Execution breaks at '${frames[0].name}'\n`, 'telemetry'));
+				}
 
-				frames.push(new StackFrame(
-					frameIndex,
-					frameText,
-					fs.existsSync(frameSourcePath) ? new Source(basename(frameSourcePath), this.convertDebuggerPathToClient(frameSourcePath), undefined, undefined, 'bash-adapter-data') : undefined,
-					this.convertDebuggerLineToClient(frameLine)
-				));
+				const totalFrames = this.fullDebugOutput.length - currentOutputLength - 1;
+
+				const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
+				const maxLevels = typeof args.levels === 'number' ? args.levels : 100;
+				frames = frames.slice(startFrame, Math.min(startFrame + maxLevels, frames.length));
+
+				response.body = { stackFrames: frames, totalFrames: totalFrames };
+				this.debuggerExecutableBusy = false;
+				this.sendResponse(response);
+				return;
 			}
-
-			if (frames.length > 0) {
-				this.sendEvent(new OutputEvent(`Execution breaks at '${frames[0].name}'\n`, 'telemetry'));
-			}
-
-			const totalFrames = this.fullDebugOutput.length - currentOutputLength - 1;
-
-			const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
-			const maxLevels = typeof args.levels === 'number' ? args.levels : 100;
-			frames = frames.slice(startFrame, Math.min(startFrame + maxLevels, frames.length));
-
-			response.body = { stackFrames: frames, totalFrames: totalFrames };
-			this.debuggerExecutableBusy = false;
-			this.sendResponse(response);
-			return;
 		}
-
-		this.scheduleExecution(() => this.stackTraceRequestFinalize(response, args, currentOutputLength));
 	}
 
-	protected scopesRequest(response: DebugProtocol.ScopesResponse, _args: DebugProtocol.ScopesArguments): void {
+	protected async scopesRequest(response: DebugProtocol.ScopesResponse, _args: DebugProtocol.ScopesArguments): Promise<void> {
+		await this.waitOnDebuggerBusy();
 
 		const scopes = [new Scope("Local", this.fullDebugOutputIndex, false)];
 		response.body = { scopes: scopes };
 		this.sendResponse(response);
 	}
 
-	protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
+	protected async variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): Promise<void> {
 
-		if (this.debuggerExecutableBusy) {
-			this.scheduleExecution(() => this.variablesRequest(response, args));
-			return;
-		}
+		await this.waitOnDebuggerBusy();
 
 		let getVariablesCommand = `info program\n`;
 
@@ -376,189 +359,179 @@ export class BashDebugSession extends LoggingDebugSession {
 		let variableDefinitions = ["$PWD", "$? \\\# from '$_Dbg_last_bash_command'"];
 		variableDefinitions = variableDefinitions.slice(start, Math.min(start + count, variableDefinitions.length));
 
-		variableDefinitions.forEach((v) => { getVariablesCommand += `print 'examine <${v}> '\nexamine ${v}\n` });
+		variableDefinitions.forEach((v) => { getVariablesCommand += `print 'examine <${v}> '\nexamine ${v}\n`; });
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`${getVariablesCommand}print '${BashDebugSession.END_MARKER}'\n`);
-		this.scheduleExecution(() => this.variablesRequestFinalize(response, args, currentLine));
+		this.variablesRequestFinalize(response, args, currentLine);
 	}
 
-	private variablesRequestFinalize(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments, currentOutputLength: number): void {
+	private async variablesRequestFinalize(response: DebugProtocol.VariablesResponse, _args: DebugProtocol.VariablesArguments, currentOutputLength: number): Promise<void> {
+		while (!this.debuggerExecutableClosing) {
+			await this.outputEventSource.onEvent();
+			if (this.promptReached(currentOutputLength)) {
+				let variables: any[] = [];
 
-		if (this.promptReached(currentOutputLength)) {
-			let variables: any[] = [];
+				for (let i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++) {
 
-			for (let i = currentOutputLength; i < this.fullDebugOutput.length - 2; i++) {
+					if (this.fullDebugOutput[i - 1].indexOf("examine <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
 
-				if (this.fullDebugOutput[i - 1].indexOf("examine <") === 0 && this.fullDebugOutput[i - 1].indexOf("> ") > 0) {
-
-					variables.push({
-						name: `${this.fullDebugOutput[i - 1].replace("examine <", "").replace("> ", "").split('#')[0]}`,
-						type: "string",
-						value: this.fullDebugOutput[i],
-						variablesReference: 0
-					});
+						variables.push({
+							name: `${this.fullDebugOutput[i - 1].replace("examine <", "").replace("> ", "").split('#')[0]}`,
+							type: "string",
+							value: this.fullDebugOutput[i],
+							variablesReference: 0
+						});
+					}
 				}
+
+				response.body = { variables: variables };
+				this.debuggerExecutableBusy = false;
+				this.sendResponse(response);
+				return;
 			}
-
-			response.body = { variables: variables };
-			this.debuggerExecutableBusy = false;
-			this.sendResponse(response);
-			return;
 		}
-
-		this.scheduleExecution(() => this.variablesRequestFinalize(response, args, currentOutputLength));
 	}
 
-	protected continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments): void {
+	protected async continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments): Promise<void> {
 
-		if (this.debuggerExecutableBusy) {
-			this.scheduleExecution(() => this.continueRequest(response, args));
-			return;
-		}
+		await this.waitOnDebuggerBusy();
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`print continue\ncontinue\nprint '${BashDebugSession.END_MARKER}'\n`);
 
-		this.scheduleExecution(() => this.continueRequestFinalize(response, args, currentLine));
+		this.continueRequestFinalize(response, args, currentLine);
 
 		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
-	private continueRequestFinalize(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments, currentOutputLength: number): void {
+	private async continueRequestFinalize(_response: DebugProtocol.ContinueResponse, _args: DebugProtocol.ContinueArguments, currentOutputLength: number): Promise<void> {
 
-		if (this.promptReached(currentOutputLength)) {
-			this.debuggerExecutableBusy = false;
-			return;
+		while (!this.debuggerExecutableClosing) {
+			await this.outputEventSource.onEvent();
+			if (this.promptReached(currentOutputLength)) {
+				this.debuggerExecutableBusy = false;
+				return;
+			}
 		}
-
-		this.scheduleExecution(() => this.continueRequestFinalize(response, args, currentOutputLength));
 	}
 
 	// bashdb doesn't support reverse execution
 	// protected reverseContinueRequest(response: DebugProtocol.ReverseContinueResponse, args: DebugProtocol.ReverseContinueArguments) : void {
 	// }
 
-	protected nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments): void {
+	protected async nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments): Promise<void> {
 
-		if (this.debuggerExecutableBusy) {
-			this.scheduleExecution(() => this.nextRequest(response, args));
-			return;
-		}
+		await this.waitOnDebuggerBusy();
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`print next\nnext\nprint '${BashDebugSession.END_MARKER}'\n`);
 
-		this.scheduleExecution(() => this.nextRequestFinalize(response, args, currentLine));
+		this.nextRequestFinalize(response, args, currentLine);
 
 		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
-	private nextRequestFinalize(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments, currentOutputLength: number): void {
-
-		if (this.promptReached(currentOutputLength)) {
-			this.debuggerExecutableBusy = false;
-			return;
+	private async nextRequestFinalize(_response: DebugProtocol.NextResponse, _args: DebugProtocol.NextArguments, currentOutputLength: number): Promise<void> {
+		while (!this.debuggerExecutableClosing) {
+			await this.outputEventSource.onEvent();
+			if (this.promptReached(currentOutputLength)) {
+				this.debuggerExecutableBusy = false;
+				return;
+			}
 		}
-
-		this.scheduleExecution(() => this.nextRequestFinalize(response, args, currentOutputLength));
 	}
 
-	protected stepInRequest(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments): void {
+	protected async stepInRequest(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments): Promise<void> {
 
-		if (this.debuggerExecutableBusy) {
-			this.scheduleExecution(() => this.stepInRequest(response, args));
-			return;
-		}
+		await this.waitOnDebuggerBusy();
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`print step\nstep\nprint '${BashDebugSession.END_MARKER}'\n`);
 
-		this.scheduleExecution(() => this.stepInRequestFinalize(response, args, currentLine));
+		this.stepInRequestFinalize(response, args, currentLine);
 
 		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
-	private stepInRequestFinalize(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments, currentOutputLength: number): void {
-		if (this.promptReached(currentOutputLength)) {
-			this.debuggerExecutableBusy = false;
-			return;
-		}
+	private async stepInRequestFinalize(_response: DebugProtocol.StepInResponse, _args: DebugProtocol.StepInArguments, currentOutputLength: number): Promise<void> {
+		while (!this.debuggerExecutableClosing) {
+			await this.outputEventSource.onEvent();
 
-		this.scheduleExecution(() => this.stepInRequestFinalize(response, args, currentOutputLength));
+			if (this.promptReached(currentOutputLength)) {
+				this.debuggerExecutableBusy = false;
+				return;
+			}
+		}
 	}
 
-	protected stepOutRequest(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments): void {
+	protected async stepOutRequest(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments): Promise<void> {
 
-		if (this.debuggerExecutableBusy) {
-			this.scheduleExecution(() => this.stepOutRequest(response, args));
-			return;
-		}
+		await this.waitOnDebuggerBusy();
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`print finish\nfinish\nprint '${BashDebugSession.END_MARKER}'\n`);
 
-		this.scheduleExecution(() => this.stepOutRequestFinalize(response, args, currentLine));
+		this.stepOutRequestFinalize(response, args, currentLine);
 
 		// NOTE: do not wait for step to finish
 		this.sendResponse(response);
 	}
 
-	private stepOutRequestFinalize(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments, currentOutputLength: number): void {
-		if (this.promptReached(currentOutputLength)) {
-			this.debuggerExecutableBusy = false;
-			return;
-		}
+	private async stepOutRequestFinalize(_response: DebugProtocol.StepOutResponse, _args: DebugProtocol.StepOutArguments, currentOutputLength: number): Promise<void> {
+		while (!this.debuggerExecutableClosing) {
+			await this.outputEventSource.onEvent();
 
-		this.scheduleExecution(() => this.stepOutRequestFinalize(response, args, currentOutputLength));
+			if (this.promptReached(currentOutputLength)) {
+				this.debuggerExecutableBusy = false;
+				return;
+			}
+		}
 	}
 
 	// bashdb doesn't support reverse execution
 	// protected stepBackRequest(response: DebugProtocol.StepBackResponse, args: DebugProtocol.StepBackArguments): void {
 	// }
 
-	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
+	protected async evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): Promise<void> {
 
-		if (this.debuggerExecutableBusy) {
-			this.scheduleExecution(() => this.evaluateRequest(response, args));
-			return;
-		}
+		await this.waitOnDebuggerBusy();
 
 		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
-		let expression = (args.context === "hover") ? `${args.expression.replace(/['"]+/g, "",)}` : `${args.expression}`;
+		let expression = (args.context === "hover") ? `${args.expression.replace(/['"]+/g, "")}` : `${args.expression}`;
 		expression = escapeCharactersInBashdbArg(expression);
 		this.proxyProcess.stdin.write(`print 'examine <${expression}>'\nexamine ${expression}\nprint '${BashDebugSession.END_MARKER}'\n`);
-		this.scheduleExecution(() => this.evaluateRequestFinalize(response, args, currentLine));
+		this.evaluateRequestFinalize(response, args, currentLine);
 	}
 
-	private evaluateRequestFinalize(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments, currentOutputLength: number): void {
+	private async evaluateRequestFinalize(response: DebugProtocol.EvaluateResponse, _args: DebugProtocol.EvaluateArguments, currentOutputLength: number): Promise<void> {
+		while (!this.debuggerExecutableClosing) {
+			await this.outputEventSource.onEvent();
+			if (this.promptReached(currentOutputLength)) {
+				response.body = { result: `'${this.fullDebugOutput[currentOutputLength]}'`, variablesReference: 0 };
 
-		if (this.promptReached(currentOutputLength)) {
-			response.body = { result: `'${this.fullDebugOutput[currentOutputLength]}'`, variablesReference: 0 };
-
-			this.debuggerExecutableBusy = false;
-			this.sendResponse(response);
-			return;
+				this.debuggerExecutableBusy = false;
+				this.sendResponse(response);
+				return;
+			}
 		}
-
-		this.scheduleExecution(() => this.evaluateRequestFinalize(response, args, currentOutputLength));
 	}
 
-	protected pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments): void {
+	protected async pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments): Promise<void> {
 		if (args.threadId === BashDebugSession.THREAD_ID) {
 			spawnBashScript(`${this.launchArgs.pathPkill} -INT -P ${this.debuggerProcessParentId} -f bashdb`,
 				this.launchArgs.pathBash,
-				data=> this.sendEvent(new OutputEvent(`${data}`, 'console')))
-			.on("exit", () => this.sendResponse(response));
+				data => this.sendEvent(new OutputEvent(`${data}`, 'console')))
+				.on("exit", () => this.sendResponse(response));
 			return;
 		}
 
@@ -617,12 +590,12 @@ export class BashDebugSession extends LoggingDebugSession {
 			this.fullDebugOutput.push(this.removePrompt(fullLine));
 			list.forEach(l => this.fullDebugOutput.push(this.removePrompt(l)));
 			this.outputEventSource.setEvent();
-		})
+		});
 	}
 
-	private scheduleExecution(callback: (...args: any[]) => void): void {
-		if (!this.debuggerExecutableClosing) {
-			this.outputEventSource.scheduleOnce(callback);
+	private async waitOnDebuggerBusy(): Promise<void> {
+		while (this.debuggerExecutableBusy) {
+			await new Promise<void>((resolve) => setTimeout(() => resolve(), 10));
 		}
 	}
 }
