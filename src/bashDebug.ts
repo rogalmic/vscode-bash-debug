@@ -1,10 +1,8 @@
 import {
 	Logger, logger,
 	DebugSession, LoggingDebugSession,
-	// @ts-ignore: error TS6133: 'BreakpointEvent' is declared but its value is never read.
-	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent,
-	// @ts-ignore: error TS6133: 'Handles' is declared but its value is never read.
-	Thread, StackFrame, Scope, Source, Handles, Breakpoint
+	InitializedEvent, TerminatedEvent, StoppedEvent, OutputEvent,
+	Thread, StackFrame, Scope, Source, Breakpoint
 } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { ChildProcess } from 'child_process';
@@ -76,7 +74,8 @@ export class BashDebugSession extends LoggingDebugSession {
 	}
 
 	protected disconnectRequest(response: DebugProtocol.DisconnectResponse, _args: DebugProtocol.DisconnectArguments): void {
-		this.debuggerExecutableBusy = false;
+
+		this.releaseDebugger();
 
 		spawnBashScript(`${this.launchArgs.pathPkill} -KILL -P "${this.debuggerProcessParentId}"; ${this.launchArgs.pathPkill} -TERM -P "${this.proxyData["PROXYID"]}"`,
 			this.launchArgs.pathBash,
@@ -103,16 +102,14 @@ export class BashDebugSession extends LoggingDebugSession {
 			args.programEffective = args.program;
 		}
 
-		{
-			const errorMessage = validatePath(
-				args.cwdEffective, args.pathBash, args.pathBashdb, args.pathCat, args.pathMkfifo, args.pathPkill);
+		const errorMessage = validatePath(
+			args.cwdEffective, args.pathBash, args.pathBashdb, args.pathCat, args.pathMkfifo, args.pathPkill);
 
-			if (errorMessage !== "") {
-				response.success = false;
-				response.message = errorMessage;
-				this.sendResponse(response);
-				return;
-			}
+		if (errorMessage !== "") {
+			response.success = false;
+			response.message = errorMessage;
+			this.sendResponse(response);
+			return;
 		}
 
 		const fifo_path = "/tmp/vscode-bash-debug-fifo-" + (Math.floor(Math.random() * 10000) + 10000);
@@ -175,17 +172,15 @@ export class BashDebugSession extends LoggingDebugSession {
 			});
 		}
 
-		this.processDebugTerminalOutput();
+		await this.onDebuggerAvailable();
 
-		this.debuggerExecutableBusy = true;
+		this.processDebugTerminalOutput();
 		this.launchRequestFinalize(response, args);
 	}
 
 	private async launchRequestFinalize(response: DebugProtocol.LaunchResponse, _args: LaunchRequestArguments): Promise<void> {
 
-		while (!this.debuggerExecutableClosing) {
-			await this.outputEventSource.onEvent();
-
+		while (await this.onNextDebuggerOutput()) {
 			for (let i = 0; i < this.fullDebugOutput.length; i++) {
 				if (this.fullDebugOutput[i] === BashDebugSession.END_MARKER) {
 
@@ -193,7 +188,7 @@ export class BashDebugSession extends LoggingDebugSession {
 					BashDebugSession.END_MARKER = `${this.debuggerProcessParentId}${BashDebugSession.END_MARKER}`;
 					this.sendResponse(response);
 					this.sendEvent(new OutputEvent(`Sending InitializedEvent`, 'telemetry'));
-					this.debuggerExecutableBusy = false;
+					this.releaseDebugger();
 					this.sendEvent(new InitializedEvent());
 
 					return;
@@ -204,7 +199,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	protected async setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): Promise<void> {
 
-		await this.waitOnDebuggerBusy();
+		await this.onDebuggerAvailable();
 
 		if (!args.source.path) {
 			this.sendEvent(new OutputEvent("Error: setBreakPointsRequest(): args.source.path is undefined.", 'console'));
@@ -236,7 +231,6 @@ export class BashDebugSession extends LoggingDebugSession {
 			setBreakpointsCommand += `info files\ninfo breakpoints\n`;
 		}
 
-		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`${setBreakpointsCommand}print '${BashDebugSession.END_MARKER}'\n`);
 		this.setBreakPointsRequestFinalize(response, args, currentLine);
@@ -249,9 +243,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			return;
 		}
 
-		while (!this.debuggerExecutableClosing) {
-			await this.outputEventSource.onEvent();
-
+		while (await this.onNextDebuggerOutput()) {
 			if (this.promptReached(currentOutputLength)) {
 				this.currentBreakpointIds[args.source.path] = [];
 				const breakpoints = new Array<Breakpoint>();
@@ -269,7 +261,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				}
 
 				response.body = { breakpoints: breakpoints };
-				this.debuggerExecutableBusy = false;
+				this.releaseDebugger();
 				this.sendResponse(response);
 				return;
 			}
@@ -284,9 +276,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	protected async stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): Promise<void> {
 
-		await this.waitOnDebuggerBusy();
+		await this.onDebuggerAvailable();
 
-		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`print backtrace\nbacktrace\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.stackTraceRequestFinalize(response, args, currentLine);
@@ -294,8 +285,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	private async stackTraceRequestFinalize(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments, currentOutputLength: number): Promise<void> {
 
-		while (!this.debuggerExecutableClosing) {
-			await this.outputEventSource.onEvent();
+		while (await this.onNextDebuggerOutput()) {
 			if (this.promptReached(currentOutputLength)) {
 				const lastStackLineIndex = this.fullDebugOutput.length - 3;
 
@@ -333,7 +323,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				frames = frames.slice(startFrame, Math.min(startFrame + maxLevels, frames.length));
 
 				response.body = { stackFrames: frames, totalFrames: totalFrames };
-				this.debuggerExecutableBusy = false;
+				this.releaseDebugger();
 				this.sendResponse(response);
 				return;
 			}
@@ -341,7 +331,6 @@ export class BashDebugSession extends LoggingDebugSession {
 	}
 
 	protected async scopesRequest(response: DebugProtocol.ScopesResponse, _args: DebugProtocol.ScopesArguments): Promise<void> {
-		await this.waitOnDebuggerBusy();
 
 		const scopes = [new Scope("Local", this.fullDebugOutputIndex, false)];
 		response.body = { scopes: scopes };
@@ -350,10 +339,9 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	protected async variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): Promise<void> {
 
-		await this.waitOnDebuggerBusy();
+		await this.onDebuggerAvailable();
 
 		let getVariablesCommand = `info program\n`;
-
 		const count = typeof args.count === 'number' ? args.count : 100;
 		const start = typeof args.start === 'number' ? args.start : 0;
 		let variableDefinitions = ["$PWD", "$? \\\# from '$_Dbg_last_bash_command'"];
@@ -361,15 +349,14 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		variableDefinitions.forEach((v) => { getVariablesCommand += `print 'examine <${v}> '\nexamine ${v}\n`; });
 
-		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`${getVariablesCommand}print '${BashDebugSession.END_MARKER}'\n`);
 		this.variablesRequestFinalize(response, args, currentLine);
 	}
 
 	private async variablesRequestFinalize(response: DebugProtocol.VariablesResponse, _args: DebugProtocol.VariablesArguments, currentOutputLength: number): Promise<void> {
-		while (!this.debuggerExecutableClosing) {
-			await this.outputEventSource.onEvent();
+
+		while (await this.onNextDebuggerOutput()) {
 			if (this.promptReached(currentOutputLength)) {
 				let variables: any[] = [];
 
@@ -387,7 +374,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				}
 
 				response.body = { variables: variables };
-				this.debuggerExecutableBusy = false;
+				this.releaseDebugger();
 				this.sendResponse(response);
 				return;
 			}
@@ -396,9 +383,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	protected async continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments): Promise<void> {
 
-		await this.waitOnDebuggerBusy();
+		await this.onDebuggerAvailable();
 
-		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`print continue\ncontinue\nprint '${BashDebugSession.END_MARKER}'\n`);
 
@@ -410,10 +396,9 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	private async continueRequestFinalize(_response: DebugProtocol.ContinueResponse, _args: DebugProtocol.ContinueArguments, currentOutputLength: number): Promise<void> {
 
-		while (!this.debuggerExecutableClosing) {
-			await this.outputEventSource.onEvent();
+		while (await this.onNextDebuggerOutput()) {
 			if (this.promptReached(currentOutputLength)) {
-				this.debuggerExecutableBusy = false;
+				this.releaseDebugger();
 				return;
 			}
 		}
@@ -425,9 +410,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	protected async nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments): Promise<void> {
 
-		await this.waitOnDebuggerBusy();
+		await this.onDebuggerAvailable();
 
-		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`print next\nnext\nprint '${BashDebugSession.END_MARKER}'\n`);
 
@@ -438,10 +422,11 @@ export class BashDebugSession extends LoggingDebugSession {
 	}
 
 	private async nextRequestFinalize(_response: DebugProtocol.NextResponse, _args: DebugProtocol.NextArguments, currentOutputLength: number): Promise<void> {
-		while (!this.debuggerExecutableClosing) {
-			await this.outputEventSource.onEvent();
+
+		while (await this.onNextDebuggerOutput()) {
+
 			if (this.promptReached(currentOutputLength)) {
-				this.debuggerExecutableBusy = false;
+				this.releaseDebugger();
 				return;
 			}
 		}
@@ -449,9 +434,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	protected async stepInRequest(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments): Promise<void> {
 
-		await this.waitOnDebuggerBusy();
+		await this.onDebuggerAvailable();
 
-		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`print step\nstep\nprint '${BashDebugSession.END_MARKER}'\n`);
 
@@ -462,11 +446,11 @@ export class BashDebugSession extends LoggingDebugSession {
 	}
 
 	private async stepInRequestFinalize(_response: DebugProtocol.StepInResponse, _args: DebugProtocol.StepInArguments, currentOutputLength: number): Promise<void> {
-		while (!this.debuggerExecutableClosing) {
-			await this.outputEventSource.onEvent();
+
+		while (await this.onNextDebuggerOutput()) {
 
 			if (this.promptReached(currentOutputLength)) {
-				this.debuggerExecutableBusy = false;
+				this.releaseDebugger();
 				return;
 			}
 		}
@@ -474,9 +458,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	protected async stepOutRequest(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments): Promise<void> {
 
-		await this.waitOnDebuggerBusy();
+		await this.onDebuggerAvailable();
 
-		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		this.proxyProcess.stdin.write(`print finish\nfinish\nprint '${BashDebugSession.END_MARKER}'\n`);
 
@@ -487,11 +470,11 @@ export class BashDebugSession extends LoggingDebugSession {
 	}
 
 	private async stepOutRequestFinalize(_response: DebugProtocol.StepOutResponse, _args: DebugProtocol.StepOutArguments, currentOutputLength: number): Promise<void> {
-		while (!this.debuggerExecutableClosing) {
-			await this.outputEventSource.onEvent();
+
+		while (await this.onNextDebuggerOutput()) {
 
 			if (this.promptReached(currentOutputLength)) {
-				this.debuggerExecutableBusy = false;
+				this.releaseDebugger();
 				return;
 			}
 		}
@@ -503,9 +486,8 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	protected async evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): Promise<void> {
 
-		await this.waitOnDebuggerBusy();
+		await this.onDebuggerAvailable();
 
-		this.debuggerExecutableBusy = true;
 		const currentLine = this.fullDebugOutput.length;
 		let expression = (args.context === "hover") ? `${args.expression.replace(/['"]+/g, "")}` : `${args.expression}`;
 		expression = escapeCharactersInBashdbArg(expression);
@@ -514,12 +496,13 @@ export class BashDebugSession extends LoggingDebugSession {
 	}
 
 	private async evaluateRequestFinalize(response: DebugProtocol.EvaluateResponse, _args: DebugProtocol.EvaluateArguments, currentOutputLength: number): Promise<void> {
-		while (!this.debuggerExecutableClosing) {
-			await this.outputEventSource.onEvent();
+
+		while (await this.onNextDebuggerOutput()) {
+
 			if (this.promptReached(currentOutputLength)) {
 				response.body = { result: `'${this.fullDebugOutput[currentOutputLength]}'`, variablesReference: 0 };
 
-				this.debuggerExecutableBusy = false;
+				this.releaseDebugger();
 				this.sendResponse(response);
 				return;
 			}
@@ -593,10 +576,26 @@ export class BashDebugSession extends LoggingDebugSession {
 		});
 	}
 
-	private async waitOnDebuggerBusy(): Promise<void> {
+	private async onDebuggerAvailable(): Promise<void> {
+
 		while (this.debuggerExecutableBusy) {
-			await new Promise<void>((resolve) => setTimeout(() => resolve(), 10));
+			await this.outputEventSource.onEvent();
 		}
+
+		this.debuggerExecutableBusy = true;
+	}
+
+	private async onNextDebuggerOutput(): Promise<boolean> {
+
+		await this.outputEventSource.onEvent();
+
+		return !this.debuggerExecutableClosing;
+	}
+
+	private async releaseDebugger(): Promise<void> {
+
+		this.debuggerExecutableBusy = false;
+		this.outputEventSource.setEvent();
 	}
 }
 

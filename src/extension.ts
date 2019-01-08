@@ -125,11 +125,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 			else {
 				config.pathPkill = "pkill";
 			}
-
-
 		}
-
-
 
 		// These variables can be undefined, as indicated in `?` (optional type) in bashDebug.ts:LaunchRequestArguments
 		// - config.showDebugOutput
