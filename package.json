@@ -154,6 +154,11 @@
                 "description": "Enable logging of the Debug Adapter Protocol.",
                 "default": true
               },
+              "useWsl": {
+                "type": "boolean",
+                "description": "Use Windows Subsystem Linux.",
+                "default": true
+              },
               "terminalKind": {
                 "enum": [
                   "integrated",

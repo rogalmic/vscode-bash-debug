@@ -56,7 +56,7 @@ enum validatePathResult {
  * // => validatePathResult.timeout
  */
 function _validatePath(cwd: string,
-	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, pathPkill: string, spawnTimeout: number = 5000): [validatePathResult, string] {
+	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, _pathPkill: string, spawnTimeout: number, useWsl: boolean): [validatePathResult, string] {
 
 	const vpr = validatePathResult;
 
@@ -65,9 +65,9 @@ function _validatePath(cwd: string,
 		`type "${pathBashdb}" || exit ${vpr.notFoundBashdb};` +
 		`type "${pathCat}" || exit ${vpr.notFoundCat};` +
 		`type "${pathMkfifo}" || exit ${vpr.notFoundMkfifo};` +
-		`type "${pathPkill}" || exit ${vpr.notFoundPkill};` +
+		//`type "${pathPkill}" || exit ${vpr.notFoundPkill};` +
 		`test -d "${cwd}" || exit ${vpr.notExistCwd};` +
-		`[[ "$BASH_VERSION" == 4.* ]] || [[ "$BASH_VERSION" == 5.* ]] || exit ${vpr.unsupportedBashVersion};`, pathBash, spawnTimeout);
+		`[[ "$BASH_VERSION" == 4.* ]] || [[ "$BASH_VERSION" == 5.* ]] || exit ${vpr.unsupportedBashVersion};`, pathBash, spawnTimeout, useWsl);
 
 	if (proc.error !== undefined) {
 		// @ts-ignore Property 'code' does not exist on type 'Error'.
@@ -96,9 +96,9 @@ function _validatePath(cwd: string,
  * // => "Error: cwd (non-exist-directory) does not exist."
  */
 export function validatePath(cwd: string,
-	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, pathPkill: string): string {
+	pathBash: string, pathBashdb: string, pathCat: string, pathMkfifo: string, pathPkill: string, useWsl: boolean): string {
 
-	const rc = _validatePath(cwd, pathBash, pathBashdb, pathCat, pathMkfifo, pathPkill);
+	const rc = _validatePath(cwd, pathBash, pathBashdb, pathCat, pathMkfifo, pathPkill, 5000, useWsl);
 
 	const askReport = `If it is reproducible, please report it to https://github.com/rogalmic/vscode-bash-debug/issues.`;
 

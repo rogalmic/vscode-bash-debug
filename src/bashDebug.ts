@@ -9,7 +9,7 @@ import { ChildProcess } from 'child_process';
 import { basename, normalize, join, isAbsolute } from 'path';
 import * as fs from 'fs';
 import { validatePath } from './bashRuntime';
-import { getWSLPath, reverseWSLPath, escapeCharactersInBashdbArg, getWSLLauncherPath } from './handlePath';
+import { getWindowsPath, reverseWindowsPath, escapeCharactersInBashdbArg, getWindowsLauncherPath } from './handlePath';
 import { EventSource } from './eventSource';
 import { spawnBashScript } from './spawnBash';
 
@@ -31,6 +31,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	showDebugOutput?: boolean;
 	/** enable logging the Debug Adapter Protocol */
 	trace?: boolean;
+	useWsl: boolean;
 }
 
 export class BashDebugSession extends LoggingDebugSession {
@@ -79,6 +80,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		spawnBashScript(`${this.launchArgs.pathPkill} -KILL -P "${this.debuggerProcessParentId}"; ${this.launchArgs.pathPkill} -TERM -P "${this.proxyData["PROXYID"]}"`,
 			this.launchArgs.pathBash,
+			this.launchArgs.useWsl,
 			data => this.sendEvent(new OutputEvent(`${data}`, 'console')));
 
 		this.proxyProcess.on("exit", () => {
@@ -94,8 +96,8 @@ export class BashDebugSession extends LoggingDebugSession {
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
 		if (process.platform === "win32") {
-			args.cwdEffective = `${getWSLPath(args.cwd)}`;
-			args.programEffective = `${getWSLPath(args.program)}`;
+			args.cwdEffective = `${getWindowsPath(args.cwd, this.launchArgs.useWsl)}`;
+			args.programEffective = `${getWindowsPath(args.program, this.launchArgs.useWsl)}`;
 		}
 		else {
 			args.cwdEffective = args.cwd;
@@ -103,7 +105,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		}
 
 		const errorMessage = validatePath(
-			args.cwdEffective, args.pathBash, args.pathBashdb, args.pathCat, args.pathMkfifo, args.pathPkill);
+			args.cwdEffective, args.pathBash, args.pathBashdb, args.pathCat, args.pathMkfifo, args.pathPkill, this.launchArgs.useWsl);
 
 		if (errorMessage !== "") {
 			response.success = false;
@@ -121,20 +123,28 @@ export class BashDebugSession extends LoggingDebugSession {
 			exit_code=$?
 			trap '' ERR SIGINT SIGTERM EXIT
 			exec 4>&-
+			exec 3>&-
 			rm "${fifo_path}_in"
 			rm "${fifo_path}"
 			exit $exit_code
 		}
 		echo "::PROXYID::$$" >&2
 		trap 'cleanup' ERR SIGINT SIGTERM EXIT
+
 		mkfifo "${fifo_path}"
 		mkfifo "${fifo_path}_in"
 
-		"${args.pathCat}" "${fifo_path}" &
-		exec 4>"${fifo_path}"
-		"${args.pathCat}" >"${fifo_path}_in"`
+		exec 3>"${fifo_path}"
+		exec 4>"${fifo_path}_in"
+
+		echo "${fifo_path}"
+
+		"${args.pathCat}" <"${fifo_path}" &
+
+		"${args.pathCat}" >&4`
 				.replace("\r", ""),
 			this.launchArgs.pathBash,
+			this.launchArgs.useWsl,
 			(data, category) => {
 				if (args.showDebugOutput || category === "console") {
 					this.sendEvent(new OutputEvent(`${data}`, category));
@@ -146,14 +156,15 @@ export class BashDebugSession extends LoggingDebugSession {
 		if (this.launchArgs.terminalKind === "debugConsole") {
 			spawnBashScript(
 				`cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
-				"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `)}`
+				"${args.pathBash}" "${args.pathBashdb}" --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `)}`
 					.replace("\r", "").replace("\n", "; "),
 				this.launchArgs.pathBash,
+				this.launchArgs.useWsl,
 				(data, category) => this.sendEvent(new OutputEvent(`${data}`, category)));
 		}
 		else {
-			const currentShell = (process.platform === "win32") ? getWSLLauncherPath(true) : args.pathBash;
-			const optionalBashPathArgument = (currentShell !== args.pathBash) ? args.pathBash : "";
+			const currentShell = (process.platform === "win32") ? getWindowsLauncherPath(true, this.launchArgs.useWsl) : args.pathBash;
+			const optionalBashPathArgument = (currentShell !== args.pathBash && this.launchArgs.useWsl !== false) ? args.pathBash : "";
 			const termArgs: DebugProtocol.RunInTerminalRequestArguments = {
 				kind: this.launchArgs.terminalKind,
 				title: "Bash Debug Console",
@@ -206,7 +217,7 @@ export class BashDebugSession extends LoggingDebugSession {
 			return;
 		}
 
-		let sourcePath = (process.platform === "win32") ? getWSLPath(args.source.path) : args.source.path;
+		let sourcePath = (process.platform === "win32") ? getWindowsPath(args.source.path, this.launchArgs.useWsl) : args.source.path;
 
 		if (sourcePath !== undefined) {
 			sourcePath = escapeCharactersInBashdbArg(sourcePath);
@@ -299,7 +310,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 					if ((process.platform === "win32")) {
 
-						frameSourcePath = reverseWSLPath(frameSourcePath);
+						frameSourcePath = reverseWindowsPath(frameSourcePath, this.launchArgs.useWsl);
 					}
 
 					frameSourcePath = isAbsolute(frameSourcePath) ? frameSourcePath : normalize(join(this.launchArgs.cwd, frameSourcePath));
@@ -513,6 +524,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		if (args.threadId === BashDebugSession.THREAD_ID) {
 			spawnBashScript(`${this.launchArgs.pathPkill} -INT -P ${this.debuggerProcessParentId} -f bashdb`,
 				this.launchArgs.pathBash,
+				this.launchArgs.useWsl,
 				data => this.sendEvent(new OutputEvent(`${data}`, 'console')))
 				.on("exit", () => this.sendResponse(response));
 			return;

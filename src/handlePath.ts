@@ -39,10 +39,14 @@ export function expandPath(path?: string, rootPath?: string): string | undefined
  * getWSLPath("/mnt/c/Users/wsh/proj0/path/to/script.sh");
  * // => "/mnt/c/Users/wsh/proj0/path/to/script.sh"
  */
-export function getWSLPath(path?: string): string | undefined {
+export function getWindowsPath(path: string | undefined, useWsl: boolean): string | undefined {
 
 	if (!path) {
 		return undefined;
+	}
+
+	if (useWsl === false) {
+		return "/" + path.split("\\").join("/").replace(":", "");
 	}
 
 	if (!path.startsWith("/")) {
@@ -57,7 +61,11 @@ export function getWSLPath(path?: string): string | undefined {
  * reverseWSLPath("/mnt/c/Users/wsh/proj0/path/to/script.sh");
  * // => "C:\\Users\\wsh\\proj0\\path\\to\\script.sh"
  */
-export function reverseWSLPath(wslPath: string): string {
+export function reverseWindowsPath(wslPath: string, useWsl: boolean): string {
+
+	if (useWsl === false) {
+		return "C:" + wslPath.substr(2).split("/").join("\\");
+	}
 
 	if (wslPath.startsWith("/mnt/")) {
 		return wslPath.substr("/mnt/".length, 1).toUpperCase() + ":" + wslPath.substr("/mnt/".length + 1).split("/").join("\\");
@@ -66,7 +74,12 @@ export function reverseWSLPath(wslPath: string): string {
 	return wslPath.split("/").join("\\");
 }
 
-export function getWSLLauncherPath(useInShell: boolean): string {
+export function getWindowsLauncherPath(useInShell: boolean, useWsl: boolean): string {
+
+	if (useWsl === false) {
+		//return join("C:", "Program Files", "Git", "bin", "bash.exe");
+		return join("C:", "Program Files", "Git", "bin", "bash.exe");
+	}
 
 	if (useInShell) {
 		return "wsl.exe";

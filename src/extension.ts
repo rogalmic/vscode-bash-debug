@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
-import { expandPath, getWSLPath } from './handlePath';
+import { expandPath, getWindowsPath } from './handlePath';
 import { normalize, join } from 'path';
 import * as which from 'npm-which';
 
@@ -85,6 +85,10 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 			return vscode.window.showErrorMessage("Please specify \"program\" in launch.json.").then(_ => { return undefined; });
 		}
 
+		if (config.useWsl === undefined) {
+			config.useWsl = true;
+		}
+
 		// Fill non-"required" attributes with default values to prevent bashdb (or other programs) from panic
 		if (!config.args) { config.args = []; }
 		if (!config.cwd) { config.cwd = folder.uri.fsPath; }
@@ -93,7 +97,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		}
 		if (!config.pathBashdb) {
 			if (process.platform === "win32") {
-				config.pathBashdb = getWSLPath(normalize(join(__dirname, "..", "bashdb_dir", "bashdb")));
+				config.pathBashdb = getWindowsPath(normalize(join(__dirname, "..", "bashdb_dir", "bashdb")), config.useWsl);
 			}
 			else {
 				config.pathBashdb = normalize(join(__dirname, "..", "bashdb_dir", "bashdb"));
@@ -101,7 +105,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		}
 		if (!config.pathBashdbLib) {
 			if (process.platform === "win32") {
-				config.pathBashdbLib = getWSLPath(normalize(join(__dirname, "..", "bashdb_dir")));
+				config.pathBashdbLib = getWindowsPath(normalize(join(__dirname, "..", "bashdb_dir")), config.useWsl);
 			}
 			else {
 				config.pathBashdbLib = normalize(join(__dirname, "..", "bashdb_dir"));

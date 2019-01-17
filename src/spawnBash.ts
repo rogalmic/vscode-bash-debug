@@ -1,9 +1,10 @@
 import { ChildProcess, SpawnSyncReturns, spawnSync, spawn } from 'child_process';
-import { getWSLLauncherPath } from './handlePath';
+import { getWindowsLauncherPath } from './handlePath';
 
-export function spawnBashScript(scriptCode: string, pathBash: string, outputHandler?: (output: string, category?: string ) => void): ChildProcess{
-	const currentShell  = (process.platform === "win32") ? getWSLLauncherPath(false) : pathBash;
-	const optionalBashPathArgument = (currentShell !== pathBash) ? pathBash : "";
+export function spawnBashScript(scriptCode: string, pathBash: string, useWsl: boolean, outputHandler?: (output: string, category?: string ) => void): ChildProcess{
+	const currentShell  = (process.platform === "win32") ? getWindowsLauncherPath(false,useWsl) : pathBash;
+
+	const optionalBashPathArgument = (currentShell !== pathBash && useWsl !==false) ? pathBash : "";
 
 	let spawnedProcess = spawn(currentShell, [optionalBashPathArgument, "-c", scriptCode].filter(arg => arg !== ""), { stdio: ["pipe", "pipe", "pipe"], shell: false});
 
@@ -24,9 +25,9 @@ export function spawnBashScript(scriptCode: string, pathBash: string, outputHand
 	return spawnedProcess;
 }
 
-export function spawnBashScriptSync(scriptCode: string, pathBash: string, spawnTimeout: number): SpawnSyncReturns<Buffer>{
-	const currentShell  = (process.platform === "win32") ? getWSLLauncherPath(false) : pathBash;
-	const optionalBashPathArgument = (currentShell !== pathBash) ? pathBash : "";
+export function spawnBashScriptSync(scriptCode: string, pathBash: string, spawnTimeout: number, useWsl: boolean): SpawnSyncReturns<Buffer>{
+	const currentShell  = (process.platform === "win32") ? getWindowsLauncherPath(false, useWsl) : pathBash;
+	const optionalBashPathArgument = (currentShell !== pathBash && useWsl !==false) ? pathBash : "";
 
 	return spawnSync(currentShell, [optionalBashPathArgument, "-c", scriptCode].filter(arg => arg !== ""), { timeout: spawnTimeout, shell: false });
 }
