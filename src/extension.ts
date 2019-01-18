@@ -87,6 +87,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 
 		// Fill non-"required" attributes with default values to prevent bashdb (or other programs) from panic
 		if (!config.args) { config.args = []; }
+		if (!config.env) { config.env = {}; }
 		if (!config.cwd) { config.cwd = folder.uri.fsPath; }
 		if (!config.pathBash) {
 			config.pathBash = "bash";

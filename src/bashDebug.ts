@@ -17,6 +17,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 
 	// Non-optional arguments are guaranteed to be defined in extension.ts: resolveDebugConfiguration().
 	args: string[];
+	env: object;
 	cwd: string;
 	cwdEffective: string;
 	program: string;
@@ -143,9 +144,13 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
 
+		let envVars = Object.keys(this.launchArgs.env)
+			.map(e => `export ${e}="${this.launchArgs.env[e]}";`)
+			.reduce((prev, next) => prev + next, ``);
+
 		if (this.launchArgs.terminalKind === "debugConsole") {
 			spawnBashScript(
-				`cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
+				`${envVars}cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
 				"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `)}`
 					.replace("\r", "").replace("\n", "; "),
 				this.launchArgs.pathBash,
@@ -159,7 +164,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				title: "Bash Debug Console",
 				cwd: ".",
 				args: [currentShell, optionalBashPathArgument, `-c`,
-					`cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
+					`${envVars}cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
 				"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `)}`
 						.replace("\r", "").replace("\n", "; ")
 				].filter(arg => arg !== ""),
