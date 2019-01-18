@@ -4,7 +4,7 @@
 		"no-duplicate-variable": true,
 		"curly": true,
 		"class-name": true,
-		"semicolon": [ "always" ],
+		"semicolon": true,
 		"triple-equals": true,
 		"no-var-keyword": true,
 		"no-bitwise": true

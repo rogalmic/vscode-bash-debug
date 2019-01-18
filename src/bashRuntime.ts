@@ -72,11 +72,11 @@ function _validatePath(cwd: string,
 	if (proc.error !== undefined) {
 		// @ts-ignore Property 'code' does not exist on type 'Error'.
 		if (proc.error.code === "ENOENT") {
-			return [vpr.notFoundBash, ""]
+			return [vpr.notFoundBash, ""];
 		}
 		// @ts-ignore Property 'code' does not exist on type 'Error'.
 		if (proc.error.code === "ETIMEDOUT") {
-			return [vpr.timeout, ""]
+			return [vpr.timeout, ""];
 		}
 		return [vpr.unknown, ""];
 	}

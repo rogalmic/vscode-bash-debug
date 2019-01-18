@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
 import { expandPath, getWSLPath } from './handlePath';
 import { normalize, join } from 'path';
+import * as which from 'npm-which';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -85,10 +86,10 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		}
 
 		// Fill non-"required" attributes with default values to prevent bashdb (or other programs) from panic
-		if (!config.args) { config.args = [] }
-		if (!config.cwd) { config.cwd = folder.uri.fsPath }
+		if (!config.args) { config.args = []; }
+		if (!config.cwd) { config.cwd = folder.uri.fsPath; }
 		if (!config.pathBash) {
-			config.pathBash = "bash"
+			config.pathBash = "bash";
 		}
 		if (!config.pathBashdb) {
 			if (process.platform === "win32") {
@@ -107,9 +108,24 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 			}
 		}
 
-		if (!config.pathCat) { config.pathCat = "cat" }
-		if (!config.pathMkfifo) { config.pathMkfifo = "mkfifo" }
-		if (!config.pathPkill) { config.pathPkill = "pkill" }
+		if (!config.pathCat) { config.pathCat = "cat"; }
+		if (!config.pathMkfifo) { config.pathMkfifo = "mkfifo"; }
+		if (!config.pathPkill) {
+
+			if ( process.platform === "darwin" ) {
+				const pathPkill = which(__dirname).sync('pkill');
+				if (pathPkill === "/usr/local/bin/pkill") {
+					vscode.window.showInformationMessage(`Using /usr/bin/pkill instead of /usr/local/bin/pkill`);
+					config.pathPkill = "/usr/bin/pkill";
+				}
+				else {
+					config.pathPkill = "pkill";
+				}
+			}
+			else {
+				config.pathPkill = "pkill";
+			}
+		}
 
 		// These variables can be undefined, as indicated in `?` (optional type) in bashDebug.ts:LaunchRequestArguments
 		// - config.showDebugOutput

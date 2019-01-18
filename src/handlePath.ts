@@ -17,7 +17,7 @@ export function expandPath(path?: string, rootPath?: string): string | undefined
 
 	if (!path) {
 		return undefined;
-	};
+	}
 
 	if (rootPath) {
 		path = path.replace("{workspaceFolder}", <string>rootPath).split("\\").join("/");
@@ -43,7 +43,7 @@ export function getWSLPath(path?: string): string | undefined {
 
 	if (!path) {
 		return undefined;
-	};
+	}
 
 	if (!path.startsWith("/")) {
 		path = "/mnt/" + path.substr(0, 1).toLowerCase() + path.substr("X:".length).split("\\").join("/");
