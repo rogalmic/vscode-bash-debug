@@ -162,6 +162,11 @@
                 ],
                 "description": "Can be set to 'integrated', 'external' or 'debugConsole'.",
                 "default": "integrated"
+              },
+              "env": {
+                "type": "object",
+                "description": "Environment variables defined as an object with key value pairs - {\"MYVAR\" : \"MY VALUE\"}.",
+                "default": {}
               }
             }
           }
