@@ -145,7 +145,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		let envVars = Object.keys(this.launchArgs.env)
-			.map(e => `export ${e}="${this.launchArgs.env[e]}";`)
+			.map(e => `export ${e}='${this.launchArgs.env[e]}';`)
 			.reduce((prev, next) => prev + next, ``);
 
 		if (this.launchArgs.terminalKind === "debugConsole") {
