@@ -148,11 +148,14 @@ export class BashDebugSession extends LoggingDebugSession {
 			.map(e => `export ${e}='${this.launchArgs.env[e]}';`)
 			.reduce((prev, next) => prev + next, ``);
 
+		const command = this.joinCommands(
+			`${envVars}cd "${args.cwdEffective}"`,
+			`while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done`,
+			`"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `)}`)
+
 		if (this.launchArgs.terminalKind === "debugConsole") {
 			spawnBashScript(
-				`${envVars}cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
-				"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `)}`
-					.replace("\r", "").replace("\n", "; "),
+				command,
 				this.launchArgs.pathBash,
 				(data, category) => this.sendEvent(new OutputEvent(`${data}`, category)));
 		}
@@ -163,11 +166,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				kind: this.launchArgs.terminalKind,
 				title: "Bash Debug Console",
 				cwd: ".",
-				args: [currentShell, optionalBashPathArgument, `-c`,
-					`${envVars}cd "${args.cwdEffective}"; while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done
-				"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `)}`
-						.replace("\r", "").replace("\n", "; ")
-				].filter(arg => arg !== ""),
+				args: [currentShell, optionalBashPathArgument, `-c`, command].filter(arg => arg !== ""),
 			};
 
 			this.runInTerminalRequest(termArgs, 10000, (response) => {
@@ -181,6 +180,10 @@ export class BashDebugSession extends LoggingDebugSession {
 
 		this.processDebugTerminalOutput();
 		this.launchRequestFinalize(response, args);
+	}
+
+	private joinCommands(...cmd: string[]): string {
+		return cmd.join(`; `);
 	}
 
 	private async launchRequestFinalize(response: DebugProtocol.LaunchResponse, _args: LaunchRequestArguments): Promise<void> {
