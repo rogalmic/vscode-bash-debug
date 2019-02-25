@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.4](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.3...v0.3.4) (2019-02-25)
+
+
+### Bug Fixes
+
+* Fix for running with powershell + environment variables. ([5e8f8fd](https://github.com/rogalmic/vscode-bash-debug/commit/5e8f8fd))
+* Fix indentation (\t) on string template causes commands to fail on bash ([9ce9dad](https://github.com/rogalmic/vscode-bash-debug/commit/9ce9dad))
+
+
+### Features
+
+* Add environment variables launch configuration. ([d7d6d8c](https://github.com/rogalmic/vscode-bash-debug/commit/d7d6d8c))
+
+
+
 <a name="0.3.3"></a>
 ## [0.3.3](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.2...v0.3.3) (2018-10-31)
 
