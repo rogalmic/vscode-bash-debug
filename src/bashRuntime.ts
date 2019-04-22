@@ -112,7 +112,12 @@ export function validatePath(cwd: string,
 			return `Error: cwd (${cwd}) does not exist.` + stderrContent;
 		}
 		case validatePathResult.notFoundBash: {
-			return `Error: bash not found. (pathBash: ${pathBash})` + stderrContent;
+			if ( process.platform == "win32" )
+			{
+				return `Error: WSL bash (mandatory on Windows) is not found. (pathBash: ${pathBash})` + stderrContent;
+			} else {
+				return `Error: bash not found. (pathBash: ${pathBash})` + stderrContent;
+			}
 		}
 		case validatePathResult.notFoundBashdb: {
 			return `Error: bashdb not found. (pathBashdb: ${pathBashdb})` + stderrContent;
