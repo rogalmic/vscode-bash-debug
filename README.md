@@ -40,6 +40,7 @@ See https://code.visualstudio.com/docs/editor/debugging for general usage.
 For Windows users:
 - Install [Windows Subsystem for Linux](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux)
 - Terminal has problems with spaces in paths when powershell is used, use [WSL bash](https://github.com/Microsoft/vscode/issues/22317) instead. For beta WSL please read [this](https://github.com/rogalmic/vscode-bash-debug/issues/93)
+- `pathBash` refers to BASH binary path in WSL filesystem, not path to `wsl.exe`/`bash.exe`
 
 For macOS users:
 - Read [here](https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill) if your mac has `/usr/local/bin/pkill`.
