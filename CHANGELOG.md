@@ -1,6 +1,21 @@
-# Change Log
+# Changelog
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [0.3.5](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.4...v0.3.5) (2019-05-21)
+
+
+### Bug Fixes
+
+* Set debug console as default `terminalKind` ([e040c7f](https://github.com/rogalmic/vscode-bash-debug/commit/e040c7f))
+* Update dependencies, readme, error messages. ([7ef4fb2](https://github.com/rogalmic/vscode-bash-debug/commit/7ef4fb2))
+
+
+### BREAKING CHANGES
+
+* interactive scripts need to select proper terminalKind
+
+
 
 ## [0.3.4](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.3...v0.3.4) (2019-02-25)
 
