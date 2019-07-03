@@ -15,27 +15,27 @@ See https://code.visualstudio.com/docs/editor/debugging for general usage.
 ## Sample features
 - Debugging auto-configuration via `launch.json`
 
-[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-launch-autoconfig.gif" width="400" style="filter: blur(1px); " title="Click to show in browser" />](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-launch-autoconfig.gif)
+[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-launch-autoconfig.webm" width="400" style="filter: blur(1px); " title="Click to show in browser" />](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-launch-autoconfig.webm)
 
 - Simple debugging in hello world application
 
-[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-hello-world.gif" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-hello-world.gif)
+[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-hello-world.webm" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-hello-world.webm)
 
 - Standard input handling via terminal
 
-[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-stdin-usage.gif" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-stdin-usage.gif)
+[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-stdin-usage.webm" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-stdin-usage.webm)
 
 - Pause support while script is running
 
-[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-pause-support.gif" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-pause-support.gif)
+[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-pause-support.webm" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-pause-support.webm)
 
 - Advanced "Watch" and "Debug console" usage
 
-[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-watch-advanced.gif" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-watch-advanced.gif)
+[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-watch-advanced.webm" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-watch-advanced.webm)
 
 - Conditional breakpoints usage
 
-[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-conditional-breakpoints.gif" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-conditional-breakpoints.gif)
+[<img src="https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-conditional-breakpoints.webm" width="400" style="filter: blur(1px); " title="Click to show in browser"/>](https://raw.githubusercontent.com/rogalmic/vscode-bash-debug/gif/images/bash-debug-samp-conditional-breakpoints.webm)
 
 For Windows users:
 - Install [Windows Subsystem for Linux](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux)
