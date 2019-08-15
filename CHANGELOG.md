@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### [0.3.5](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.4...v0.3.5) (2019-05-21)
+## [0.3.5](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.4...v0.3.5) (2019-05-21)
 
 
 ### Bug Fixes
@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-### [0.3.4](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.3...v0.3.4) (2019-02-25)
+## [0.3.4](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.3...v0.3.4) (2019-02-25)
 
 
 ### Bug Fixes
@@ -32,7 +32,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-### [0.3.3](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.2...v0.3.3) (2018-10-31)
+## [0.3.3](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.2...v0.3.3) (2018-10-31)
 
 
 ### Bug Fixes
@@ -47,7 +47,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-### [0.3.2](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.1...v0.3.2) (2018-09-25)
+## [0.3.2](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.1...v0.3.2) (2018-09-25)
 
 
 ### Bug Fixes
@@ -56,7 +56,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-## [0.3.1](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.4...v0.3.1) (2018-09-24)
+# [0.3.1](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.4...v0.3.1) (2018-09-24)
 
 
 ### Bug Fixes
@@ -73,7 +73,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-### [0.2.4](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.3...v0.2.4) (2018-09-02)
+## [0.2.4](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.3...v0.2.4) (2018-09-02)
 
 
 ### Bug Fixes
@@ -82,7 +82,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-### [0.2.3](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.2...v0.2.3) (2018-08-27)
+## [0.2.3](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.2...v0.2.3) (2018-08-27)
 
 
 ### Bug Fixes
@@ -94,7 +94,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-### [0.2.2](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.1...v0.2.2) (2018-08-20)
+## [0.2.2](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.1...v0.2.2) (2018-08-20)
 
 
 ### Bug Fixes
@@ -103,7 +103,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-### [0.2.1](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.0...v0.2.1) (2018-08-09)
+## [0.2.1](https://github.com/rogalmic/vscode-bash-debug/compare/v0.2.0...v0.2.1) (2018-08-09)
 
 
 ### Bug Fixes
@@ -113,7 +113,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-## [0.2.0](https://github.com/rogalmic/vscode-bash-debug/compare/v0.1.1...v0.2.0) (2018-04-12)
+# [0.2.0](https://github.com/rogalmic/vscode-bash-debug/compare/v0.1.1...v0.2.0) (2018-04-12)
 
 
 ### Bug Fixes
@@ -127,7 +127,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-### [0.1.1](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.1.1) (2018-03-17)
+## [0.1.1](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.1.1) (2018-03-17)
 
 - update attributes in `launch.json`
   - *BREAKING* change attribute names
@@ -142,39 +142,39 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-## [0.1.0](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.1.0) (2017-06-13)
+# [0.1.0](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.1.0) (2017-06-13)
 
 - fix deprecated launch.json format
 
 
 
-### [0.0.7](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.7-alpha.7) (2017-02-25)
+## [0.0.7](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.7-alpha.7) (2017-02-25)
 
 - fix redundant watch value data, explain watch expressions (https://github.com/rogalmic/vscode-bash-debug/issues/26)
 - fix manual extering of script to run (BashOnWindows case)
 
 
 
-### [0.0.6](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.6-alpha.6) (2017-02-25)
+## [0.0.6](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.6-alpha.6) (2017-02-25)
 
 - fix for watch feature (https://github.com/rogalmic/vscode-bash-debug/issues/26)
 - bashdb installation explained (https://github.com/rogalmic/vscode-bash-debug/issues/18)
 
 
 
-### [0.0.5](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.5-alpha.5) (2017-01-21)
+## [0.0.5](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.5-alpha.5) (2017-01-21)
 
 - windows 10 experimental support (verified on insider build 15014)
 
 
 
-### [0.0.4](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.4-alpha.4) (2017-01-17)
+## [0.0.4](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.4-alpha.4) (2017-01-17)
 
 - fix for larger scripts (https://github.com/rogalmic/vscode-bash-debug/issues/22)
 
 
 
-### [0.0.3](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.3-alpha.3) (2017-01-14)
+## [0.0.3](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.3-alpha.3) (2017-01-14)
 
 - remove usage of mktemp (https://github.com/rogalmic/vscode-bash-debug/issues/19)
 - partial pause support (not finalized yet)
@@ -182,7 +182,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-### [0.0.2](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.2-alpha.2) (2016-11-06)
+## [0.0.2](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.2-alpha.2) (2016-11-06)
 
 - fixed broken initial configurations (for VS Code 1.7.1)
 - using single bash process instance as backend
@@ -190,5 +190,5 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-### [0.0.1](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.1-alpha.1) (2016-11-05)
+# [0.0.1](https://github.com/rogalmic/vscode-bash-debug/releases/tag/v0.0.1-alpha.1) (2016-11-05)
 
