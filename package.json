@@ -160,8 +160,8 @@
                   "external",
                   "debugConsole"
                 ],
-                "description": "Can be set to 'integrated', 'external' or 'debugConsole'.",
-                "default": "integrated"
+                "description": "Can be set to 'integrated', 'external' or 'debugConsole'. Using 'integrated' or 'external' may require explicit terminal interpreter set for workspace.",
+                "default": "debugConsole"
               },
               "env": {
                 "type": "object",
