@@ -1,4 +1,5 @@
 import { spawnBashScriptSync } from './spawnBash';
+import * as fs from 'fs';
 
 enum validatePathResult {
 	success = 0,
@@ -60,8 +61,19 @@ function _validatePath(cwd: string,
 
 	const vpr = validatePathResult;
 
+
+	var chmod_bashdb = pathBashdb.indexOf("bashdb_dir") > 0;
+	if (chmod_bashdb) {
+	    try {
+		fs.accessSync( pathBashdb, fs.constants.X_OK );
+		chmod_bashdb = false;
+	    } catch ( err ) {
+		// Means that execute not possible, try and chmod it
+	    }
+	}
+
 	const proc = spawnBashScriptSync(
-		((pathBashdb.indexOf("bashdb_dir") > 0) ? `chmod +x "${pathBashdb}" || exit ${vpr.cannotChmod};` : ``) +
+		((chmod_bashdb) ? `chmod +x "${pathBashdb}" || exit ${vpr.cannotChmod};` : ``) +
 		`type "${pathBashdb}" || exit ${vpr.notFoundBashdb};` +
 		`type "${pathCat}" || exit ${vpr.notFoundCat};` +
 		`type "${pathMkfifo}" || exit ${vpr.notFoundMkfifo};` +
