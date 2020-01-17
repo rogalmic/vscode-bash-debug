@@ -142,7 +142,7 @@ export class BashDebugSession extends LoggingDebugSession {
 				}
 			});
 
-		this.proxyProcess.stdin.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin!.write(`examine Debug environment: bash_ver=$BASH_VERSION, bashdb_ver=$_Dbg_release, program=$0, args=$*\nprint "$PPID"\nhandle INT stop\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		let envVars = Object.keys(this.launchArgs.env)
 			.map(e => `export ${e}='${this.launchArgs.env[e]}';`)
@@ -240,7 +240,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		}
 
 		const currentLine = this.fullDebugOutput.length;
-		this.proxyProcess.stdin.write(`${setBreakpointsCommand}print '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin!.write(`${setBreakpointsCommand}print '${BashDebugSession.END_MARKER}'\n`);
 		this.setBreakPointsRequestFinalize(response, args, currentLine);
 	}
 
@@ -287,7 +287,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		await this.onDebuggerAvailable();
 
 		const currentLine = this.fullDebugOutput.length;
-		this.proxyProcess.stdin.write(`print backtrace\nbacktrace\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin!.write(`print backtrace\nbacktrace\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.stackTraceRequestFinalize(response, args, currentLine);
 	}
 
@@ -358,7 +358,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		variableDefinitions.forEach((v) => { getVariablesCommand += `print 'examine <${v}> '\nexamine ${v}\n`; });
 
 		const currentLine = this.fullDebugOutput.length;
-		this.proxyProcess.stdin.write(`${getVariablesCommand}print '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin!.write(`${getVariablesCommand}print '${BashDebugSession.END_MARKER}'\n`);
 		this.variablesRequestFinalize(response, args, currentLine);
 	}
 
@@ -394,7 +394,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		await this.onDebuggerAvailable();
 
 		const currentLine = this.fullDebugOutput.length;
-		this.proxyProcess.stdin.write(`print continue\ncontinue\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin!.write(`print continue\ncontinue\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.continueRequestFinalize(response, args, currentLine);
 
@@ -421,7 +421,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		await this.onDebuggerAvailable();
 
 		const currentLine = this.fullDebugOutput.length;
-		this.proxyProcess.stdin.write(`print next\nnext\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin!.write(`print next\nnext\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.nextRequestFinalize(response, args, currentLine);
 
@@ -445,7 +445,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		await this.onDebuggerAvailable();
 
 		const currentLine = this.fullDebugOutput.length;
-		this.proxyProcess.stdin.write(`print step\nstep\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin!.write(`print step\nstep\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.stepInRequestFinalize(response, args, currentLine);
 
@@ -469,7 +469,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		await this.onDebuggerAvailable();
 
 		const currentLine = this.fullDebugOutput.length;
-		this.proxyProcess.stdin.write(`print finish\nfinish\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin!.write(`print finish\nfinish\nprint '${BashDebugSession.END_MARKER}'\n`);
 
 		this.stepOutRequestFinalize(response, args, currentLine);
 
@@ -499,7 +499,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		const currentLine = this.fullDebugOutput.length;
 		let expression = (args.context === "hover") ? `${args.expression.replace(/['"]+/g, "")}` : `${args.expression}`;
 		expression = escapeCharactersInBashdbArg(expression);
-		this.proxyProcess.stdin.write(`print 'examine <${expression}>'\nexamine ${expression}\nprint '${BashDebugSession.END_MARKER}'\n`);
+		this.proxyProcess.stdin!.write(`print 'examine <${expression}>'\nexamine ${expression}\nprint '${BashDebugSession.END_MARKER}'\n`);
 		this.evaluateRequestFinalize(response, args, currentLine);
 	}
 
@@ -544,7 +544,7 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	private processDebugTerminalOutput(): void {
 
-		this.proxyProcess.stdio[2].on('data', (data) => {
+		this.proxyProcess.stdio[2]!.on('data', (data) => {
 			const list = data.toString().split("\n");
 			list.forEach(l => {
 				let nodes = l.split("::");
@@ -567,14 +567,14 @@ export class BashDebugSession extends LoggingDebugSession {
 					this.sendEvent(new StoppedEvent("break", BashDebugSession.THREAD_ID));
 				}
 				else if (line.indexOf("Debugged program terminated") === 0) {
-					this.proxyProcess.stdin.write(`\nq\n`);
+					this.proxyProcess.stdin!.write(`\nq\n`);
 					this.sendEvent(new OutputEvent(`Sending TerminatedEvent`, 'telemetry'));
 					this.sendEvent(new TerminatedEvent());
 				}
 			}
 		});
 
-		this.proxyProcess.stdio[1].on('data', (data) => {
+		this.proxyProcess.stdio[1]!.on('data', (data) => {
 
 			const list = data.toString().split("\n", -1);
 			const fullLine = `${this.fullDebugOutput.pop()}${list.shift()}`;

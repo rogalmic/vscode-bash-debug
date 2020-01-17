@@ -124,7 +124,7 @@ export function validatePath(cwd: string,
 			return `Error: cwd (${cwd}) does not exist.` + stderrContent;
 		}
 		case validatePathResult.notFoundBash: {
-			if ( process.platform == "win32" )
+			if ( process.platform.toString() === "win32" )
 			{
 				return `Error: WSL bash (mandatory on Windows) is not found. (pathBash: ${pathBash})` + stderrContent;
 			} else {
@@ -150,7 +150,7 @@ export function validatePath(cwd: string,
 			return `Error: Cannot chmod +x internal bashdb copy.` + stderrContent;
 		}
 		case validatePathResult.unsupportedBashVersion: {
-			return `Error: Only bash versions 4.* are supported.` + stderrContent;
+			return `Error: Only bash versions 4.* or 5.* are supported.` + stderrContent;
 		}
 		case validatePathResult.unknown: {
 			return `Error: BUG: unknown error ocurred while validating environment. ` + askReport + stderrContent;
