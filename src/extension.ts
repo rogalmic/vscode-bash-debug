@@ -53,11 +53,11 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		if (!config.type || !config.name) {
 			let msg = "BUG in Bash Debug: reached to unreachable code.";
 			msg += "\nIf it is reproducible, please report this bug on: https://github.com/rogalmic/vscode-bash-debug/issues";
-			msg += "\nYou can avoid this bug by setting \"type\" and \"name\" attributes in launch.json.";
+			msg += "\nYou can avoid this bug by setting `type` and `name` attributes in launch.json.";
 			return vscode.window.showErrorMessage(msg).then(_ => { return undefined; });
 		}
 		if (!config.request) {
-			let msg = "Please set \"request\" attribute to \"launch\".";
+			let msg = "Please set `request` attribute to `launch`.";
 			return vscode.window.showErrorMessage(msg).then(_ => { return undefined; });
 		}
 
@@ -77,11 +77,17 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 
 		// Check "required" attributes (defined in package.json) are included
 		if (!config.program) {
-			return vscode.window.showErrorMessage("Please specify \"program\" in launch.json.").then(_ => { return undefined; });
+			return vscode.window.showErrorMessage("Please specify `program` in launch.json.").then(_ => { return undefined; });
 		}
 
 		// Fill non-"required" attributes with default values to prevent bashdb (or other programs) from panic
-		if (!config.args) { config.args = []; }
+		if (!config.args) {
+			config.args = [];
+		}
+		else if (!Array.isArray(config.args)) {
+			return vscode.window.showErrorMessage("Please specify `args` as array of strings in launch.json.").then(_ => { return undefined; });
+		}
+
 		if (!config.env) { config.env = {}; }
 		if (!config.cwd) {
 			if (!folder) {
