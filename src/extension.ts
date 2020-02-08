@@ -49,11 +49,6 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 			return undefined;
 		}
 
-		if (!folder) {
-			let msg = "Unable to determine workspace folder.";
-			return vscode.window.showErrorMessage(msg).then(_ => { return undefined; });
-		}
-
 		// Else launch.json exists
 		if (!config.type || !config.name) {
 			let msg = "BUG in Bash Debug: reached to unreachable code.";
@@ -88,7 +83,13 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		// Fill non-"required" attributes with default values to prevent bashdb (or other programs) from panic
 		if (!config.args) { config.args = []; }
 		if (!config.env) { config.env = {}; }
-		if (!config.cwd) { config.cwd = folder.uri.fsPath; }
+		if (!config.cwd) {
+			if (!folder) {
+				let msg = "Unable to determine workspace folder.";
+				return vscode.window.showErrorMessage(msg).then(_ => { return undefined; });
+			}
+			config.cwd = folder.uri.fsPath;
+		}
 		if (!config.pathBash) {
 			config.pathBash = "bash";
 		}
@@ -113,7 +114,7 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 		if (!config.pathMkfifo) { config.pathMkfifo = "mkfifo"; }
 		if (!config.pathPkill) {
 
-			if ( process.platform === "darwin" ) {
+			if (process.platform === "darwin") {
 				const pathPkill = which(__dirname).sync('pkill');
 				if (pathPkill === "/usr/local/bin/pkill") {
 					vscode.window.showInformationMessage(`Using /usr/bin/pkill instead of /usr/local/bin/pkill`);
