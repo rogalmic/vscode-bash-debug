@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.7](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.6...v0.3.7) (2020-02-08)
+
+
+### Bug Fixes
+
+* Avoid chmod bashdb if it is already executable. ([80f9771](https://github.com/rogalmic/vscode-bash-debug/commit/80f97714bc7c2029cbf7d69107616a1d22da883d))
+* Error message for invalid args configuration. ([b0c7b38](https://github.com/rogalmic/vscode-bash-debug/commit/b0c7b38d8c1c61642055c46f6a1145cf41969818))
+* Work with global config. ([2c22844](https://github.com/rogalmic/vscode-bash-debug/commit/2c2284441e8633d13db24b32763ead311012ad36))
+
 ### [0.3.6](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.5...v0.3.6) (2019-09-05)
 
 
