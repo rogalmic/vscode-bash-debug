@@ -7,6 +7,5 @@
 	"shellcheck.exclude":["SC2148", "SC2154", "SC1090", "SC2034"],
     "shellcheck.customArgs": [
         "--external-sources"
-	],
-	"editor.formatOnSave": false
+    ]
 }
