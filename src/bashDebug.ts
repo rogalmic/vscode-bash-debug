@@ -12,7 +12,7 @@ import { validatePath } from './bashRuntime';
 import { getWSLPath, reverseWSLPath, escapeCharactersInBashdbArg, getWSLLauncherPath } from './handlePath';
 import { EventSource } from './eventSource';
 import { spawnBashScript } from './spawnBash';
-import { quote  } from 'shell-quote'
+import { quote } from 'shell-quote'
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
