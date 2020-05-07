@@ -12,7 +12,7 @@ import { validatePath } from './bashRuntime';
 import { getWSLPath, reverseWSLPath, escapeCharactersInBashdbArg, getWSLLauncherPath } from './handlePath';
 import { EventSource } from './eventSource';
 import { spawnBashScript } from './spawnBash';
-import { parse } from 'shell-quote'
+import { parse  } from 'shell-quote'
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 
@@ -153,7 +153,7 @@ export class BashDebugSession extends LoggingDebugSession {
 		const command = this.joinCommands(
 			`${envVars}cd "${args.cwdEffective}"`,
 			`while [[ ! -p "${fifo_path}" ]]; do sleep 0.25; done`,
-			`"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${args.args.map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `)} ${args.argsString ? parse(args.argsString).map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `) : ""}`);
+			`"${args.pathBash}" "${args.pathBashdb}" --quiet --tty "${fifo_path}" --tty_in "${fifo_path}_in" --library "${args.pathBashdbLib}" -- "${args.programEffective}" ${this.joinArgs(args.args, args.argsString)}`);
 
 		if (this.launchArgs.terminalKind === "debugConsole" || this.launchArgs.terminalKind === undefined) {
 			spawnBashScript(
@@ -186,6 +186,17 @@ export class BashDebugSession extends LoggingDebugSession {
 
 	private joinCommands(...cmd: string[]): string {
 		return cmd.join(`; `);
+	}
+
+	private joinArgs(args: string[], argsString: string): string {
+		function argsArrayToString(args: string[]): string {
+			return args.map(e => `"` + e.replace(`"`, `\\\"`) + `"`).join(` `)
+		}
+		let joinedArgs: string = ""
+		if (args) joinedArgs = argsArrayToString(args)
+		if (argsString) joinedArgs += ` ${argsArrayToString(parse(argsString))}`
+
+		return joinedArgs
 	}
 
 	private async launchRequestFinalize(response: DebugProtocol.LaunchResponse, _args: LaunchRequestArguments): Promise<void> {
