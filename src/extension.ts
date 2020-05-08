@@ -88,6 +88,10 @@ class BashConfigurationProvider implements vscode.DebugConfigurationProvider {
 			return vscode.window.showErrorMessage("Please specify `args` as array of strings in launch.json.").then(_ => { return undefined; });
 		}
 
+		if (!config.argsString) {
+			config.argsString = "";
+		}
+
 		if (!config.env) { config.env = {}; }
 		if (!config.cwd) {
 			if (!folder) {

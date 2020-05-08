@@ -48,6 +48,7 @@
   "dependencies": {
     "child-process": "^1.0.2",
     "npm-which": "^3.0.1",
+    "shell-quote": "^1.7.2",
     "vscode-debugadapter": "1.38.0",
     "vscode-debugprotocol": "1.38.0"
   },
@@ -101,8 +102,13 @@
             "properties": {
               "args": {
                 "// type: Array<string> -> warning `Incorrect type. Expected Array<string>` in launch.json": null,
-                "description": "Command line arguments. (i.e. [\"--opt\", \"arg\"])",
+                "description": "Command line arguments in array of strings format. (i.e. [\"--opt\", \"arg\"])",
                 "default": []
+              },
+              "argsString": {
+                "// type: string -> warning `Incorrect type. Expected string` in launch.json": null,
+                "description": "Command line arguments in string format. (i.e. \"--opt arg\"]. The arguments in this string will be appended to the arguments of `args`, if present.)",
+                "default": ""
               },
               "cwd": {
                 "type": "string",
