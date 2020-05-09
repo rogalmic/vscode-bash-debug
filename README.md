@@ -55,3 +55,4 @@ For macOS users:
 * Currently debugger stops at first command
 * `$0` variable shows path to bashdb
 * Older `bash` versions ( `4.0` - `4.2` ) are not tested, but might work™
+* `BASH_REMATCH` gets overwritten when stepping through code
