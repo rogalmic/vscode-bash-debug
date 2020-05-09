@@ -1,14 +1,14 @@
 language: node_js
 
 node_js:
-- '12.4.0'
+- '12.8.1'
 
 os:
 - linux
 
 group: dev
 sudo: required
-dist: xenial
+dist: bionic
 
 branches:
   only:
