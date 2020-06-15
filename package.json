@@ -1,7 +1,7 @@
 {
   "name": "bash-debug",
   "displayName": "Bash Debug",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "publisher": "rogalmic",
   "description": "A debugger extension for bash scripts (using bashdb).",
   "author": {
@@ -61,7 +61,7 @@
     "tslint": "6.1.2",
     "typescript": "3.9.5",
     "vsce": "1.77.0",
-    "vscode": "1.1.37",
+    "vscode": "1.1.36",
     "vscode-debugadapter-testsupport": "1.41.0"
   },
   "scripts": {

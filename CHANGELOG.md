@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.9](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.8...v0.3.9) (2020-06-15)
+
+
+### Features
+
+* Deploy to Open vsx. ([61168a0](https://github.com/rogalmic/vscode-bash-debug/commit/61168a0b5e16f8a3207c3ca05702b03eda3c0673))
+* Deploy to Open vsx. ([#143](https://github.com/rogalmic/vscode-bash-debug/issues/143)) ([5c815d6](https://github.com/rogalmic/vscode-bash-debug/commit/5c815d68cabe251a81d974c4925ee58de22db075))
+
 ### [0.3.8](https://github.com/rogalmic/vscode-bash-debug/compare/v0.3.7...v0.3.8) (2020-05-09)
 
 
