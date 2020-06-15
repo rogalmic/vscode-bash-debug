@@ -21,6 +21,7 @@ env:
 
 install:
 - npm install -g vsce
+- npm install -g ovsx
 - npm install -g typescript
 - npm install
 
@@ -39,6 +40,12 @@ deploy:
       condition: "$TRAVIS_OS_NAME == linux"
   - provider: script
     script: vsce publish -p $VSCE_TOKEN --packagePath *.vsix
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: "$TRAVIS_TAG =~ $RELEASE_TAG_EXPRESSION"
+  - provider: script
+    script: npx ovsx publish *.vsix -p $OVSX_TOKEN
     skip_cleanup: true
     on:
       tags: true
