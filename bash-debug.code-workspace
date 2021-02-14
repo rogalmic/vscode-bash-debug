@@ -16,5 +16,10 @@
         "shellcheck.customArgs": [
             "--external-sources"
         ]
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-vscode.vscode-js-profile-flame"
+        ]
     }
 }

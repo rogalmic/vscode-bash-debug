@@ -6,6 +6,7 @@
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
     "editor.formatOnSave": true,
+    "editor.renderWhitespace": "all",
     "shellcheck.exclude": [
         "SC2148",
         "SC2154",

@@ -75,7 +75,7 @@
         "compile": "tsc -p ./src",
         "lint": "eslint ./src/**/*.ts",
         "watch": "tsc -w -p ./src",
-        "test": "ts-node node_modules/jasmine/bin/jasmine --config=jasmine.json",
+        "test": "ts-node --project ./src/tsconfig.json node_modules/jasmine/bin/jasmine --config=jasmine.json",
         "package": "vsce package",
         "publish": "vsce publish",
         "release": "standard-version"

@@ -32,7 +32,7 @@ describe("bashRuntime - _validatePath", () => {
     it("returns notFoundBash when bash path incorrect", () => {
 
         expect(_validatePath("./", "invalid-bash-path", "type", "type", "type", "type"))
-            .toEqual([<validatePathResult>127, "/bin/bash: invalid-bash-path: command not found\n"]);
+            .toEqual([validatePathResult.notFoundBash, "/bin/bash: invalid-bash-path: command not found\n"]);
     });
 
     it("returns notFoundBashdb when bashdb path incorrect", () => {
@@ -62,7 +62,7 @@ describe("bashRuntime - _validatePath", () => {
     it("returns notFoundBash when all data incorrect", () => {
 
         expect(_validatePath("invalid-path", "invalid-path", "invalid-path", "invalid-path", "invalid-path", "invalid-path"))
-            .toEqual([<validatePathResult>127, "/bin/bash: invalid-path: command not found\n"]);
+            .toEqual([validatePathResult.notFoundBash, "/bin/bash: invalid-path: command not found\n"]);
     });
 
     it("returns timeout when timeout", () => {
