@@ -1,46 +1,62 @@
 {
-	"version": "0.2.0",
-	"configurations": [
-		{
-			"type": "extensionHost",
-			"request": "launch",
-			"name": "Extension",
-			"preLaunchTask": "npm",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
-			],
-			"outFiles": [ "${workspaceFolder}/out/**/*.js" ]
-		},
-		{
-			"type": "node",
-			"request": "launch",
-			"name": "Server",
-			"cwd": "${workspaceFolder}",
-			"program": "${workspaceFolder}/src/bashDebug.ts",
-			"args": [ "--server=4711" ],
-			"outFiles": [ "${workspaceFolder}/out/**/*.js" ]
-		},
-		{
-			"type": "node",
-			"request": "launch",
-			"name": "Tests",
-			"cwd": "${workspaceFolder}",
-			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-			"args": [
-				"-u", "tdd",
-				"--timeout", "999999",
-				"--colors",
-				"./out/tests/"
-			],
-			"outFiles": [ "${workspaceFolder}/out/**/*.js" ],
-			"internalConsoleOptions": "openOnSessionStart"
-		}
-	],
-	"compounds": [
-		{
-			"name": "Extension + Server",
-			"configurations": [ "Extension", "Server" ]
-		}
-	]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "extensionHost",
+            "request": "launch",
+            "name": "Extension",
+            "preLaunchTask": "build",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/out/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Server",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/src/bashDebug.ts",
+            "args": [
+                "--server=4711"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/out/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Jasmine Tests Current File",
+            "program": "${workspaceFolder}/node_modules/jasmine/bin/jasmine.js",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "--nolazy",
+                "-r",
+                "ts-node/register/transpile-only"
+            ],
+            "args": [
+                "--config=./jasmine.json",
+                "${file}"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**",
+                "node_modules/**"
+            ]
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Extension + Server",
+            "configurations": [
+                "Extension",
+                "Server"
+            ]
+        }
+    ]
 }

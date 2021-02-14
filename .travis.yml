@@ -1,7 +1,7 @@
 language: node_js
 
 node_js:
-- '12.8.1'
+- '12.18.3'
 
 os:
 - linux
@@ -20,14 +20,11 @@ env:
     - RELEASE_TAG_EXPRESSION=^v?[0-9]+\.[0-9]+\.[0-9]+$
 
 install:
-- npm install -g vsce
-- npm install -g ovsx
-- npm install -g typescript
 - npm install
 
 script:
-- vsce package
-- npm test
+- npm run test
+- npm run package
 
 deploy:
   - provider: releases
@@ -39,7 +36,7 @@ deploy:
       branch: master
       condition: "$TRAVIS_OS_NAME == linux"
   - provider: script
-    script: vsce publish -p $VSCE_TOKEN --packagePath *.vsix
+    script: npx vsce publish -p $VSCE_TOKEN --packagePath *.vsix
     skip_cleanup: true
     on:
       tags: true

@@ -1,17 +1,23 @@
 {
-	"compilerOptions": {
-		"module": "commonjs",
-		"target": "es2018",
-
-		"noImplicitAny": false,
-		"removeComments": true,
-		"noUnusedLocals": true,
-		"noImplicitThis": true,
-		"inlineSourceMap": false,
-		"sourceMap": true,
-		"outDir": "../out",
-		"preserveConstEnums": true,
-		"strictNullChecks": true,
-		"noUnusedParameters": true
-	}
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es2018",
+        "lib": [
+            "es2020"
+        ],
+        "noImplicitAny": false,
+        "removeComments": true,
+        "noUnusedLocals": true,
+        "noImplicitThis": true,
+        "inlineSourceMap": false,
+        "sourceMap": true,
+        "outDir": "../out",
+        "preserveConstEnums": true,
+        "strictNullChecks": true,
+        "noUnusedParameters": true
+    },
+    "exclude": [
+        "node_modules",
+        ".vscode-test"
+    ]
 }

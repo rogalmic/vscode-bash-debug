@@ -1,18 +1,19 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "npm",
-			"identifier": "npm",
-			"script": "watch",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"isBackground": true,
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		}
-	]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "npm",
+            "script": "watch",
+            "problemMatcher": "$tsc-watch",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "never"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
 }

@@ -1,241 +1,237 @@
 {
-  "name": "bash-debug",
-  "displayName": "Bash Debug",
-  "version": "0.3.9",
-  "publisher": "rogalmic",
-  "description": "A debugger extension for bash scripts (using bashdb).",
-  "author": {
-    "name": "Michal Rogalinski",
-    "email": "rogalinsky@gmail.com"
-  },
-  "license": "MIT",
-  "keywords": [
-    "multi-root ready"
-  ],
-  "engines": {
-    "vscode": "^1.40.0",
-    "node": "^12.8.1"
-  },
-  "icon": "images/bash-debug-icon.png",
-  "categories": [
-    "Debuggers"
-  ],
-  "private": true,
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/rogalmic/vscode-bash-debug.git"
-  },
-  "bugs": {
-    "url": "https://github.com/rogalmic/vscode-bash-debug/issues"
-  },
-  "badges": [
-    {
-      "url": "https://img.shields.io/github/downloads/rogalmic/vscode-bash-debug/latest/total.svg",
-      "href": "https://github.com/rogalmic/vscode-bash-debug/releases/latest",
-      "description": "Download latest beta release (master branch)"
+    "name": "bash-debug",
+    "displayName": "Bash Debug",
+    "version": "0.3.9",
+    "publisher": "rogalmic",
+    "description": "A debugger extension for bash scripts (using bashdb).",
+    "author": {
+        "name": "Michal Rogalinski",
+        "email": "rogalinsky@gmail.com"
     },
-    {
-      "url": "https://img.shields.io/github/stars/rogalmic/vscode-bash-debug.svg?style=social&label=Stars",
-      "href": "https://github.com/rogalmic/vscode-bash-debug/stargazers",
-      "description": "Star the project in github"
-    },
-    {
-      "url": "https://img.shields.io/badge/paypal-donate-blue.svg",
-      "href": "https://paypal.me/rogalmic",
-      "description": "Donate some $ to keep project going"
-    }
-  ],
-  "dependencies": {
-    "child-process": "^1.0.2",
-    "npm-which": "^3.0.1",
-    "shell-quote": "^1.7.2",
-    "vscode-debugadapter": "1.40.0",
-    "vscode-debugprotocol": "1.40.0"
-  },
-  "devDependencies": {
-    "@types/mocha": "7.0.2",
-    "@types/node": "12.12.14",
-    "jsdoctest": "1.7.1",
-    "mocha": "7.1.2",
-    "standard-version": "^8.0.0",
-    "tslint": "6.1.2",
-    "typescript": "3.9.5",
-    "vsce": "1.77.0",
-    "vscode": "1.1.36",
-    "vscode-debugadapter-testsupport": "1.41.0"
-  },
-  "scripts": {
-    "prepare": "tsc -p ./src",
-    "compile": "tsc -p ./src",
-    "tslint": "tslint ./src/**/*.ts",
-    "watch": "tsc -w -p ./src",
-    "test": "mocha -u tdd ./out/tests/; node_modules/.bin/mocha --require jsdoctest out/bashRuntime.js out/handlePath.js",
-    "postinstall": "node ./node_modules/vscode/bin/install",
-    "package": "vsce package",
-    "publish": "vsce publish",
-    "release": "standard-version"
-  },
-  "main": "./out/extension",
-  "activationEvents": [
-    "onDebug",
-    "onCommand:extension.bash-debug.getProgramName",
-    "onCommand:extension.bash-debug.selectProgramName"
-  ],
-  "contributes": {
-    "breakpoints": [
-      {
-        "language": "shellscript"
-      }
+    "license": "MIT",
+    "keywords": [
+        "bash",
+        "debug",
+        "debugger",
+        "multi-root ready"
     ],
-    "debuggers": [
-      {
-        "type": "bashdb",
-        "label": "Bash Debug",
-        "program": "./out/bashDebug.js",
-        "runtime": "node",
-        "configurationAttributes": {
-          "launch": {
-            "// `type`, `request` and `name` are required implicitly.": null,
-            "required": [
-              "program"
-            ],
-            "properties": {
-              "args": {
-                "// type: Array<string> -> warning `Incorrect type. Expected Array<string>` in launch.json": null,
-                "description": "Command line arguments in array of strings format. (i.e. [\"--opt\", \"arg\"])",
-                "default": []
-              },
-              "argsString": {
-                "// type: string -> warning `Incorrect type. Expected string` in launch.json": null,
-                "description": "Command line arguments in string format. (i.e. \"--opt arg\"]. The arguments in this string will be appended to the arguments of `args`, if present.)",
-                "default": ""
-              },
-              "cwd": {
-                "type": "string",
-                "description": "Working directory. (i.e. `cd $cwd; bashdb <options> $program` will be executed internally).",
-                "default": "${workspaceFolder}"
-              },
-              "program": {
-                "type": "string",
-                "description": "Absolute path to a script. See also: https://code.visualstudio.com/docs/editor/variables-reference",
-                "default": "${file}"
-              },
-              "pathBash": {
-                "type": "string",
-                "description": "Specify absolute path to bash. Refer to https://github.com/rogalmic/vscode-bash-debug/blob/master/README.md#usage",
-                "default": ""
-              },
-              "pathBashdb": {
-                "type": "string",
-                "description": "Specify absolute path to bashdb (on Windows, path in Linux Subsystem).",
-                "default": "/usr/local/bin/bashdb"
-              },
-              "pathBashdbLib": {
-                "type": "string",
-                "description": "Specify absolute path to bashdb libs (on Windows, path in Linux Subsystem).",
-                "default": "/usr/share/bashdb"
-              },
-              "pathCat": {
-                "type": "string",
-                "description": "Specify absolute path to cat (on Windows, path in Linux Subsystem).",
-                "default": "/usr/bin/cat"
-              },
-              "pathMkfifo": {
-                "type": "string",
-                "description": "Specify absolute path to mkfifo (on Windows, path in Linux Subsystem).",
-                "default": "/usr/bin/mkfifo"
-              },
-              "pathPkill": {
-                "type": "string",
-                "description": "Specify absolute path to pkill (on Windows, path in Linux Subsystem). On macOS, please use /usr/bin/pkill instead of /usr/local/bin/pkill, otherwise vscode crashes. see https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill for details.",
-                "default": "/usr/local/bin/pkill"
-              },
-              "showDebugOutput": {
-                "type": "boolean",
-                "description": "Defines if bashdb output will be visible together with script output.",
-                "default": true
-              },
-              "trace": {
-                "type": "boolean",
-                "description": "Enable logging of the Debug Adapter Protocol.",
-                "default": true
-              },
-              "terminalKind": {
-                "enum": [
-                  "integrated",
-                  "external",
-                  "debugConsole"
-                ],
-                "description": "Can be set to 'integrated', 'external' or 'debugConsole'. Using 'integrated' or 'external' may require explicit terminal interpreter set for workspace.",
-                "default": "debugConsole"
-              },
-              "env": {
-                "type": "object",
-                "description": "Environment variables defined as an object with key value pairs - {\"MYVAR\" : \"MY VALUE\"}.",
-                "default": {}
-              }
-            }
-          }
+    "engines": {
+        "vscode": "^1.40.0",
+        "node": "^12.18.3"
+    },
+    "icon": "images/bash-debug-icon.png",
+    "categories": [
+        "Debuggers"
+    ],
+    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/rogalmic/vscode-bash-debug.git"
+    },
+    "bugs": {
+        "url": "https://github.com/rogalmic/vscode-bash-debug/issues"
+    },
+    "badges": [
+        {
+            "url": "https://img.shields.io/github/downloads/rogalmic/vscode-bash-debug/latest/total.svg",
+            "href": "https://github.com/rogalmic/vscode-bash-debug/releases/latest",
+            "description": "Download latest beta release (master branch)"
         },
-        "// Template for initial launch.json": null,
-        "// Added when: launch.json is missing && (": null,
-        "//   Add configuration... (in debug pane) -> Bash Debug ||": null,
-        "//   >Debug: Open launch.json -> Bash Debug ||": null,
-        "//   (>Debug: Start Debugging -> Bash Debug && file type is not shellscript)": null,
-        "// )": null,
-        "initialConfigurations": [
-          {
-            "type": "bashdb",
-            "request": "launch",
-            "name": "Bash-Debug (simplest configuration)",
-            "program": "${file}"
-          }
-        ],
-        "// Added when select 'Add configuration...' -> 'Bash Debug' in debug pane": null,
-        "// `label` is shown in IntelliSense and `name` is shown in DEBUG side-bar.": null,
-        "configurationSnippets": [
-          {
-            "label": "Bash-Debug (hardcoded script name)",
-            "description": "Debug a bash script (specify the path to the script in launch.json)",
-            "body": {
-              "type": "bashdb",
-              "request": "launch",
-              "name": "Bash-Debug (hardcoded script name)",
-              "cwd": "^\"\\${workspaceFolder}\"",
-              "program": "^\"\\${workspaceFolder}/path/to/script.sh\"",
-              "args": []
-            }
-          },
-          {
-            "label": "Bash-Debug (select script from list of sh files)",
-            "description": "Debug a bash script (select script from the list of sh files before starting debug)",
-            "body": {
-              "type": "bashdb",
-              "request": "launch",
-              "name": "Bash-Debug (select script from list of sh files)",
-              "cwd": "^\"\\${workspaceFolder}\"",
-              "program": "^\"\\${command:SelectScriptName}\"",
-              "args": []
-            }
-          },
-          {
-            "label": "Bash-Debug (type in script name)",
-            "description": "Debug a bash script (specify the script path before starting debug)",
-            "body": {
-              "type": "bashdb",
-              "request": "launch",
-              "name": "Bash-Debug (type in script name)",
-              "cwd": "^\"\\${workspaceFolder}\"",
-              "program": "^\"\\${command:AskForScriptName}\"",
-              "args": []
-            }
-          }
-        ],
-        "variables": {
-          "AskForScriptName": "extension.bash-debug.getProgramName",
-          "SelectScriptName": "extension.bash-debug.selectProgramName"
+        {
+            "url": "https://img.shields.io/github/stars/rogalmic/vscode-bash-debug.svg?style=social&label=Stars",
+            "href": "https://github.com/rogalmic/vscode-bash-debug/stargazers",
+            "description": "Star the project in github"
+        },
+        {
+            "url": "https://img.shields.io/badge/paypal-donate-blue.svg",
+            "href": "https://paypal.me/rogalmic",
+            "description": "Donate some $ to keep project going"
         }
-      }
-    ]
-  }
+    ],
+    "dependencies": {
+        "child-process": "^1.0.2",
+        "npm-which": "^3.0.1",
+        "shell-quote": "^1.7.2",
+        "vscode-debugadapter": "1.40.0",
+        "vscode-debugprotocol": "1.40.0"
+    },
+    "devDependencies": {
+        "@types/jasmine": "^3.6.3",
+        "@types/node": "^14.14.27",
+        "@types/vscode": "^1.40.0",
+        "@typescript-eslint/eslint-plugin": "^4.15.0",
+        "@typescript-eslint/parser": "^4.15.0",
+        "eslint": "^7.20.0",
+        "jasmine": "^3.6.4",
+        "ovsx": "^0.1.0-next.a9154dc",
+        "standard-version": "^9.1.0",
+        "ts-node": "^9.1.1",
+        "typescript": "^4.1.5",
+        "vsce": "^1.85.0",
+        "vscode-debugadapter-testsupport": "1.41.0"
+    },
+    "scripts": {
+        "prepublish": "tsc -p ./src",
+        "compile": "tsc -p ./src",
+        "lint": "eslint ./src/**/*.ts",
+        "watch": "tsc -w -p ./src",
+        "test": "ts-node node_modules/jasmine/bin/jasmine --config=jasmine.json",
+        "package": "vsce package",
+        "publish": "vsce publish",
+        "release": "standard-version"
+    },
+    "main": "./out/extension",
+    "activationEvents": [
+        "onDebug",
+        "onCommand:extension.bash-debug.getProgramName",
+        "onCommand:extension.bash-debug.selectProgramName"
+    ],
+    "contributes": {
+        "breakpoints": [
+            {
+                "language": "shellscript"
+            }
+        ],
+        "debuggers": [
+            {
+                "type": "bashdb",
+                "label": "Bash Debug",
+                "program": "./out/bashDebug.js",
+                "runtime": "node",
+                "configurationAttributes": {
+                    "launch": {
+                        "required": [
+                            "program"
+                        ],
+                        "properties": {
+                            "args": {
+                                "// type: Array<string> -> warning `Incorrect type. Expected Array<string>` in launch.json": null,
+                                "description": "Command line arguments in array of strings format. (i.e. [\"--opt\", \"arg\"])",
+                                "default": []
+                            },
+                            "argsString": {
+                                "// type: string -> warning `Incorrect type. Expected string` in launch.json": null,
+                                "description": "Command line arguments in string format. (i.e. \"--opt arg\"]. The arguments in this string will be appended to the arguments of `args`, if present.)",
+                                "default": ""
+                            },
+                            "cwd": {
+                                "type": "string",
+                                "description": "Working directory. (i.e. `cd $cwd; bashdb <options> $program` will be executed internally).",
+                                "default": "${workspaceFolder}"
+                            },
+                            "program": {
+                                "type": "string",
+                                "description": "Absolute path to a script. See also: https://code.visualstudio.com/docs/editor/variables-reference",
+                                "default": "${file}"
+                            },
+                            "pathBash": {
+                                "type": "string",
+                                "description": "Specify absolute path to bash. Refer to https://github.com/rogalmic/vscode-bash-debug/blob/master/README.md#usage",
+                                "default": ""
+                            },
+                            "pathBashdb": {
+                                "type": "string",
+                                "description": "Specify absolute path to bashdb (on Windows, path in Linux Subsystem).",
+                                "default": "/usr/local/bin/bashdb"
+                            },
+                            "pathBashdbLib": {
+                                "type": "string",
+                                "description": "Specify absolute path to bashdb libs (on Windows, path in Linux Subsystem).",
+                                "default": "/usr/share/bashdb"
+                            },
+                            "pathCat": {
+                                "type": "string",
+                                "description": "Specify absolute path to cat (on Windows, path in Linux Subsystem).",
+                                "default": "/usr/bin/cat"
+                            },
+                            "pathMkfifo": {
+                                "type": "string",
+                                "description": "Specify absolute path to mkfifo (on Windows, path in Linux Subsystem).",
+                                "default": "/usr/bin/mkfifo"
+                            },
+                            "pathPkill": {
+                                "type": "string",
+                                "description": "Specify absolute path to pkill (on Windows, path in Linux Subsystem). On macOS, please use /usr/bin/pkill instead of /usr/local/bin/pkill, otherwise vscode crashes. see https://github.com/rogalmic/vscode-bash-debug/wiki/macOS:-avoid-use-of--usr-local-bin-pkill for details.",
+                                "default": "/usr/local/bin/pkill"
+                            },
+                            "showDebugOutput": {
+                                "type": "boolean",
+                                "description": "Defines if bashdb output will be visible together with script output.",
+                                "default": true
+                            },
+                            "trace": {
+                                "type": "boolean",
+                                "description": "Enable logging of the Debug Adapter Protocol.",
+                                "default": true
+                            },
+                            "terminalKind": {
+                                "enum": [
+                                    "integrated",
+                                    "external",
+                                    "debugConsole"
+                                ],
+                                "description": "Can be set to 'integrated', 'external' or 'debugConsole'. Using 'integrated' or 'external' may require explicit terminal interpreter set for workspace.",
+                                "default": "debugConsole"
+                            },
+                            "env": {
+                                "type": "object",
+                                "description": "Environment variables defined as an object with key value pairs - {\"MYVAR\" : \"MY VALUE\"}.",
+                                "default": {}
+                            }
+                        }
+                    }
+                },
+                "initialConfigurations": [
+                    {
+                        "type": "bashdb",
+                        "request": "launch",
+                        "name": "Bash-Debug (simplest configuration)",
+                        "program": "${file}"
+                    }
+                ],
+                "configurationSnippets": [
+                    {
+                        "label": "Bash-Debug (hardcoded script name)",
+                        "description": "Debug a bash script (specify the path to the script in launch.json)",
+                        "body": {
+                            "type": "bashdb",
+                            "request": "launch",
+                            "name": "Bash-Debug (hardcoded script name)",
+                            "cwd": "^\"\\${workspaceFolder}\"",
+                            "program": "^\"\\${workspaceFolder}/path/to/script.sh\"",
+                            "args": []
+                        }
+                    },
+                    {
+                        "label": "Bash-Debug (select script from list of sh files)",
+                        "description": "Debug a bash script (select script from the list of sh files before starting debug)",
+                        "body": {
+                            "type": "bashdb",
+                            "request": "launch",
+                            "name": "Bash-Debug (select script from list of sh files)",
+                            "cwd": "^\"\\${workspaceFolder}\"",
+                            "program": "^\"\\${command:SelectScriptName}\"",
+                            "args": []
+                        }
+                    },
+                    {
+                        "label": "Bash-Debug (type in script name)",
+                        "description": "Debug a bash script (specify the script path before starting debug)",
+                        "body": {
+                            "type": "bashdb",
+                            "request": "launch",
+                            "name": "Bash-Debug (type in script name)",
+                            "cwd": "^\"\\${workspaceFolder}\"",
+                            "program": "^\"\\${command:AskForScriptName}\"",
+                            "args": []
+                        }
+                    }
+                ],
+                "variables": {
+                    "AskForScriptName": "extension.bash-debug.getProgramName",
+                    "SelectScriptName": "extension.bash-debug.selectProgramName"
+                }
+            }
+        ]
+    }
 }
