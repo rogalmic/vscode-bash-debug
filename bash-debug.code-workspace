@@ -19,7 +19,8 @@
     },
     "extensions": {
         "recommendations": [
-            "ms-vscode.vscode-js-profile-flame"
+            "ms-vscode.vscode-js-profile-flame",
+            "dbaeumer.vscode-eslint"
         ]
     }
 }
