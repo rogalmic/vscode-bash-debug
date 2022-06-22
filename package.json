@@ -51,7 +51,7 @@
     "dependencies": {
         "child-process": "^1.0.2",
         "npm-which": "^3.0.1",
-        "shell-quote": "^1.7.2",
+        "shell-quote": "^1.7.3",
         "vscode-debugadapter": "1.40.0",
         "vscode-debugprotocol": "1.40.0"
     },
