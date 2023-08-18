@@ -128,7 +128,7 @@ function _Dbg_is_file {
   fi
   # first character might be encoded as \057 == '/',
   # find_file:0:1 == "\" , true story
-  typeset find_file="$(printf "$1")"
+  typeset find_file="$(printf '%s\n' "$1")"
   typeset try_find_file
 
   if [[ -z $find_file ]] ; then
